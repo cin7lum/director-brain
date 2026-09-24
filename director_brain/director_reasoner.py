@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import copy
 import json
 import time
 from abc import ABC, abstractmethod
@@ -157,6 +158,20 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             shot_ids = set(act_node.attributes.get("shot_ids", []))
             act_cands = [c for c in candidates if c["source_shot_id"] in shot_ids]
 
+            # 空幕兜底：本幕时间范围内无镜头时，从全局候选借用
+            # （resolve 幕优先取时间最靠后的镜头，hook 幕取最靠前的）
+            borrowed = False
+            if not act_cands and candidates:
+                sorted_cands = sorted(candidates, key=lambda c: c["source_in_us"])
+                if act_name == "resolve":
+                    act_cands = [copy.deepcopy(sorted_cands[-1])]
+                elif act_name == "hook":
+                    act_cands = [copy.deepcopy(sorted_cands[0])]
+                else:
+                    mid = len(sorted_cands) // 2
+                    act_cands = [copy.deepcopy(sorted_cands[mid])]
+                borrowed = True
+
             per_act_target = max(
                 int(_ACT_RATIO[act_name] * brief.target_duration),
                 MIN_CLIP_US,
@@ -169,6 +184,25 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             )
             act_edits: list[EditItem] = list(edl.ordered_edits)
             used_fallback = False
+
+            # 时长不足兜底：本幕选中总时长 < 目标 50% 时，放宽 technical_usable
+            # 重新选片（仅对本幕候选深拷贝，不影响其他幕）
+            if act_edits:
+                act_dur = sum(e.out_frame - e.in_frame for e in act_edits)
+                if act_dur < per_act_target * 0.5 and not borrowed:
+                    relaxed = [copy.deepcopy(c) for c in act_cands]
+                    for c in relaxed:
+                        c["technical_usable"] = True
+                    edl_relaxed = generate_edl(
+                        project_id=brief.project_id,
+                        candidates=relaxed,
+                        target_duration_us=per_act_target,
+                    )
+                    relaxed_edits = list(edl_relaxed.ordered_edits)
+                    if relaxed_edits:
+                        relaxed_dur = sum(e.out_frame - e.in_frame for e in relaxed_edits)
+                        if relaxed_dur > act_dur:
+                            act_edits = relaxed_edits
 
             # 兜底：本幕选不出镜头时，直接取 blur_score 最高的完整镜头
             if not act_edits and act_cands:

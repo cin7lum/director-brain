@@ -57,7 +57,8 @@ def _build_filter_complex(edl: EditorialDecisionList, has_audio: bool) -> str:
         start_s = f"{start:.6f}"
         end_s = f"{end:.6f}"
         parts.append(
-            f"[0:v]trim=start={start_s}:end={end_s},setpts=PTS-STARTPTS[v{i}];"
+            f"[0:v]trim=start={start_s}:end={end_s},setpts=PTS-STARTPTS,"
+            f"scale=trunc(iw/2)*2:trunc(ih/2)*2[v{i}];"
         )
         v_labels.append(f"[v{i}]")
         if has_audio:
