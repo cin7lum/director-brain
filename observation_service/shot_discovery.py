@@ -6,10 +6,11 @@
 """
 from __future__ import annotations
 
-import hashlib
 import os
 import re
 import subprocess
+
+from director_brain._utils import file_sha256, short_hash
 
 
 DISCOVERY_VERSION = "v0.1"
@@ -18,15 +19,6 @@ MIN_SHOT_DURATION_US = 500_000      # 0.5s
 LONG_SHOT_THRESHOLD_US = 8_000_000  # 8s：长镜头按 window 拆分
 WINDOW_SIZE_US = 4_000_000          # 4s window
 MIN_TAIL_US = 1_500_000             # 末段短于此则并入前一段
-
-
-def _file_sha256(path: str) -> str:
-    """计算文件内容的 sha256（按 1MB 块流式读取）。"""
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def _probe_duration_us(path: str) -> int | None:
@@ -78,13 +70,8 @@ def _scene_cut_times_us(path: str, threshold: float) -> list[int] | None:
 
 
 def _shot_id(media_hash: str, in_us: int, out_us: int, version: str) -> str:
-    """稳定 shot_id：sha256(media_hash + in_us + out_us + version)，前缀 shot_。"""
-    h = hashlib.sha256()
-    h.update(media_hash.encode())
-    h.update(str(in_us).encode())
-    h.update(str(out_us).encode())
-    h.update(version.encode())
-    return "shot_" + h.hexdigest()[:16]
+    """稳定 shot_id：SHA-256(media_hash|in_us|out_us|version) 前 16 位，前缀 shot_。"""
+    return "shot_" + short_hash(f"{media_hash}|{in_us}|{out_us}|{version}")
 
 
 def discover_shots(video_path: str) -> list[dict]:
@@ -101,7 +88,7 @@ def discover_shots(video_path: str) -> list[dict]:
         return []
 
     try:
-        media_hash = _file_sha256(video_path)
+        media_hash = file_sha256(video_path)
     except OSError:
         return []
 

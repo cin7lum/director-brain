@@ -9,10 +9,10 @@ fail-soft 语义——观测缺失/claim 解析失败都不抛异常。
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import time
 
+from director_brain._utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.film_observation import FilmObservation
 
@@ -32,10 +32,6 @@ def _safe_load_claim(claim: str) -> dict:
     except (json.JSONDecodeError, TypeError):
         return {}
     return data if isinstance(data, dict) else {}
-
-
-def _short_hash(text: str) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
 
 
 def compile_brief(
@@ -110,7 +106,7 @@ def compile_brief(
         source_text = "no_speech_detected"
         sound_language = "no_speech"
 
-    brief_id = f"brief_{project_id}_{_short_hash(video_path)}"
+    brief_id = f"brief_{project_id}_{short_hash(video_path)}"
 
     return DirectorBrief(
         schema_version="1.0",

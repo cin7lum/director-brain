@@ -130,11 +130,15 @@ class TestExportRoundTrip:
             os.unlink(tmp_path)
 
         assert len(edl2.ordered_edits) == len(edl1.ordered_edits)
-        for it1, it2 in zip(edl1.ordered_edits, edl2.ordered_edits):
+        for it1, it2, dec1, dec2 in zip(
+            edl1.ordered_edits, edl2.ordered_edits,
+            plan1.decisions, plan2.decisions,
+        ):
             assert it1.source_asset_id == it2.source_asset_id
             assert it1.in_frame == it2.in_frame
             assert it1.out_frame == it2.out_frame
             assert it1.rationale == it2.rationale
+            assert dec1.confidence == dec2.confidence
 
     def test_exported_slot_structure(self):
         edl1, plan1, _ = import_v01_proposal(str(SMALL_FIXTURE))
@@ -143,12 +147,27 @@ class TestExportRoundTrip:
         assert "project_id" in exported
         assert "slots" in exported
         assert "ai_model" in exported
+        assert "rough_cut_id" in exported
         slot = exported["slots"][0]
         for key in (
             "slot_id", "position", "source_shot_id", "source_media_hash",
             "proposed_in_us", "proposed_out_us", "reason",
+            "clip_instance_id", "confidence_type", "confidence_value",
         ):
             assert key in slot, f"missing key {key}"
+        assert slot["clip_instance_id"], "clip_instance_id must be non-empty"
+
+    def test_export_has_clip_instance_id_and_rough_cut_id(self):
+        edl1, plan1, _ = import_v01_proposal(str(MULTI_FIXTURE))
+        exported = export_to_v01(edl1, plan1)
+        # rough_cut_id 非空且以 rc_ 开头
+        assert exported["rough_cut_id"], "rough_cut_id must be non-empty"
+        assert exported["rough_cut_id"].startswith("rc_")
+        # 每个 slot 的 clip_instance_id 存在且非空
+        for slot in exported["slots"]:
+            cid = slot.get("clip_instance_id")
+            assert cid, f"slot {slot.get('slot_id')} missing clip_instance_id"
+            assert cid.startswith("clip_")
 
 
 # ---------------------------------------------------------------------------

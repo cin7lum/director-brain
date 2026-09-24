@@ -71,8 +71,8 @@ def test_fingerprint_stable_for_same_input():
     fp2 = compute_fingerprint(**BASE_KWARGS)
     assert fp1 == fp2
     assert isinstance(fp1, str)
-    # sha256 十六进制摘要长度为 64
-    assert len(fp1) == 64
+    # 统一为 SHA-256 前 16 位（经 director_brain._utils.short_hash）
+    assert len(fp1) == 16
 
 
 # ---------------------------------------------------------------------------

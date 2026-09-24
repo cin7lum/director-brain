@@ -270,6 +270,37 @@ def test_update_partial_fields(repo: SqliteRepository):
     assert got == updated
 
 
+def test_update_rejects_invalid_field(repo: SqliteRepository):
+    brief = _make_brief()
+    repo.save(brief)
+
+    with pytest.raises(ValueError, match="nonexistent_field"):
+        repo.update(
+            DirectorBrief,
+            "b-1",
+            nonexistent_field="bad",
+        )
+
+    # 非法字段未写入数据库：原数据保持不变
+    got = repo.get(DirectorBrief, "b-1")
+    assert got is not None
+    assert got.approval_state == "draft"
+    assert not hasattr(got, "nonexistent_field")
+
+
+def test_update_valid_field_succeeds(repo: SqliteRepository):
+    brief = _make_brief()
+    repo.save(brief)
+
+    updated = repo.update(DirectorBrief, "b-1", approval_state="approved")
+    assert updated.approval_state == "approved"
+    # 未传入字段保持原值
+    assert updated.intent == "create tension"
+
+    got = repo.get(DirectorBrief, "b-1")
+    assert got.approval_state == "approved"
+
+
 # ---------------------------------------------------------------------------
 # 4. 对象存储 CRUD
 # ---------------------------------------------------------------------------

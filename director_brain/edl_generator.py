@@ -6,16 +6,12 @@
 """
 from __future__ import annotations
 
-import hashlib
 import time
 
+from director_brain._utils import short_hash
 from director_brain.models.edl import EditItem, EditorialDecisionList
 
 PRODUCER = "edl_generator_v0.1"
-
-
-def _short_hash(text: str) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
 
 
 def generate_edl(
@@ -70,7 +66,7 @@ def generate_edl(
         created_at=int(time.time()),
         producer=PRODUCER,
         source_ref=project_id,
-        edl_id=f"edl_{project_id}_{_short_hash(fingerprint)}",
+        edl_id=f"edl_{project_id}_{short_hash(fingerprint)}",
         version="0.1",
         brief_version="0.1",
         context_id=f"ctx_{project_id}",

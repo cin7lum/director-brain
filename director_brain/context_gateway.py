@@ -9,29 +9,17 @@ ASSET 层是 :class:`~director_brain.models.film_context.FilmContextSnapshot` �
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import time
 from pathlib import Path
 
+from director_brain._utils import file_sha256, short_hash
 from director_brain.models.film_context import ContextLayer, FilmContextSnapshot
 from director_brain.models.film_observation import FilmObservation
 from storage.repository import BrainRepository
 
 _TIMEBASE_US = 1_000_000  # 微秒时基，与 observation_service 一致
-
-
-def _file_sha256(path: str) -> str:
-    """分块计算文件 SHA-256；文件不可读时返回空串。"""
-    digest = hashlib.sha256()
-    try:
-        with open(path, "rb") as fh:
-            for chunk in iter(lambda: fh.read(1 << 20), b""):
-                digest.update(chunk)
-    except OSError:
-        return ""
-    return digest.hexdigest()
 
 
 def _probe_video_meta(video_path: str) -> dict[str, object]:
@@ -96,13 +84,15 @@ def build_asset_index(video_path: str, observations: list[FilmObservation]) -> F
 
     context_id = (
         "ctx_asset_"
-        + hashlib.sha256((video_path + str(len(observations))).encode("utf-8")).hexdigest()[:12]
+        + short_hash(video_path + "|" + "|".join(obs_ids_sorted))
     )
-    analysis_fingerprint = (
-        hashlib.sha256((video_path + "".join(obs_ids_sorted)).encode("utf-8")).hexdigest()[:16]
-    )
+    analysis_fingerprint = short_hash(video_path + "".join(obs_ids_sorted))
 
-    file_hash = _file_sha256(video_path)
+    # file_sha256 不可读时抛 OSError；这里 degrade 为空串，与原 _file_sha256 语义一致
+    try:
+        file_hash = file_sha256(video_path)
+    except OSError:
+        file_hash = ""
     meta = _probe_video_meta(video_path)
 
     shot_count = len({obs.media_asset_id for obs in observations})

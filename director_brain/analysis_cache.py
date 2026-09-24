@@ -9,10 +9,10 @@ schema 版本）产生稳定指纹；命中缓存直接复用，不重复调用 
 """
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
+from director_brain._utils import short_hash
 from director_brain.models.film_observation import FilmObservation
 
 
@@ -41,7 +41,7 @@ def compute_fingerprint(
         "schema_version": schema_version,
     }
     serialized = json.dumps(payload, sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return short_hash(serialized)
 
 
 class AnalysisCache:

@@ -131,6 +131,20 @@ class SqliteRepository(BrainRepository):
             raise KeyError(f"{entity_cls.__name__}#{entity_id} 不存在")
 
         data = json.loads(row["data"])
+
+        # 校验 fields 的 key 都是模型合法字段，避免脏数据写入数据库后
+        # 才在重建模型时报错。Pydantic 模型用 model_fields；dataclass
+        # （如 DecisionLedgerEntry）用 __dataclass_fields__。
+        if hasattr(entity_cls, "model_fields"):
+            valid_keys = entity_cls.model_fields.keys()
+        else:
+            valid_keys = entity_cls.__dataclass_fields__.keys()
+        for key in fields:
+            if key not in valid_keys:
+                raise ValueError(
+                    f"field '{key}' is not a valid field of {entity_cls.__name__}"
+                )
+
         data.update(fields)
         payload = json.dumps(data, ensure_ascii=False)
         self._conn.execute(

@@ -69,26 +69,26 @@ from observation_service.keyframe import extract_keyframe
 if shots:
     shot = shots[0]
     mid_us = (shot["source_in_us"] + shot["source_out_us"]) // 2
-    frame_path = extract_keyframe(VIDEO, shot["source_in_us"], shot["source_out_us"])
-    print(f"  镜头范围: {shot['source_in_us']}us - {shot['source_out_us']}us")
-    print(f"  理论中点: {mid_us}us")
-    print(f"  抽帧结果: {frame_path}")
-    if frame_path and Path(frame_path).exists():
-        size = Path(frame_path).stat().st_size
-        print(f"  文件大小: {size} bytes")
-        # 用 ffprobe 验证帧的时间戳
-        import subprocess
-        r = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "frame=pkt_pts_time",
-             "-of", "csv=p=0", frame_path],
-            capture_output=True, text=True, timeout=10
-        )
-        print(f"  ffprobe 输出: {r.stdout.strip()[:100]}")
-        results["keyframe_extracted"] = True
-        results["keyframe_size"] = size
-    else:
-        print("  ❌ 抽帧失败或文件不存在！")
-        results["keyframe_extracted"] = False
+    with extract_keyframe(VIDEO, shot["source_in_us"], shot["source_out_us"]) as frame_path:
+        print(f"  镜头范围: {shot['source_in_us']}us - {shot['source_out_us']}us")
+        print(f"  理论中点: {mid_us}us")
+        print(f"  抽帧结果: {frame_path}")
+        if frame_path and Path(frame_path).exists():
+            size = Path(frame_path).stat().st_size
+            print(f"  文件大小: {size} bytes")
+            # 用 ffprobe 验证帧的时间戳
+            import subprocess
+            r = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "frame=pkt_pts_time",
+                 "-of", "csv=p=0", frame_path],
+                capture_output=True, text=True, timeout=10
+            )
+            print(f"  ffprobe 输出: {r.stdout.strip()[:100]}")
+            results["keyframe_extracted"] = True
+            results["keyframe_size"] = size
+        else:
+            print("  ❌ 抽帧失败或文件不存在！")
+            results["keyframe_extracted"] = False
 else:
     print("  跳过（无镜头）")
 

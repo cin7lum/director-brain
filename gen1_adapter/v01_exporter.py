@@ -5,8 +5,13 @@ V0.1 JSON 结构，与真实 heuristic 输出对比。
 """
 from __future__ import annotations
 
+import logging
+
+from director_brain._utils import short_hash
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
+
+logger = logging.getLogger(__name__)
 
 #: edl_id / plan_id 导入时添加的前缀，导出时去除
 _EDL_PREFIX = "edl_from_"
@@ -18,6 +23,21 @@ def _strip_prefix(value: str, prefix: str) -> str:
     if value.startswith(prefix):
         return value[len(prefix):]
     return value
+
+
+def _infer_confidence_type(rationale) -> str:
+    """从 Decision.rationale 推断 confidence_type。
+
+    - rationale 含 ``"heuristic:"`` → ``"HEURISTIC"``
+    - rationale 含 ``"vlm:"`` → ``"SELF_REPORTED"``
+    - 无法推断（含 dec 缺失导致 rationale 为 None）→ warning 并默认 ``"HEURISTIC"``
+    """
+    if rationale and "heuristic:" in rationale:
+        return "HEURISTIC"
+    if rationale and "vlm:" in rationale:
+        return "SELF_REPORTED"
+    logger.warning("无法从 rationale 推断 confidence_type, 默认 HEURISTIC: %s", rationale)
+    return "HEURISTIC"
 
 
 def export_to_v01(
@@ -46,8 +66,12 @@ def export_to_v01(
         # 尝试按导入时的 decision_id 规则找到对应 decision
         dec = decisions_by_id.get(f"dec_{slot_id}")
         confidence_value = dec.confidence if dec else None
-        # confidence_type 无法从 EDL/Plan 恢复，导出 HEURISTIC 作为占位
-        confidence_type = "HEURISTIC"
+        confidence_type = _infer_confidence_type(dec.rationale if dec else None)
+
+        # EditItem 无 clip_instance_id 字段，从 source_asset_id + in/out 派生稳定 ID
+        clip_instance_id = (
+            f"clip_{short_hash(f'{item.source_asset_id}|{item.in_frame}|{item.out_frame}')}"
+        )
 
         slots.append({
             "slot_id": slot_id,
@@ -58,13 +82,14 @@ def export_to_v01(
             "proposed_out_us": item.out_frame,
             "proposed_role": item.shot_function,
             "reason": item.rationale,
+            "clip_instance_id": clip_instance_id,
             "confidence_type": confidence_type,
             "confidence_value": confidence_value,
         })
 
     return {
         "proposal_id": proposal_id,
-        "rough_cut_id": "",
+        "rough_cut_id": f"rc_{short_hash(edl.edl_id)}",
         "project_id": project_id,
         "ai_model": ai_model,
         "prompt_version": ai_model,

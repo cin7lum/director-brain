@@ -118,19 +118,19 @@ class TestExtractKeyframe:
         video = _make_test_video(duration_sec=3)
         try:
             # 镜头 0~3 秒（3_000_000 us），中点 = 1.5s
-            out_path = extract_keyframe(video, 0, 3_000_000)
-            assert out_path != "", "抽取失败应返回空字符串"
-            p = Path(out_path)
-            assert p.exists(), f"输出文件不存在: {out_path}"
-            assert p.stat().st_size > 0, "输出文件大小为 0"
+            with extract_keyframe(video, 0, 3_000_000) as out_path:
+                assert out_path != "", "抽取失败应返回空字符串"
+                p = Path(out_path)
+                assert p.exists(), f"输出文件不存在: {out_path}"
+                assert p.stat().st_size > 0, "输出文件大小为 0"
         finally:
             if os.path.exists(video):
                 os.remove(video)
 
     def test_extract_failure_returns_empty(self):
         """视频路径不存在时应返回空字符串，不抛异常。"""
-        result = extract_keyframe("/nonexistent/path.mp4", 0, 1_000_000)
-        assert result == ""
+        with extract_keyframe("/nonexistent/path.mp4", 0, 1_000_000) as result:
+            assert result == ""
 
 
 # ---------------------------------------------------------------------------

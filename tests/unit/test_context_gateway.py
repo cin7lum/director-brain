@@ -154,6 +154,25 @@ def test_context_id_stable_across_calls(tmp_path):
     assert first.context_id.startswith("ctx_asset_")
 
 
+def test_context_id_changes_when_observation_ids_differ(tmp_path):
+    """6b. 观测数量相同但 observation_id 不同时，context_id 必须不同。
+
+    回归 P1-1：旧实现 context_id 仅依赖 path + len(observations)，
+    两组同数量、不同 observation_id 的输入会撞出同一个 context_id。
+    """
+    video = str(tmp_path / "asset_test.mp4")
+    _make_test_video(video, duration_sec=3)
+
+    group_a = [_make_obs("obs_AAA"), _make_obs("obs_BBB")]
+    group_b = [_make_obs("obs_XXX"), _make_obs("obs_YYY")]
+    assert len(group_a) == len(group_b)  # 数量相同，仅 ID 不同
+
+    snap_a = build_asset_index(video, group_a)
+    snap_b = build_asset_index(video, group_b)
+
+    assert snap_a.context_id != snap_b.context_id
+
+
 def test_source_content_hashes_nonempty_for_real_file(tmp_path):
     """7. 对存在的视频文件，source_content_hashes 非空。"""
     video = str(tmp_path / "asset_test.mp4")

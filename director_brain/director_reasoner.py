@@ -10,11 +10,11 @@
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import time
 from abc import ABC, abstractmethod
 
+from director_brain._utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
@@ -55,10 +55,6 @@ def _parse_claim(claim: str) -> dict:
 def _num(data: dict, key: str) -> float | None:
     v = data.get(key)
     return float(v) if isinstance(v, (int, float)) else None
-
-
-def _short_hash(text: str) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
 
 
 def _build_candidates(tech_obs: list[FilmObservation]) -> list[dict]:
@@ -209,7 +205,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             created_at=int(time.time()),
             producer=PRODUCER,
             source_ref=brief.source_ref,
-            edl_id=f"edl_{brief.project_id}_{_short_hash(brief.brief_id)}",
+            edl_id=f"edl_{brief.project_id}_{short_hash(brief.brief_id)}",
             version="0.1",
             brief_version=brief.version,
             context_id=graph.graph_id,
@@ -226,7 +222,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             created_at=int(time.time()),
             producer=PRODUCER,
             source_ref=brief.source_ref,
-            plan_id=f"plan_{brief.project_id}_{_short_hash(brief.brief_id)}",
+            plan_id=f"plan_{brief.project_id}_{short_hash(brief.brief_id)}",
             version="0.1",
             brief_version=brief.version,
             film_state_version="0.1",
