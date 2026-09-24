@@ -145,3 +145,49 @@ def test_brief_id_and_version_fields():
     assert "xyz123" in brief.brief_id
     assert brief.schema_version == "1.0"
     assert brief.created_at > 0
+
+
+# ---------------------------------------------------------------------------
+# 用户意图入口（intent_text，规则提取，非 LLM）
+# ---------------------------------------------------------------------------
+
+def test_intent_text_drives_semantic_fields():
+    brief = compile_brief(
+        "p", "v.mp4", [],
+        intent_text="做一个快节奏的短视频，给朋友看，必须包含日出镜头")
+    assert brief.intent == "user_provided"
+    assert brief.language == "zh"
+    assert brief.audience == "friends"
+    assert brief.delivery_profile == "short_form"
+    assert brief.emotional_arc == "upbeat"
+    assert "日出镜头" in brief.must_include
+
+
+def test_intent_must_avoid_extraction():
+    brief = compile_brief(
+        "p", "v.mp4", [],
+        intent_text="感人的 vlog，避免出现黑屏，不要模糊镜头")
+    assert brief.emotional_arc == "heartwarming"
+    assert brief.delivery_profile == "vlog"
+    assert "黑屏" in brief.must_avoid
+    assert "模糊镜头" in brief.must_avoid
+
+
+def test_intent_none_preserves_legacy_behavior():
+    brief = compile_brief("p", "v.mp4", [])
+    assert brief.intent == "auto_compiled_from_observations"
+    assert brief.language == "not_determined"
+    assert brief.audience == "not_determined"
+    assert brief.delivery_profile == "not_determined"
+    assert brief.must_include == []
+    assert brief.must_avoid == []
+
+
+def test_intent_unknown_keywords_stay_not_determined():
+    brief = compile_brief("p", "v.mp4", [],
+                           intent_text="一些无法识别的随机内容 xyz123")
+    assert brief.intent == "user_provided"
+    assert brief.audience == "not_determined"
+    assert brief.emotional_arc == "not_determined"
+    assert brief.must_include == []
+    assert brief.must_avoid == []

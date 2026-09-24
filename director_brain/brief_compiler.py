@@ -10,6 +10,7 @@ fail-soft 语义——观测缺失/claim 解析失败都不抛异常。
 from __future__ import annotations
 
 import json
+import re
 import time
 
 from director_brain._utils import short_hash
@@ -34,11 +35,99 @@ def _safe_load_claim(claim: str) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _parse_intent(intent_text: str) -> dict:
+    """从用户自然语言意图中规则提取语义字段。
+
+    纯关键词+正则匹配，不调用 LLM。无法匹配的字段保持 ``"not_determined"``
+    或空列表（fail-soft）。
+    """
+    text = intent_text or ""
+
+    # ---- language：按中文字符占比 ----
+    cjk = sum(1 for ch in text if "一" <= ch <= "鿿")
+    has_latin = any(ch.isascii() and ch.isalpha() for ch in text)
+    if cjk and cjk / max(len(text.strip()), 1) > 0.3:
+        language = "zh"
+    elif has_latin:
+        language = "en"
+    else:
+        language = "not_determined"
+
+    def _first(mapping: list[tuple[str, str]]) -> str:
+        for keys, value in mapping:
+            for k in keys:
+                if k in text:
+                    return value
+        return "not_determined"
+
+    audience = _first([
+        (("朋友", "朋友圈"), "friends"),
+        (("家人", "家庭", "亲子"), "family"),
+        (("客户", "甲方", "商务", "B端"), "client"),
+        (("公众", "公开", "发布", "全网"), "public"),
+        (("孩子", "儿童", "少儿"), "children"),
+    ])
+    delivery_profile = _first([
+        (("短视频", "抖音", "快手", "小红书", "竖屏"), "short_form"),
+        (("vlog", "日志", "记录"), "vlog"),
+        (("纪录片", "纪录"), "documentary"),
+        (("广告", "宣传片", "品牌", "产品"), "commercial"),
+        (("电影", "微电影", "院线"), "cinematic"),
+    ])
+    emotional_arc = _first([
+        (("快节奏", "高能", "燃", "热血", "激昂", "亢奋"), "upbeat"),
+        (("感人", "温情", "温暖", "治愈", "暖心"), "heartwarming"),
+        (("悬疑", "紧张", "惊悚", "烧脑"), "suspenseful"),
+        (("平静", "舒缓", "安静", "宁静"), "calm"),
+        (("悲伤", "伤感", "难过", "忧伤"), "melancholic"),
+    ])
+    editing_language = _first([
+        (("快剪", "快切", "快速剪辑", "闪切"), "fast_cut"),
+        (("慢节奏", "慢剪", "长镜头", "慢镜头"), "slow_paced"),
+        (("蒙太奇",), "montage"),
+        (("跳切",), "jump_cut"),
+    ])
+
+    def _extract(patterns: list[str]) -> list[str]:
+        out: list[str] = []
+        for pat in patterns:
+            for m in re.finditer(pat, text):
+                item = m.group(1).strip(" ，。！？、,.;；")
+                if item:
+                    out.append(item)
+        return out
+
+    must_include = _extract([
+        r"必须包含(.+?)(?:[，。！？\n]|$)",
+        r"一定要有(.+?)(?:[，。！？\n]|$)",
+        r"要有(.+?)(?:[，。！？\n]|$)",
+        r"必须出现(.+?)(?:[，。！？\n]|$)",
+    ])
+    must_avoid = _extract([
+        r"避免出现(.+?)(?:[，。！？\n]|$)",
+        r"避免(.+?)(?:[，。！？\n]|$)",
+        r"不要(.+?)(?:[，。！？\n]|$)",
+        r"不能有(.+?)(?:[，。！？\n]|$)",
+        r"禁止(.+?)(?:[，。！？\n]|$)",
+    ])
+
+    return {
+        "language": language,
+        "audience": audience,
+        "delivery_profile": delivery_profile,
+        "emotional_arc": emotional_arc,
+        "editing_language": editing_language,
+        "must_include": must_include,
+        "must_avoid": must_avoid,
+    }
+
+
 def compile_brief(
     project_id: str,
     video_path: str,
     observations: list[FilmObservation],
     target_duration_us: int | None = None,
+    intent_text: str | None = None,
 ) -> DirectorBrief:
     """从观测自动编译一份导演简报（draft 状态）。
 
@@ -49,6 +138,10 @@ def compile_brief(
             ``speech_transcript`` 观测。
         target_duration_us: 目标成片时长（微秒）。传入时用传入值；未传入时
             用 :data:`DEFAULT_TARGET_DURATION_US`。**禁止**用源素材时长覆盖。
+        intent_text: 用户自然语言意图描述。传入时用规则提取（非 LLM）解析
+            language/audience/delivery_profile/emotional_arc/editing_language/
+            must_include/must_avoid；未传入（或空串）时这些字段保持
+            ``"not_determined"``/空列表，行为与未接入意图前一致。
 
     Returns:
         填充完毕的 :class:`DirectorBrief`，``approval_state="draft"``。
@@ -108,6 +201,16 @@ def compile_brief(
 
     brief_id = f"brief_{project_id}_{short_hash(video_path)}"
 
+    # ---- 用户意图解析（规则提取，fail-soft）----
+    intent_fields = {
+        "language": "not_determined", "audience": "not_determined",
+        "delivery_profile": "not_determined", "emotional_arc": "not_determined",
+        "editing_language": "not_determined",
+        "must_include": [], "must_avoid": [],
+    }
+    if intent_text:
+        intent_fields.update(_parse_intent(intent_text))
+
     return DirectorBrief(
         schema_version="1.0",
         project_id=project_id,
@@ -117,20 +220,20 @@ def compile_brief(
         brief_id=brief_id,
         version="0.1",
         source_text=source_text,
-        language="not_determined",
-        intent="auto_compiled_from_observations",
-        audience="not_determined",
+        language=intent_fields["language"],
+        intent="user_provided" if intent_text else "auto_compiled_from_observations",
+        audience=intent_fields["audience"],
         target_duration=target,
         source_duration_us=source_duration_us,
-        delivery_profile="not_determined",
+        delivery_profile=intent_fields["delivery_profile"],
         themes=themes,
         relationships=[],
-        emotional_arc="not_determined",
+        emotional_arc=intent_fields["emotional_arc"],
         visual_language=visual_language,
-        editing_language="not_determined",
+        editing_language=intent_fields["editing_language"],
         sound_language=sound_language,
-        must_include=[],
-        must_avoid=[],
+        must_include=intent_fields["must_include"],
+        must_avoid=intent_fields["must_avoid"],
         privacy_constraints=[],
         approval_state="draft",
         approved_by=None,
