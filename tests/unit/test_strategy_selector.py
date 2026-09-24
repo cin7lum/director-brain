@@ -4,7 +4,7 @@
 - generate_variants：对每个 config 用不同 target_duration 复制 brief 并调用推理器
 - compare_plans：duration_us / shot_count / avg_blur / narrative_coverage /
   quality_distribution 字段与数值计算
-- select_best：duration（选最长）与 quality（选最高 avg_blur）两种优先级
+- select_best：duration（选最接近 target_duration_us）与 quality（选最高 avg_blur）两种优先级
 
 fixture 风格对齐 tests/unit/test_plan_validator.py（_obs / _edit / _edl / _plan）。
 """
@@ -166,7 +166,7 @@ class _FakeReasoner:
 
 def test_generate_variants_one_per_config(monkeypatch):
     fake = _FakeReasoner()
-    monkeypatch.setattr(strategy_selector, "HeuristicDirectorReasoner", lambda: fake)
+    monkeypatch.setattr(strategy_selector, "HeuristicDirectorReasoner", lambda blur_threshold=10.0: fake)
 
     brief = _brief(target_duration=15_000_000)
     variants = generate_variants(
@@ -307,14 +307,27 @@ def test_malformed_claim_falls_back():
 # select_best
 # ---------------------------------------------------------------------------
 
-def test_select_best_duration_picks_longest():
+def test_select_best_duration_picks_closest_to_target():
     cards = [
-        {"duration_us": 10_000_000, "avg_blur": 90.0},  # blur 最高但最短
-        {"duration_us": 20_000_000, "avg_blur": 30.0},  # 最长 → 被选中
-        {"duration_us": 15_000_000, "avg_blur": 50.0},
+        {"duration_us": 5_000_000, "avg_blur": 50.0},
+        {"duration_us": 10_000_000, "avg_blur": 80.0},
+        {"duration_us": 15_000_000, "avg_blur": 60.0},
     ]
-    # target = max(duration) = 20M；idx1 距离 0 最小
-    assert select_best(cards, priority="duration") == 1
+    # target=12s → 15s(idx2) 距离 3s，10s(idx1) 距离 2s → 选 idx1
+    assert select_best(cards, priority="duration",
+                       target_duration_us=12_000_000) == 1
+    # target=8s → 10s(idx1) 距离 2s，5s(idx0) 距离 3s → 选 idx1
+    assert select_best(cards, priority="duration",
+                       target_duration_us=8_000_000) == 1
+    # target=14s → 15s(idx2) 距离 1s → 选 idx2
+    assert select_best(cards, priority="duration",
+                       target_duration_us=14_000_000) == 2
+
+
+def test_select_best_duration_requires_target():
+    cards = [{"duration_us": 10_000_000, "avg_blur": 50.0}]
+    with pytest.raises(ValueError):
+        select_best(cards, priority="duration")
 
 
 def test_select_best_duration_returns_legal_index():
@@ -322,7 +335,8 @@ def test_select_best_duration_returns_legal_index():
         {"duration_us": 12_000_000, "avg_blur": 10.0},
         {"duration_us": 18_000_000, "avg_blur": 20.0},
     ]
-    idx = select_best(cards, priority="duration")
+    idx = select_best(cards, priority="duration",
+                      target_duration_us=15_000_000)
     assert 0 <= idx < len(cards)
 
 
@@ -333,3 +347,61 @@ def test_select_best_quality_picks_highest_blur():
         {"duration_us": 10_000_000, "avg_blur": 50.0},
     ]
     assert select_best(cards, priority="quality") == 1
+
+
+
+# ---------------------------------------------------------------------------
+# 多方案真实差异（blur_threshold 维度）
+# ---------------------------------------------------------------------------
+
+def _make_eight_obs():
+    """8 个镜头，每 2 个一组：高质量(blur=100)+ 中质量(blur=8)，每个 5s。"""
+    obs = []
+    for i in range(8):
+        blur = 100.0 if i % 2 == 0 else 8.0
+        obs.append(_obs(
+            f"shot_{i}",
+            {"blur_score": blur, "exposure_ok": True},
+            start=i * 5_000_000,
+            end=(i + 1) * 5_000_000,
+        ))
+    return obs
+
+
+def test_generate_variants_blur_threshold_changes_edl():
+    """严格(20)与宽松(5)阈值应产生不同 EDL（非仅时长不同）。
+
+    4 幕各 2 候选(blur 100/8)，总目标 20s：
+    - threshold=20：每幕仅高 blur 可用，develop/peak 各 1 槽 → 共 4 槽
+    - threshold=5：全部可用，develop/peak 目标需 2 槽 → 共 6 槽
+    """
+    from director_brain.models.story_graph import (
+        StoryGraph, StoryNode, StoryNodeType,
+    )
+
+    obs = _make_eight_obs()
+    brief = _brief(target_duration=20_000_000)
+    graph = StoryGraph(
+        graph_id="g", version="0.1",
+        project_id="test_proj", created_at=int(time.time()),
+        producer="test", source_ref="test.mp4",
+        nodes=[
+            StoryNode(node_id="n1", node_type=StoryNodeType.ACT, ref_id="r1",
+                      attributes={"act": "hook", "shot_ids": ["shot_0", "shot_1"]}),
+            StoryNode(node_id="n2", node_type=StoryNodeType.ACT, ref_id="r2",
+                      attributes={"act": "develop", "shot_ids": ["shot_2", "shot_3"]}),
+            StoryNode(node_id="n3", node_type=StoryNodeType.ACT, ref_id="r3",
+                      attributes={"act": "peak", "shot_ids": ["shot_4", "shot_5"]}),
+            StoryNode(node_id="n4", node_type=StoryNodeType.ACT, ref_id="r4",
+                      attributes={"act": "resolve", "shot_ids": ["shot_6", "shot_7"]}),
+        ],
+    )
+    configs = [
+        {"target_duration_us": 20_000_000, "blur_threshold": 20.0},
+        {"target_duration_us": 20_000_000, "blur_threshold": 5.0},
+    ]
+    variants = generate_variants(brief, graph, obs, configs)
+    edl0 = [e.source_asset_id for e in variants[0][0].ordered_edits]
+    edl1 = [e.source_asset_id for e in variants[1][0].ordered_edits]
+    assert edl0 != edl1, f"阈值不同但 EDL 相同: {edl0} vs {edl1}"
+    assert len(edl0) < len(edl1), f"严格阈值应槽更少: {len(edl0)} vs {len(edl1)}"

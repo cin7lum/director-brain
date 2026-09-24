@@ -46,17 +46,20 @@ def generate_variants(
 ) -> list[tuple[EditorialDecisionList, DirectorDecisionPlan]]:
     """对每个 config 生成一个 EDL 变体。
 
-    每个 config 至少含 ``{"target_duration_us": int}``：用
+    每个 config 至少含 ``{"target_duration_us": int}``，可选
+    ``{"blur_threshold": float}``（默认 10.0）：用
     ``brief.model_copy(update={"target_duration": ...})`` 复制简报后交给
-    :class:`HeuristicDirectorReasoner` 生成 (EDL, Plan)。原 brief 不被修改。
+    ``HeuristicDirectorReasoner(blur_threshold=...)`` 生成 (EDL, Plan)。
+    不同 blur_threshold 会真实改变选片结果（非仅时长不同）。原 brief 不被修改。
 
     Returns:
         与 ``configs`` 等长的 (EDL, Plan) 列表。
     """
-    reasoner = HeuristicDirectorReasoner()
     variants: list[tuple[EditorialDecisionList, DirectorDecisionPlan]] = []
     for cfg in configs:
         target = int(cfg["target_duration_us"])
+        threshold = float(cfg.get("blur_threshold", 10.0))
+        reasoner = HeuristicDirectorReasoner(blur_threshold=threshold)
         brief_copy = brief.model_copy(update={"target_duration": target})
         edl, plan = reasoner.generate_plan(brief_copy, graph, observations)
         variants.append((edl, plan))
@@ -142,11 +145,15 @@ def compare_plans(
     return scorecards
 
 
-def select_best(scorecards: list[dict], priority: str = "duration") -> int:
+def select_best(
+    scorecards: list[dict],
+    priority: str = "duration",
+    target_duration_us: int | None = None,
+) -> int:
     """按优先级选出最优方案索引。
 
-    - ``priority="duration"``：目标取所有方案中最大的 duration_us（最长版本
-      作为参考目标），选 |duration_us - target| 最小者（距离并列取首个）。
+    - ``priority="duration"``：选 |duration_us - target_duration_us| 最小者
+      （距离并列取首个）。``target_duration_us`` 必填，缺省抛 ValueError。
     - ``priority="quality"``：选 avg_blur 最高者（并列取首个）。
 
     Returns:
@@ -156,10 +163,12 @@ def select_best(scorecards: list[dict], priority: str = "duration") -> int:
         raise ValueError("select_best: empty scorecards")
 
     if priority == "duration":
-        target = max(sc["duration_us"] for sc in scorecards)
+        if target_duration_us is None:
+            raise ValueError(
+                "select_best priority='duration' requires target_duration_us")
         return min(
             range(len(scorecards)),
-            key=lambda i: abs(scorecards[i]["duration_us"] - target),
+            key=lambda i: abs(scorecards[i]["duration_us"] - target_duration_us),
         )
     if priority == "quality":
         return max(

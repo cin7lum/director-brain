@@ -1,10 +1,10 @@
 """M2.2 Director Reasoner：从 Brief + 故事图 + 观测产出 EDL 与决策计划。
 
-- :class:`HeuristicDirectorReasoner`：复用
-  :class:`~gen1_adapter.heuristic_baseline.HeuristicBaseline` 选镜头，转成
-  :class:`EditorialDecisionList` 与 :class:`DirectorDecisionPlan`。
-- :class:`LLMDirectorReasoner`：预留 LLM（ollama）接口骨架，当前环境不可用，
-  ``generate_plan`` 直接抛 :class:`NotImplementedError`。
+当前生产推理器为 :class:`HeuristicDirectorReasoner`（确定性算法：基于
+blur_score × vlm_multiplier 排序 + 四幕选片）。
+:class:`LLMDirectorReasoner` 为预留骨架，未实现，``generate_plan`` 抛
+:class:`NotImplementedError`；通过 ``get_director_reasoner(strategy="llm")``
+获取时会提前发出 warning。
 
 时间统一微秒，timebase=1_000_000。
 """
@@ -13,6 +13,7 @@ from __future__ import annotations
 import copy
 import json
 import time
+import warnings
 from abc import ABC, abstractmethod
 
 from director_brain._utils import short_hash
@@ -61,10 +62,11 @@ def _num(data: dict, key: str) -> float | None:
 def _build_candidates(
     tech_obs: list[FilmObservation],
     vlm_obs: list[FilmObservation] | None = None,
+    threshold: float = _BLUR_USABLE_THRESHOLD,
 ) -> list[dict]:
     """从 deterministic_technical 观测构建 HeuristicBaseline 候选 dict。
 
-    technical_usable 主条件为 ``exposure_ok and blur_score > 10``；过滤后可用
+    technical_usable 主条件为 ``exposure_ok and blur_score > threshold``；过滤后可用
     候选 <2 时逐级放宽（去掉 blur 阈值 → 全部可用），保证至少有候选。
 
     若传入 ``vlm_obs``，从中筛选 ``claim_kind == MODEL_OBSERVATION`` 的 VLM
@@ -101,7 +103,7 @@ def _build_candidates(
         })
 
     for c in candidates:
-        c["technical_usable"] = c["exposure_ok"] and c["blur_score"] > _BLUR_USABLE_THRESHOLD
+        c["technical_usable"] = c["exposure_ok"] and c["blur_score"] > threshold
 
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
@@ -129,6 +131,9 @@ class DirectorReasoner(ABC):
 class HeuristicDirectorReasoner(DirectorReasoner):
     """基于 HeuristicBaseline 的确定性导演推理器（无 LLM）。"""
 
+    def __init__(self, blur_threshold: float = 10.0) -> None:
+        self.blur_threshold = float(blur_threshold)
+
     def generate_plan(
         self,
         brief: DirectorBrief,
@@ -141,7 +146,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         vlm_obs = [
             o for o in observations if o.observation_type == "vlm_semantic"
         ]
-        candidates = _build_candidates(tech_obs, vlm_obs)
+        candidates = _build_candidates(tech_obs, vlm_obs, self.blur_threshold)
         shot_to_obs = {o.media_asset_id: o.observation_id for o in tech_obs}
 
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
@@ -152,6 +157,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         act_nodes.sort(key=lambda n: _ACT_ORDER[n.attributes["act"]])
 
         paired: list[tuple[str, EditItem, Decision]] = []
+        borrowed_any = False
+        fallback_any = False
 
         for act_node in act_nodes:
             act_name = act_node.attributes["act"]
@@ -171,6 +178,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     mid = len(sorted_cands) // 2
                     act_cands = [copy.deepcopy(sorted_cands[mid])]
                 borrowed = True
+                borrowed_any = True
 
             per_act_target = max(
                 int(_ACT_RATIO[act_name] * brief.target_duration),
@@ -217,21 +225,44 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     rationale=f"heuristic:blur={best['blur_score']}",
                 )]
                 used_fallback = True
+                fallback_any = True
 
+            act_total = len(act_cands)
+            act_usable = sum(1 for c in act_cands if c.get("technical_usable"))
+            usable_ratio = act_usable / act_total if act_total else 0.0
+            max_blur = max((c["blur_score"] for c in act_cands), default=1.0) or 1.0
             for idx, edit in enumerate(act_edits):
                 edit.shot_function = _ACT_FUNCTION.get(act_name)
                 reason = edit.rationale or ""
                 edit.rationale = f"act={act_name}, {reason}"
                 slot_label = "fallback" if used_fallback else f"slot_{idx + 1:02d}"
+
+                selected_blur = next(
+                    (c["blur_score"] for c in act_cands
+                     if c["source_shot_id"] == edit.source_asset_id), 0.0)
+                blur_norm = min(selected_blur / max_blur, 1.0) if max_blur > 0 else 0.0
+                confidence = round(
+                    usable_ratio * 0.4 + blur_norm * 0.4
+                    + (0.0 if (used_fallback or borrowed) else 0.2), 2)
+                confidence = max(0.1, min(confidence, 1.0))
+
+                other_cands = [c for c in act_cands
+                               if c["source_shot_id"] != edit.source_asset_id]
+                other_cands.sort(key=lambda c: c["blur_score"], reverse=True)
+                alternatives = [c["source_shot_id"] for c in other_cands[:2]]
+
+                requires_approval = (confidence < 0.6 or used_fallback
+                                     or borrowed or act_total < 2)
+
                 decision = Decision(
                     decision_id=f"dec_{act_name}_{slot_label}",
                     purpose="select_shot",
                     shot_refs=[edit.source_asset_id],
                     evidence_refs=[shot_to_obs.get(edit.source_asset_id, "")],
                     rationale=edit.rationale,
-                    alternatives=[],
-                    confidence=0.5,
-                    requires_approval=False,
+                    alternatives=alternatives,
+                    confidence=confidence,
+                    requires_approval=requires_approval,
                 )
                 paired.append((act_name, edit, decision))
 
@@ -240,6 +271,14 @@ class HeuristicDirectorReasoner(DirectorReasoner):
 
         edits: list[EditItem] = [p[1] for p in paired]
         decisions: list[Decision] = [p[2] for p in paired]
+
+        open_questions: list[str] = []
+        if any(d.requires_approval for d in decisions):
+            open_questions.append("some_decisions_require_approval")
+        if borrowed_any:
+            open_questions.append("borrowed_shots_from_other_acts")
+        if fallback_any:
+            open_questions.append("fallback_selection_used")
 
         source_hashes: list[str] = []
         seen_hashes: set[str] = set()
@@ -280,7 +319,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             sequence=[e.source_asset_id for e in edits],
             decisions=decisions,
             constraints=[f"target_duration_us={brief.target_duration}"],
-            open_questions=[],
+            open_questions=open_questions,
             validation_status="pending",
             approval_state="draft",
         )
@@ -289,7 +328,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
 
 
 class LLMDirectorReasoner(DirectorReasoner):
-    """LLM（ollama）导演推理器预留骨架；当前环境不可用。"""
+    """LLM 导演推理器未实现，当前环境使用 HeuristicDirectorReasoner 作为确定性推理器。
+
+    本类为预留骨架，``generate_plan`` 抛 :class:`NotImplementedError`。
+    """
 
     def __init__(self, provider: str = "ollama", config: dict | None = None):
         self.provider = provider
@@ -312,5 +354,11 @@ def get_director_reasoner(strategy: str = "heuristic", **kwargs) -> DirectorReas
     if strategy == "heuristic":
         return HeuristicDirectorReasoner()
     if strategy == "llm":
+        warnings.warn(
+            "LLM director reasoner is not implemented; returning a placeholder "
+            "instance whose generate_plan() raises NotImplementedError. "
+            "Use strategy='heuristic' for the deterministic reasoner.",
+            stacklevel=2,
+        )
         return LLMDirectorReasoner(**kwargs)
     raise ValueError(f"unknown director reasoner strategy: {strategy!r}")

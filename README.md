@@ -28,6 +28,13 @@ scripts/             # 工具脚本
 docs/                # 文档
 ```
 
+## 当前能力边界
+
+- **导演推理**：Heuristic 确定性算法（blur_score × VLM 权重排序 + 四幕选片），非 LLM。
+- **LLM 推理**：`LLMDirectorReasoner` 为预留骨架，未实现；`get_director_reasoner("llm")` 会发出 warning，调用 `generate_plan` 抛 `NotImplementedError`。
+- **决策可解释性**：`Decision.confidence / alternatives / requires_approval` 与 `Plan.open_questions` 由 Heuristic 真实计算（非常量）。
+- **多方案选择**：`select_best(priority="duration")` 选最接近 `target_duration_us` 的方案（不再"最长即最优"）；`generate_variants` 支持 `blur_threshold` 真实变化维度。
+
 ## 开发流程
 
 三窗口分离：主控窗口（规划/复验）、开发窗口（编码）、监工窗口（测试/验收）。
