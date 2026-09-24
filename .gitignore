@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# pytest
+.pytest_cache/
+
+# 数据库
+*.db
+
+# 临时审计脚本（仅根目录，避免误排除 director_brain/audit_trail.py 正式模块）
+/audit_*.py
+
+# 真实运行产出
+tests/real_output/

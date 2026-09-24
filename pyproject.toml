@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "director-brain"
+version = "0.1.0"
+description = "Director Brain: 将创作意图、素材事实与质量反馈转化为可解释、可追溯、可修订的导演决策"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+]
+http = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "httpx>=0.24",
+]
+
+[tool.setuptools.packages.find]
+include = ["director_brain*", "observation_service*", "arsenal*", "davinci_execution*", "fql*", "gen1_adapter*", "storage*", "api*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

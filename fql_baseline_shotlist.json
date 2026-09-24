@@ -1,0 +1,584 @@
+{
+  "schema_version": "1.5.0-hardening-01",
+  "status": "ok",
+  "maturity": "EXPERIMENTAL",
+  "film": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "source": {
+    "type": "inferred_from_final",
+    "kind": "DETECTED",
+    "detectors": [
+      "opencv-robust",
+      "pyscenedetect-adaptive",
+      "ffmpeg-scene"
+    ],
+    "confidence_model": "heuristic_agreement_not_calibrated_probability"
+  },
+  "artifact": {
+    "status": "ok",
+    "algorithm": "sha256",
+    "sha256": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+    "size_bytes": 4372373,
+    "basename": "sintel_trailer.mp4"
+  },
+  "probe": {
+    "status": "ok",
+    "duration": 52.208333,
+    "fps": 24.0,
+    "width": 854,
+    "height": 480,
+    "nb_frames": 1253,
+    "pix_fmt": "yuv420p",
+    "color_range": null,
+    "color_space": null,
+    "color_transfer": null,
+    "color_primaries": null
+  },
+  "duration": 52.208333,
+  "fusion": {
+    "status": "ok",
+    "available_detectors": [
+      "opencv-robust",
+      "pyscenedetect-adaptive",
+      "ffmpeg-scene"
+    ],
+    "unavailable_detectors": [],
+    "fusion_tolerance_sec": 0.18,
+    "boundaries": [
+      {
+        "time": 16.5,
+        "transition": "hard_cut",
+        "agreement_score": 0.95,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 16.5,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 1.0,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.4697",
+              "threshold=0.2200",
+              "hist=0.7137",
+              "neighborhood_cross=0.7137",
+              "separation_ratio=16.425",
+              "within_pre=0.0000",
+              "within_post=0.0434"
+            ]
+          },
+          {
+            "time": 16.5,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          },
+          {
+            "time": 16.5,
+            "detector": "ffmpeg-scene",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 17.5,
+        "transition": "hard_cut",
+        "agreement_score": 0.933,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 17.5,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.915,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.3773",
+              "threshold=0.2200",
+              "hist=0.7137",
+              "neighborhood_cross=0.7137",
+              "separation_ratio=9.619",
+              "within_pre=0.0742",
+              "within_post=0.0000"
+            ]
+          },
+          {
+            "time": 17.5,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          },
+          {
+            "time": 17.5,
+            "detector": "ffmpeg-scene",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 23.792,
+        "transition": "hard_cut",
+        "agreement_score": 0.732,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 23.791666666666668,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.744,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.2524",
+              "threshold=0.2200",
+              "hist=0.3969",
+              "neighborhood_cross=0.3997",
+              "separation_ratio=5.523",
+              "within_pre=0.0251",
+              "within_post=0.0473"
+            ]
+          },
+          {
+            "time": 23.791667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 25.875,
+        "transition": "hard_cut",
+        "agreement_score": 0.939,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 25.875,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.943,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.3984",
+              "threshold=0.2200",
+              "hist=0.5899",
+              "neighborhood_cross=0.5802",
+              "separation_ratio=7.556",
+              "within_pre=0.0300",
+              "within_post=0.0468"
+            ]
+          },
+          {
+            "time": 25.875,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          },
+          {
+            "time": 25.875,
+            "detector": "ffmpeg-scene",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 27.417,
+        "transition": "hard_cut",
+        "agreement_score": 0.858,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 27.416666666666668,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.538,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.2244",
+              "threshold=0.2200",
+              "hist=0.2871",
+              "neighborhood_cross=0.2972",
+              "separation_ratio=2.324",
+              "within_pre=0.0911",
+              "within_post=0.0367"
+            ]
+          },
+          {
+            "time": 27.416667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          },
+          {
+            "time": 27.416667,
+            "detector": "ffmpeg-scene",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 28.0,
+        "transition": "hard_cut",
+        "agreement_score": 0.943,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "accepted_multi_detector_agreement",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 28.0,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.965,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.4144",
+              "threshold=0.2200",
+              "hist=0.7130",
+              "neighborhood_cross=0.7130",
+              "separation_ratio=59.035",
+              "within_pre=0.0121",
+              "within_post=0.0000"
+            ]
+          },
+          {
+            "time": 28.0,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          },
+          {
+            "time": 28.0,
+            "detector": "ffmpeg-scene",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      }
+    ],
+    "uncertain_boundaries": [
+      {
+        "time": 13.917,
+        "transition": "hard_cut",
+        "agreement_score": 0.517,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "uncertain_single_detector_disagreement",
+        "detectors": [
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 13.916667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 16.833,
+        "transition": "hard_cut",
+        "agreement_score": 0.544,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "uncertain_single_detector_disagreement",
+        "detectors": [
+          "opencv-robust"
+        ],
+        "observations": [
+          {
+            "time": 16.833333333333332,
+            "detector": "opencv-robust",
+            "transition": "hard_cut",
+            "strength": 0.637,
+            "interval_start": null,
+            "interval_end": null,
+            "notes": [
+              "score=0.2341",
+              "threshold=0.2200",
+              "hist=0.3903",
+              "neighborhood_cross=0.3790",
+              "separation_ratio=3.175",
+              "within_pre=0.0709",
+              "within_post=0.0485"
+            ]
+          }
+        ]
+      },
+      {
+        "time": 18.167,
+        "transition": "hard_cut",
+        "agreement_score": 0.517,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "uncertain_single_detector_disagreement",
+        "detectors": [
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 18.166667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 21.917,
+        "transition": "hard_cut",
+        "agreement_score": 0.517,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "uncertain_single_detector_disagreement",
+        "detectors": [
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 21.916667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      },
+      {
+        "time": 28.292,
+        "transition": "hard_cut",
+        "agreement_score": 0.517,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability",
+        "decision": "uncertain_single_detector_disagreement",
+        "detectors": [
+          "pyscenedetect-adaptive"
+        ],
+        "observations": [
+          {
+            "time": 28.291667,
+            "detector": "pyscenedetect-adaptive",
+            "transition": "hard_cut",
+            "strength": null,
+            "interval_start": null,
+            "interval_end": null
+          }
+        ]
+      }
+    ]
+  },
+  "shots": [
+    {
+      "shot_id": "SHOT-0001",
+      "key": "shot_0001",
+      "src": "final:0001",
+      "start": 0.0,
+      "end": 16.5,
+      "dur": 16.5,
+      "transition": "start",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [],
+        "agreement_score": null,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0002",
+      "key": "shot_0002",
+      "src": "final:0002",
+      "start": 16.5,
+      "end": 17.5,
+      "dur": 1.0,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.95,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0003",
+      "key": "shot_0003",
+      "src": "final:0003",
+      "start": 17.5,
+      "end": 23.792,
+      "dur": 6.292,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.933,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0004",
+      "key": "shot_0004",
+      "src": "final:0004",
+      "start": 23.792,
+      "end": 25.875,
+      "dur": 2.083,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.732,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0005",
+      "key": "shot_0005",
+      "src": "final:0005",
+      "start": 25.875,
+      "end": 27.417,
+      "dur": 1.542,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.939,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0006",
+      "key": "shot_0006",
+      "src": "final:0006",
+      "start": 27.417,
+      "end": 28.0,
+      "dur": 0.583,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.858,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    },
+    {
+      "shot_id": "SHOT-0007",
+      "key": "shot_0007",
+      "src": "final:0007",
+      "start": 28.0,
+      "end": 52.208,
+      "dur": 24.208,
+      "transition": "hard_cut",
+      "purpose": "",
+      "section": "",
+      "provenance": {
+        "kind": "DETECTED",
+        "source_type": "inferred_from_final",
+        "detectors": [
+          "ffmpeg-scene",
+          "opencv-robust",
+          "pyscenedetect-adaptive"
+        ],
+        "agreement_score": 0.943,
+        "agreement_semantics": "heuristic_agreement_not_calibrated_probability"
+      }
+    }
+  ]
+}

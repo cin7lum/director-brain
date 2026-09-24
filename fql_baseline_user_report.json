@@ -1,0 +1,370 @@
+{
+  "schema_version": "1.1",
+  "report_type": "USER_RESULT",
+  "locale": "zh-CN",
+  "outputs": {
+    "json_filename": "USER_REPORT.json",
+    "html_filename": "USER_REPORT.html"
+  },
+  "source_artifact": {
+    "basename": "sintel_trailer.mp4",
+    "exact_size_bytes": 4372373,
+    "sha256": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254"
+  },
+  "coverage": {
+    "value": 0.37,
+    "percent": 37.0,
+    "tier": "PARTIAL",
+    "available_weight": 0.37,
+    "source_status": "partial",
+    "display_explanation": "覆盖率决定哪些工程维度可以被安全解释；未覆盖维度不会被补成零分。"
+  },
+  "score": {
+    "display_kind": "PARTIAL_ENGINEERING_SCORE",
+    "label": "当前可分析范围内的工程评分",
+    "value": 5.469,
+    "grade": "D",
+    "warning": "这不是整片综合评分，也不是经过人类基准校准的质量结论。"
+  },
+  "dimensions": {
+    "analyzed": [
+      {
+        "name": "剪辑",
+        "score": 6.47,
+        "evidence_class": "HEURISTIC",
+        "evidence": [
+          "editing_skill.subscores"
+        ],
+        "provenance": {
+          "sources": [
+            "editing_skill.subscores"
+          ],
+          "transformation_type": "heuristic_scoring",
+          "output_kind": "dimension_score",
+          "evidence_class": "HEURISTIC"
+        },
+        "uncertainty": "这是实验性/启发式分析结果，不是经过人类基准校准的概率或判断。"
+      },
+      {
+        "name": "声音",
+        "score": 4.0,
+        "evidence_class": "RULE_BASED",
+        "evidence": [
+          "ffmpeg.ebur128"
+        ],
+        "provenance": {
+          "sources": [
+            "ffmpeg.ebur128"
+          ],
+          "transformation_type": "score_aggregation",
+          "output_kind": "dimension_score",
+          "evidence_class": "RULE_BASED",
+          "raw_measurement_evidence_class": "FACT"
+        },
+        "uncertainty": "这是由源证据经过规则/评分推导的结果，不是经过人类基准校准的概率或判断。"
+      }
+    ],
+    "unavailable": [
+      {
+        "name": "导演",
+        "evidence_class": "UNAVAILABLE",
+        "reason_code": "insufficient_narrative_metadata",
+        "why_unavailable": "缺少经过授权的叙事/语义证据，不能对导演或故事作结论。",
+        "capability_statuses": [
+          {
+            "capability": "visual_semantic_judge",
+            "status": "STUB"
+          },
+          {
+            "capability": "asr_whisperx",
+            "status": "STUB"
+          }
+        ]
+      },
+      {
+        "name": "摄影",
+        "evidence_class": "UNAVAILABLE",
+        "reason_code": "shot_metadata_unavailable",
+        "why_unavailable": "没有经过验证的镜头元数据；检测到的切镜边界不等于镜头景别判断。",
+        "capability_statuses": [
+          {
+            "capability": "camera_language_inference",
+            "status": "STUB"
+          }
+        ],
+        "capability_status": "STUB"
+      },
+      {
+        "name": "调色",
+        "evidence_class": "UNAVAILABLE",
+        "reason_code": "color_evidence_unavailable",
+        "why_unavailable": "当前输入没有可用的调色证据。",
+        "capability_statuses": [
+          {
+            "capability": "visual_semantic_judge",
+            "status": "STUB"
+          },
+          {
+            "capability": "vqa_dover",
+            "status": "STUB"
+          }
+        ]
+      },
+      {
+        "name": "包装",
+        "evidence_class": "UNAVAILABLE",
+        "reason_code": "packaging_evidence_unavailable",
+        "why_unavailable": "当前输入没有可用的包装/字幕证据。",
+        "capability_statuses": [
+          {
+            "capability": "visual_semantic_judge",
+            "status": "STUB"
+          }
+        ],
+        "capability_status": "STUB"
+      },
+      {
+        "name": "情绪",
+        "evidence_class": "UNAVAILABLE",
+        "reason_code": "domain_emotion_evidence_unavailable",
+        "why_unavailable": "当前输入没有可用的情绪或观众反应证据。",
+        "capability_statuses": [
+          {
+            "capability": "visual_semantic_judge",
+            "status": "STUB"
+          },
+          {
+            "capability": "asr_whisperx",
+            "status": "STUB"
+          }
+        ]
+      }
+    ]
+  },
+  "evidence_summary": {
+    "剪辑": {
+      "evidence_class": "HEURISTIC",
+      "sources": [
+        "editing_skill.subscores"
+      ],
+      "transformation_type": "heuristic_scoring",
+      "output_kind": "dimension_score",
+      "summary": "剪辑分数来自现有实验性/启发式工程分析。"
+    },
+    "声音": {
+      "evidence_class": "RULE_BASED",
+      "sources": [
+        "ffmpeg.ebur128"
+      ],
+      "transformation_type": "score_aggregation",
+      "output_kind": "dimension_score",
+      "raw_measurements": [
+        {
+          "metric": "integrated_lufs",
+          "value": -12.8,
+          "unit": "LUFS",
+          "source": "ffmpeg.ebur128",
+          "evidence_class": "FACT",
+          "provenance": {
+            "sources": [
+              "ffmpeg.ebur128"
+            ],
+            "transformation_type": "direct_measurement",
+            "output_kind": "raw_measurement",
+            "evidence_class": "FACT"
+          }
+        },
+        {
+          "metric": "true_peak_dbfs",
+          "value": 1.2,
+          "unit": "dBFS",
+          "source": "ffmpeg.ebur128",
+          "evidence_class": "FACT",
+          "provenance": {
+            "sources": [
+              "ffmpeg.ebur128"
+            ],
+            "transformation_type": "direct_measurement",
+            "output_kind": "raw_measurement",
+            "evidence_class": "FACT"
+          }
+        },
+        {
+          "metric": "lra_lu",
+          "value": 14.6,
+          "unit": "LU",
+          "source": "ffmpeg.ebur128",
+          "evidence_class": "FACT",
+          "provenance": {
+            "sources": [
+              "ffmpeg.ebur128"
+            ],
+            "transformation_type": "direct_measurement",
+            "output_kind": "raw_measurement",
+            "evidence_class": "FACT"
+          }
+        },
+        {
+          "metric": "deviation_lu",
+          "value": 1.2,
+          "unit": "LU",
+          "source": "ffmpeg.ebur128",
+          "evidence_class": "FACT",
+          "provenance": {
+            "sources": [
+              "ffmpeg.ebur128"
+            ],
+            "transformation_type": "direct_measurement",
+            "output_kind": "raw_measurement",
+            "evidence_class": "FACT"
+          }
+        }
+      ],
+      "summary": "声音维度分数由现有音频测量经过评分规则推导；原始测量与门控结论分别标注。"
+    },
+    "cut_boundary_detection": {
+      "evidence_class": "HEURISTIC",
+      "source_type": "inferred_from_final",
+      "detector": "opencv-robust",
+      "summary": "检测到的最终片切镜边界仅作为启发式工程信号；没有据此生成镜头景别或 Professional Shot Scale 预测。"
+    }
+  },
+  "issues": [
+    {
+      "issue_id": "ISSUE-001",
+      "title": "这次分析只覆盖了部分工程指标",
+      "severity": "P1",
+      "status": "OPEN",
+      "what_happened": "当前分析覆盖率为 37%，只有已列出的工程维度进入了评分。",
+      "why_it_matters": "不能把这次结果理解为整片质量结论；未覆盖维度没有被判为好或坏。",
+      "evidence_class": "RULE_BASED",
+      "evidence": [
+        {
+          "kind": "FACT",
+          "metric": "coverage",
+          "actual": 0.37
+        },
+        {
+          "kind": "RULE_BASED",
+          "metric": "minimum_display_target",
+          "target": 0.6
+        }
+      ],
+      "provenance": {
+        "sources": [
+          "coverage",
+          "minimum_display_target"
+        ],
+        "transformation_type": "rule_based_conclusion",
+        "output_kind": "issue_conclusion",
+        "evidence_class": "RULE_BASED"
+      },
+      "where": "GLOBAL",
+      "recommended_next_step": "ANALYSIS_ENRICHMENT_REQUIRED",
+      "recommended_next_step_text": "当前执行器没有可验证的分析增强动作。",
+      "automation_availability": "NOT_AVAILABLE_IN_CURRENT_EXECUTOR",
+      "repair_status": null,
+      "repair_history_retained": false,
+      "uncertainty": "覆盖率是显示安全规则，不是人类质量有效性证明。"
+    },
+    {
+      "issue_id": "ISSUE-002",
+      "title": "音频峰值超过当前技术阈值",
+      "severity": "P0",
+      "status": "OPEN",
+      "what_happened": "检测到 true peak 为 1.2 dBFS；当前规则阈值为 -1.0 dBFS。",
+      "why_it_matters": "这是声音维度的技术门控问题，不是对主观听感的判断。",
+      "evidence_class": "RULE_BASED",
+      "evidence": [
+        {
+          "kind": "FACT",
+          "metric": "true_peak_dbfs",
+          "measured": 1.2
+        },
+        {
+          "kind": "RULE_BASED",
+          "metric": "ceiling_dbfs",
+          "threshold": -1.0
+        }
+      ],
+      "provenance": {
+        "sources": [
+          "ffmpeg.ebur128",
+          "G_TP_VIOLATION"
+        ],
+        "transformation_type": "threshold_rule",
+        "output_kind": "issue_conclusion",
+        "evidence_class": "RULE_BASED",
+        "raw_measurement_evidence_class": "FACT"
+      },
+      "where": "GLOBAL",
+      "recommended_next_step": "AUTO_FIX_AVAILABLE",
+      "recommended_next_step_text": "可尝试经过验证的音频修复动作。",
+      "automation_availability": "AVAILABLE_WITH_VALIDATION",
+      "repair_status": null,
+      "repair_history_retained": false,
+      "uncertainty": "结论来自音频测量与规则门控；它不代表观众主观体验。",
+      "technical_details_optional": {
+        "gate": "G_TP_VIOLATION"
+      }
+    }
+  ],
+  "repair": {
+    "status": null,
+    "status_label": null,
+    "repair_action": null,
+    "actions": [
+      {
+        "action_id": "ACT-001",
+        "issue_id": "ISSUE-001",
+        "type": "analysis_enrichment",
+        "status": null,
+        "status_label": null,
+        "execution_status": null,
+        "accept": false,
+        "reason_codes": []
+      },
+      {
+        "action_id": "ACT-002",
+        "issue_id": "ISSUE-002",
+        "type": "audio_limit",
+        "status": null,
+        "status_label": null,
+        "execution_status": null,
+        "accept": false,
+        "reason_codes": []
+      }
+    ],
+    "rollback_status": null,
+    "candidate_version_status": null,
+    "previous_version_status": null,
+    "loop_status": null,
+    "candidate_evaluation": null,
+    "fixture_origin": null,
+    "interpretation": "没有可展示的修复执行结果。"
+  },
+  "limits": {
+    "unavailable_dimensions_are_explicit": true,
+    "shot_size": {
+      "status": "UNAVAILABLE",
+      "reason": "没有经过验证的镜头景别证据；最终片切镜检测不等于景别判断。"
+    },
+    "professional_shot_scale": "NOT_VALIDATED",
+    "human_ground_truth": "NOT_VALIDATED",
+    "subjective_audience_experience": "UNAVAILABLE"
+  },
+  "scientific_status": {
+    "ground_truth": "NOT_VALIDATED",
+    "h13": "BLOCKED",
+    "h14": "NOT_AUTHORIZED",
+    "professional_shot_scale": "NOT_VALIDATED",
+    "provider_inference_executed": false
+  },
+  "non_conclusions": [
+    "这不是整片综合质量结论。",
+    "未列入已分析维度的项目没有被判定为好或坏。",
+    "没有提供人类 Ground Truth、Provider inference 或 shot-scale 预测。",
+    "当前报告不能授权 H13 或 H14。"
+  ],
+  "report_identity": "16ff657c824a854eba05c89ea04ec2fe32cf1e884c014936a35f32b3be2450ee"
+}

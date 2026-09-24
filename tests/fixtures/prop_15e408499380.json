@@ -1,0 +1,94 @@
+{
+  "project_id": "cli_sintel_trailer",
+  "proposal_id": "prop_15e408499380",
+  "rough_cut_id": "rc_b4d4adb945e8",
+  "slots": [
+    {
+      "source_shot_id": "shot_4e9be299d0ed6681_w02",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_9a30071de6e0",
+      "slot_id": "slot_01",
+      "position": 0,
+      "proposed_in_us": 32000000,
+      "proposed_out_us": 36000000,
+      "reason": "heuristic:blur=281.25",
+      "confidence_type": "HEURISTIC",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_3adb53f8ac560214",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_c5cdf38d8003",
+      "slot_id": "slot_02",
+      "position": 1,
+      "proposed_in_us": 25875000,
+      "proposed_out_us": 27416666,
+      "reason": "heuristic:blur=271.07",
+      "confidence_type": "HEURISTIC",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_4e9be299d0ed6681_w01",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_4dc7e8adebcb",
+      "slot_id": "slot_03",
+      "position": 2,
+      "proposed_in_us": 28000000,
+      "proposed_out_us": 32000000,
+      "reason": "heuristic:blur=239.04",
+      "confidence_type": "HEURISTIC",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_fdd3c70d0e14156e",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_23762368c470",
+      "slot_id": "slot_04",
+      "position": 3,
+      "proposed_in_us": 23791667,
+      "proposed_out_us": 25874999,
+      "reason": "heuristic:blur=203.57",
+      "confidence_type": "HEURISTIC",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_afc4f2eb386e99a3_w02",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_e905a55a91b4",
+      "slot_id": "slot_05",
+      "position": 4,
+      "proposed_in_us": 4000000,
+      "proposed_out_us": 8000000,
+      "reason": "vlm:fn=ESTABLISHING,role=hero,blur=120.45,score=132.5,hero(x1.1)",
+      "confidence_type": "SELF_REPORTED",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_39caf39c24fa703c",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_629d240f5730",
+      "slot_id": "slot_06",
+      "position": 5,
+      "proposed_in_us": 16500000,
+      "proposed_out_us": 17500000,
+      "reason": "vlm:fn=ACTION,role=hero,blur=87.32,score=96.1,hero(x1.1)",
+      "confidence_type": "SELF_REPORTED",
+      "confidence_value": null
+    },
+    {
+      "source_shot_id": "shot_4e9be299d0ed6681_w03",
+      "source_media_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "clip_instance_id": "clip_956234b6cb07",
+      "slot_id": "slot_07",
+      "position": 6,
+      "proposed_in_us": 36312500,
+      "proposed_out_us": 39687500,
+      "reason": "heuristic:blur=92.0",
+      "confidence_type": "HEURISTIC",
+      "confidence_value": null
+    }
+  ],
+  "ai_model": "heuristic_v0.2",
+  "prompt_version": "heuristic_v0.2",
+  "initial_snapshot_id": "sha256:fc4ca26aeaa30adebe2d63de3db002a786e49509a0a6da2ed8325bf6fd932bfa"
+}

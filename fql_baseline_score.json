@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.5.0-hardening-01",
+  "film": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "artifact": {
+    "status": "ok",
+    "algorithm": "sha256",
+    "sha256": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+    "size_bytes": 4372373,
+    "basename": "sintel_trailer.mp4"
+  },
+  "genre": "generic",
+  "preset": {
+    "name": "generic",
+    "label": "通用成片",
+    "description": "默认 preset——不假设片型，只算任何视频都适用的客观指标",
+    "duration_range": [
+      10,
+      600
+    ],
+    "loudness_target": -14,
+    "key_events": {},
+    "reaction_ids": [],
+    "climax_keys": [],
+    "review_focus": [
+      "构图是否服务内容",
+      "节奏是否随内容变速",
+      "转场是否克制（硬切为主）",
+      "有无技术性事故（虚焦/过曝/削波）"
+    ],
+    "calibration_anchor": null,
+    "recommended_personae": [],
+    "loudness_tolerance_lu": 3.0,
+    "gates_enabled": [
+      "G_TP_VIOLATION",
+      "G_LOUDNESS_UNKNOWN",
+      "G_CONSEC_SAME_RUN",
+      "G_FANCY_TRANSITION"
+    ]
+  },
+  "shotlist_summary": {
+    "status": "ok",
+    "source": {
+      "type": "inferred_from_final",
+      "kind": "DETECTED",
+      "detectors": [
+        "opencv-robust",
+        "pyscenedetect-adaptive",
+        "ffmpeg-scene"
+      ],
+      "confidence_model": "heuristic_agreement_not_calibrated_probability"
+    },
+    "n_shots": 7
+  },
+  "quality": {
+    "total": 5.469,
+    "raw_total": 5.469,
+    "grade": "D",
+    "available_weight": 0.37,
+    "dimensions_used": [
+      "剪辑",
+      "声音"
+    ],
+    "coverage": 0.37,
+    "status": "partial"
+  },
+  "independent_quality_signals": {
+    "signals": {
+      "rule_quality": {
+        "total": 5.469,
+        "raw_total": 5.469,
+        "grade": "D",
+        "available_weight": 0.37,
+        "dimensions_used": [
+          "剪辑",
+          "声音"
+        ],
+        "coverage": 0.37,
+        "status": "partial"
+      }
+    },
+    "agreement_score": null,
+    "policy": "separate_until_human_calibrated"
+  },
+  "dimensions": {
+    "导演": {
+      "score": null,
+      "confidence": 0.0,
+      "reason": "insufficient_narrative_metadata"
+    },
+    "摄影": {
+      "score": null,
+      "confidence": 0.0,
+      "reason": "shot_metadata_unavailable"
+    },
+    "剪辑": {
+      "score": 6.47,
+      "confidence": 0.93,
+      "evidence": [
+        "editing_skill.subscores"
+      ]
+    },
+    "声音": {
+      "score": 4.0,
+      "confidence": 0.95,
+      "evidence": [
+        "ffmpeg.ebur128"
+      ],
+      "gated_by": [
+        "G_TP_VIOLATION"
+      ]
+    },
+    "调色": {
+      "score": null,
+      "confidence": 0.0,
+      "reason": "color_evidence_unavailable"
+    },
+    "包装": {
+      "score": null,
+      "confidence": 0.0,
+      "reason": "packaging_evidence_unavailable"
+    },
+    "情绪": {
+      "score": null,
+      "confidence": 0.0,
+      "reason": "domain_emotion_evidence_unavailable"
+    }
+  },
+  "tech": {
+    "status": "ok",
+    "integrated_lufs": -12.8,
+    "true_peak_dbfs": 1.2,
+    "lra_lu": 14.6,
+    "deviation_lu": 1.2,
+    "tp_violation": true,
+    "true_peak_threshold_dbfs": -1.0
+  },
+  "shot_language": {
+    "status": "ok",
+    "n_shots": 7,
+    "shot_size_counts": {
+      "?": 7
+    },
+    "known_size_pct": 0.0,
+    "cu_pct": 0.0,
+    "consec_run3_count": 0,
+    "fancy_trans_count": 0,
+    "hard_pct": 100.0,
+    "asl": 7.458,
+    "pace_ratio": 41.523,
+    "breath_count_3s": 3,
+    "breath_count_5s": 3,
+    "move_types": 0,
+    "camera_angles_count": 0,
+    "posed_pct": 0.0,
+    "jcut_count": 0,
+    "lcut_count": 0,
+    "cut_times": [
+      16.5,
+      17.5,
+      23.792,
+      25.875,
+      27.417,
+      28.0
+    ]
+  },
+  "editing_craft": {
+    "status": "ok",
+    "subscores": {
+      "rhythm": 6.76,
+      "breathing": 7.66,
+      "sound_editing": 4.23
+    },
+    "metrics": {
+      "duration_cv": 1.152,
+      "jl_cut_count": 0,
+      "breath_ratio_3s": 0.429,
+      "lra_lu": 14.6
+    },
+    "evidence_quality": {
+      "rhythm": "DETECTED",
+      "breathing": "DETECTED",
+      "sound_editing": "DETECTED"
+    },
+    "available_weight": 0.7,
+    "score": 6.47,
+    "confidence": 0.93
+  },
+  "style_adherence": null,
+  "semantic_review": null,
+  "vqa": null,
+  "external_evidence_state": {
+    "semantic_review": null,
+    "vqa": null
+  },
+  "context": {
+    "event_coverage": {},
+    "key_events_total": 0,
+    "key_events_covered": 0,
+    "climax_required": false,
+    "climax_has_cu": false,
+    "reaction_used": 0
+  },
+  "gates": [
+    {
+      "id": "G_TP_VIOLATION",
+      "severity": "P0",
+      "message": "True peak 超过 -1 dBFS。",
+      "repair": "audio_limit",
+      "level": "L1",
+      "cap": {
+        "dimension": "声音",
+        "max": 4.0
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "EV-001",
+      "kind": "DETECTED",
+      "source": "ffmpeg.ebur128",
+      "metric": "integrated_lufs",
+      "value": -12.8,
+      "confidence": null,
+      "confidence_semantics": "deterministic_measurement_if_parser_successful"
+    },
+    {
+      "evidence_id": "EV-002",
+      "kind": "DETECTED",
+      "source": "ffmpeg.ebur128",
+      "metric": "true_peak_dbfs",
+      "value": 1.2,
+      "confidence": null,
+      "confidence_semantics": "deterministic_measurement_if_parser_successful"
+    },
+    {
+      "evidence_id": "EV-003",
+      "kind": "DETECTED",
+      "source": "ffmpeg.ebur128",
+      "metric": "lra_lu",
+      "value": 14.6,
+      "confidence": null,
+      "confidence_semantics": "deterministic_measurement_if_parser_successful"
+    },
+    {
+      "evidence_id": "EV-004",
+      "kind": "DETECTED",
+      "source": "ffmpeg.ebur128",
+      "metric": "deviation_lu",
+      "value": 1.2,
+      "confidence": null,
+      "confidence_semantics": "deterministic_measurement_if_parser_successful"
+    },
+    {
+      "evidence_id": "EV-005",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "n_shots",
+      "value": 7,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-006",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "cu_pct",
+      "value": 0.0,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-007",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "consec_run3_count",
+      "value": 0,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-008",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "fancy_trans_count",
+      "value": 0,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-009",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "hard_pct",
+      "value": 100.0,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-010",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "asl",
+      "value": 7.458,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-011",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "pace_ratio",
+      "value": 41.523,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-012",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "jcut_count",
+      "value": 0,
+      "confidence": null
+    },
+    {
+      "evidence_id": "EV-013",
+      "kind": "DETECTED",
+      "source": "inferred_from_final",
+      "metric": "lcut_count",
+      "value": 0,
+      "confidence": null
+    }
+  ],
+  "shot_metadata_policy": {
+    "allow_inferred_shot_metadata": false,
+    "allow_unvalidated_inferred_shot_metadata": false,
+    "default": "exclude_INFERRED_and_JUDGMENT_visual_fields; validated provider evidence required unless unsafe override"
+  },
+  "issues": [
+    {
+      "issue_id": "ISSUE-001",
+      "code": "ANALYSIS_COVERAGE_LOW",
+      "severity": "P1",
+      "dimension": "分析覆盖",
+      "diagnosis": "当前评分覆盖率 37%，不能据此宣告成片达标。",
+      "evidence": [
+        {
+          "type": "coverage",
+          "actual": 0.37,
+          "target_min": 0.6
+        }
+      ],
+      "min_repair_level": "L1",
+      "suggested_action_types": [
+        "analysis_enrichment"
+      ]
+    },
+    {
+      "issue_id": "ISSUE-002",
+      "code": "G_TP_VIOLATION",
+      "severity": "P0",
+      "dimension": "声音",
+      "diagnosis": "True peak 超过 -1 dBFS。",
+      "evidence": [
+        {
+          "type": "gate",
+          "id": "G_TP_VIOLATION"
+        }
+      ],
+      "min_repair_level": "L1",
+      "suggested_action_types": [
+        "audio_limit"
+      ]
+    }
+  ],
+  "decision": {
+    "pass": false,
+    "note": "Engineering Alpha: grade thresholds are engineering heuristics until human benchmark calibration is complete."
+  }
+}

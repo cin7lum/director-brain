@@ -1,0 +1,172 @@
+{
+  "schema_version": "l0-production-qa-0.1.0",
+  "qa_id": "l0-gen1-render-20260924-153012-a1b2c3d4",
+  "render_hash": "sha256:b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+  "receipt_ref": "contracts/render_receipt.example.json",
+  "film_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "status": "FAIL",
+  "check_results": [
+    {
+      "check": "artifact_integrity",
+      "method": "MEASURED",
+      "status": "PASS",
+      "observed": {
+        "sha256": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+        "size_bytes": 4372373
+      },
+      "expected": {
+        "sha256": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+        "size_bytes": 4372373
+      },
+      "evidence": "ffprobe + sha256 file hash",
+      "detail": null
+    },
+    {
+      "check": "media_format",
+      "method": "MEASURED",
+      "status": "WARN",
+      "observed": {
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "duration_s": 52.208333,
+        "video_codec": "h264",
+        "width": 854,
+        "height": 480,
+        "r_frame_rate": "24/1",
+        "audio_present": true,
+        "audio_codec": "aac",
+        "audio_sample_rate": "48000",
+        "audio_channels": 2
+      },
+      "expected": {
+        "audio_present": false
+      },
+      "evidence": "ffprobe format+stream",
+      "detail": "audio presence mismatch with receipt"
+    },
+    {
+      "check": "duration_match",
+      "method": "MEASURED",
+      "status": "FAIL",
+      "observed": {
+        "duration_us": 52208333,
+        "diff_us": 32208333
+      },
+      "expected": {
+        "duration_us": 20000000,
+        "tolerance_us": 33333
+      },
+      "evidence": "ffprobe format duration",
+      "detail": null
+    },
+    {
+      "check": "timeline_readback",
+      "method": "MEASURED",
+      "status": "FAIL",
+      "observed": {
+        "n_clips": 5,
+        "sum_duration_us": 17170000,
+        "diff_us": 2830000
+      },
+      "expected": {
+        "duration_us": 20000000,
+        "tolerance_us": 33333
+      },
+      "evidence": "receipt.timeline.clips sum",
+      "detail": null
+    },
+    {
+      "check": "media_manifest",
+      "method": "MEASURED",
+      "status": "WARN",
+      "observed": {
+        "n_media": 1,
+        "n_issues": 1
+      },
+      "expected": "all source media exist and hash match",
+      "evidence": "file existence + sha256",
+      "detail": "media_001: file not found (D:/素材/sintel_trailer.mp4)"
+    },
+    {
+      "check": "audio_loudness",
+      "method": "NOT_APPLICABLE",
+      "status": "SKIP",
+      "observed": null,
+      "expected": null,
+      "evidence": null,
+      "detail": "audio not present in delivery profile"
+    },
+    {
+      "check": "black_freeze_frame",
+      "method": "SELF_QA",
+      "status": "PASS",
+      "observed": {
+        "n_black_frames": 0
+      },
+      "expected": "no black frames",
+      "evidence": "ffmpeg blackframe filter (SELF_QA, requires human review)",
+      "detail": null
+    },
+    {
+      "check": "cut_boundary",
+      "method": "SELF_QA",
+      "status": "WARN",
+      "observed": {
+        "declared_cuts": 4,
+        "detected_cuts": 6,
+        "matched": 0,
+        "match_rate": 0.0
+      },
+      "expected": "declared cut points match detected boundaries (>=80%, tolerance 0.5s)",
+      "evidence": "adapters.shot_detection ensemble (SELF_QA, not independent verification)",
+      "detail": null
+    }
+  ],
+  "self_qa_observations": [
+    {
+      "check": "black_freeze_frame",
+      "method": "SELF_QA",
+      "status": "PASS",
+      "observed": {
+        "n_black_frames": 0
+      },
+      "expected": "no black frames",
+      "evidence": "ffmpeg blackframe filter (SELF_QA, requires human review)",
+      "detail": null
+    },
+    {
+      "check": "cut_boundary",
+      "method": "SELF_QA",
+      "status": "WARN",
+      "observed": {
+        "declared_cuts": 4,
+        "detected_cuts": 6,
+        "matched": 0,
+        "match_rate": 0.0
+      },
+      "expected": "declared cut points match detected boundaries (>=80%, tolerance 0.5s)",
+      "evidence": "adapters.shot_detection ensemble (SELF_QA, not independent verification)",
+      "detail": null
+    }
+  ],
+  "coverage": 0.88,
+  "unverified_items": [
+    {
+      "check": "audio_loudness",
+      "reason": "audio not present in delivery profile"
+    }
+  ],
+  "limitations": [
+    "L0 checks production correctness only, NOT Film Quality (narrative/aesthetic/intent).",
+    "SELF_QA observations are from the execution chain's own detection; not independent human verification.",
+    "Cut boundary matching uses 0.5s tolerance; boundary drift within tolerance is not flagged.",
+    "Black frame detection uses ffmpeg blackframe filter (amount=98%, threshold=0.1); near-black frames may be missed."
+  ],
+  "summary": {
+    "total_checks": 8,
+    "pass": 2,
+    "fail": 2,
+    "warn": 3,
+    "skip": 1,
+    "incomplete": 0
+  }
+}

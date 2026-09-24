@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.5.0",
+  "source_score": "D:\\新建豆包\\AI-Director\\fql_baseline_score.json",
+  "film": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "min_required_level": "L1",
+  "actions": [
+    {
+      "action_id": "ACT-001",
+      "issue_id": "ISSUE-001",
+      "target_code": "ANALYSIS_COVERAGE_LOW",
+      "type": "analysis_enrichment",
+      "level": "L1",
+      "params": {
+        "recommended": [
+          "shot_vlm_enrichment",
+          "semantic_review",
+          "optional_vqa"
+        ]
+      },
+      "evidence": [
+        {
+          "type": "coverage",
+          "actual": 0.37,
+          "target_min": 0.6
+        }
+      ]
+    },
+    {
+      "action_id": "ACT-002",
+      "issue_id": "ISSUE-002",
+      "target_code": "G_TP_VIOLATION",
+      "type": "audio_limit",
+      "level": "L1",
+      "params": {
+        "ceiling_dbfs": -1.0
+      },
+      "evidence": [
+        {
+          "type": "gate",
+          "id": "G_TP_VIOLATION"
+        }
+      ]
+    }
+  ],
+  "stop_if": [
+    "executor does not support action",
+    "required source/NLE assets missing",
+    "repair would violate higher-priority gate"
+  ]
+}
