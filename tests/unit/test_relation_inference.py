@@ -69,6 +69,37 @@ def _graph(obs):
     return build_story_graph(brief, obs)
 
 
+def _make_vlm_obs(index, start_us, end_us, *, role="hero", shot_function="ACTION"):
+    """构造一条成功的 vlm_semantic 观测（claim_kind=MODEL_OBSERVATION）。"""
+    claim = json.dumps({
+        "shot_function": shot_function,
+        "proposed_role_v2": role,
+        "motion_amount": "subtle",
+        "frame_description": "test",
+    })
+    return FilmObservation(
+        observation_id=f"vlm_shot_{index:08d}",
+        media_asset_id=f"shot_{index:08d}",
+        media_hash=f"hash_{index}",
+        start_frame=start_us,
+        end_frame=end_us,
+        timebase=1_000_000,
+        observation_type="vlm_semantic",
+        claim=claim,
+        provider="ollama_qwen3_vl",
+        model_version="qwen3-vl:latest",
+        prompt_version="vlm_prompt_v1",
+        confidence=0.7,
+        review_state="auto_generated",
+        claim_kind=ClaimKind.MODEL_OBSERVATION,
+        schema_version="1.0",
+        project_id="test_proj",
+        created_at=int(time.time()),
+        producer="ollama_qwen3_vl",
+        source_ref="dummy.mp4",
+    )
+
+
 def test_empty_observations_returns_empty():
     assert infer_relations([], _graph([])) == []
 
@@ -164,3 +195,98 @@ def test_same_act_edge_gets_confidence_boost_and_act_evidence():
     assert abs(e.confidence - 0.82) < 0.01, f"unexpected confidence: {e.confidence}"
     # evidence_refs 必须包含幕节点 id
     assert "act_hook" in e.evidence_refs
+
+
+def test_semantic_continuity_same_role():
+    """相邻镜头 proposed_role_v2 相同 → SEMANTIC_CONTINUITY 边。"""
+    # blur 差 100（>=50）→ 不触发确定性 reaction，避免与 VLM 边去重冲突
+    tech = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=200.0, brightness_mean=100.0),
+    ]
+    vlm = [
+        _make_vlm_obs(0, 0, 2_000_000, role="hero", shot_function="ACTION"),
+        _make_vlm_obs(1, 2_000_000, 4_000_000, role="hero", shot_function="ACTION"),
+    ]
+    obs = tech + vlm
+    edges = infer_relations(obs, _graph(obs))
+    cont = [e for e in edges if e.edge_id.startswith("semantic_continuity_")]
+    assert len(cont) == 1
+    assert cont[0].edge_type == StoryEdgeType.CAUSAL_CANDIDATE
+    assert cont[0].from_node == "shot_00000000"
+    assert cont[0].to_node == "shot_00000001"
+    # 前两条证据指向 VLM 观测；后续可能追加幕节点 id
+    assert cont[0].evidence_refs[:2] == ["vlm_shot_00000000", "vlm_shot_00000001"]
+
+
+def test_semantic_contrast_function_diff():
+    """ESTABLISHING → ACTION（高对比对）→ SEMANTIC_CONTRAST 边。"""
+    tech = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=200.0, brightness_mean=100.0),
+    ]
+    vlm = [
+        _make_vlm_obs(0, 0, 2_000_000, role="hero", shot_function="ESTABLISHING"),
+        _make_vlm_obs(1, 2_000_000, 4_000_000, role="support", shot_function="ACTION"),
+    ]
+    obs = tech + vlm
+    edges = infer_relations(obs, _graph(obs))
+    contrast = [e for e in edges if e.edge_id.startswith("semantic_contrast_")]
+    assert len(contrast) == 1
+    assert contrast[0].edge_type == StoryEdgeType.EMOTIONAL_TURN
+    assert contrast[0].from_node == "shot_00000000"
+    assert contrast[0].to_node == "shot_00000001"
+
+
+def test_discard_filter_skips_edges():
+    """任一端点 role=discard → 不生成以该镜头为端点的 VLM 语义边。"""
+    tech = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=300.0, brightness_mean=100.0),
+        _make_tech_obs(2, 4_000_000, 6_000_000, blur_score=100.0, brightness_mean=100.0),
+    ]
+    vlm = [
+        _make_vlm_obs(0, 0, 2_000_000, role="hero", shot_function="ACTION"),
+        _make_vlm_obs(1, 2_000_000, 4_000_000, role="discard", shot_function="ACTION"),
+        _make_vlm_obs(2, 4_000_000, 6_000_000, role="hero", shot_function="ACTION"),
+    ]
+    obs = tech + vlm
+    edges = infer_relations(obs, _graph(obs))
+    semantic = [e for e in edges if e.edge_id.startswith("semantic_")]
+    assert semantic == []
+
+
+def test_no_vlm_observations_fallback():
+    """只有 deterministic 观测 → 不产生任何 semantic_ 边（向后兼容）。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=200.0, brightness_mean=100.0),
+    ]
+    edges = infer_relations(obs, _graph(obs))
+    assert not any(e.edge_id.startswith("semantic_") for e in edges)
+
+
+def test_vlm_and_deterministic_edges_coexist():
+    """VLM 边与确定性边共存：reaction（CAUSAL_CANDIDATE）+ semantic_contrast（EMOTIONAL_TURN）。"""
+    # blur 差 20（<50）、时长 2s → 确定性 reaction 边触发；brightness 相同 → 无确定性 contrast
+    tech = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=120.0, brightness_mean=100.0),
+    ]
+    vlm = [
+        _make_vlm_obs(0, 0, 2_000_000, role="hero", shot_function="ESTABLISHING"),
+        _make_vlm_obs(1, 2_000_000, 4_000_000, role="support", shot_function="ACTION"),
+    ]
+    obs = tech + vlm
+    edges = infer_relations(obs, _graph(obs))
+
+    reaction = [e for e in edges if e.edge_id.startswith("reaction_")]
+    vlm_contrast = [e for e in edges if e.edge_id.startswith("semantic_contrast_")]
+    assert len(reaction) == 1
+    assert reaction[0].edge_type == StoryEdgeType.CAUSAL_CANDIDATE
+    assert len(vlm_contrast) == 1
+    assert vlm_contrast[0].edge_type == StoryEdgeType.EMOTIONAL_TURN
+
+    # 同一对镜头允许不同类型边共存，但 (from, to, type) 不重复
+    keys = [(e.from_node, e.to_node, e.edge_type) for e in edges]
+    assert len(keys) == len(set(keys))

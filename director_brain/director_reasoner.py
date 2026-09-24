@@ -18,7 +18,7 @@ from director_brain._utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
-from director_brain.models.film_observation import FilmObservation
+from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
 from gen1_adapter.heuristic_baseline import generate_edl, MIN_CLIP_US
 
@@ -57,17 +57,34 @@ def _num(data: dict, key: str) -> float | None:
     return float(v) if isinstance(v, (int, float)) else None
 
 
-def _build_candidates(tech_obs: list[FilmObservation]) -> list[dict]:
+def _build_candidates(
+    tech_obs: list[FilmObservation],
+    vlm_obs: list[FilmObservation] | None = None,
+) -> list[dict]:
     """从 deterministic_technical 观测构建 HeuristicBaseline 候选 dict。
 
     technical_usable 主条件为 ``exposure_ok and blur_score > 10``；过滤后可用
     候选 <2 时逐级放宽（去掉 blur 阈值 → 全部可用），保证至少有候选。
+
+    若传入 ``vlm_obs``，从中筛选 ``claim_kind == MODEL_OBSERVATION`` 的 VLM
+    语义观测，按 ``media_asset_id`` 建立 claim 映射，把
+    ``shot_function / proposed_role_v2 / motion_amount`` 作为
+    ``vlm_shot_function / vlm_role / vlm_motion`` 写入 candidate；无对应
+    VLM 观测时这三个字段为 ``None``（``_vlm_multiplier`` 返回 1.0，行为不变）。
     """
+    vlm_by_shot: dict[str, dict] = {}
+    if vlm_obs:
+        for o in vlm_obs:
+            if getattr(o, "claim_kind", None) is not ClaimKind.MODEL_OBSERVATION:
+                continue
+            vlm_by_shot[o.media_asset_id] = _parse_claim(o.claim)
+
     candidates: list[dict] = []
     for o in tech_obs:
         data = _parse_claim(o.claim)
         blur = _num(data, "blur_score")
         exposure_ok = bool(data.get("exposure_ok", False))
+        vlm_claim = vlm_by_shot.get(o.media_asset_id, {})
         candidates.append({
             "source_shot_id": o.media_asset_id,
             "source_media_hash": o.media_hash,
@@ -77,6 +94,9 @@ def _build_candidates(tech_obs: list[FilmObservation]) -> list[dict]:
             "blur_score": blur if blur is not None else 0.0,
             "exposure_ok": exposure_ok,
             "_obs_id": o.observation_id,
+            "vlm_shot_function": vlm_claim.get("shot_function"),
+            "vlm_role": vlm_claim.get("proposed_role_v2"),
+            "vlm_motion": vlm_claim.get("motion_amount"),
         })
 
     for c in candidates:
@@ -117,7 +137,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
         ]
-        candidates = _build_candidates(tech_obs)
+        vlm_obs = [
+            o for o in observations if o.observation_type == "vlm_semantic"
+        ]
+        candidates = _build_candidates(tech_obs, vlm_obs)
         shot_to_obs = {o.media_asset_id: o.observation_id for o in tech_obs}
 
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 
-from director_brain.models.film_observation import FilmObservation
+from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import (
     INFERENCE_STATUS_INFERRED,
     StoryEdge,
@@ -36,6 +36,20 @@ _CONTRAST_SHAKE_RATIO = 3.0
 #: MONTAGE 单镜头时长上限（微秒）：<1s。
 _MONTAGE_MAX_US = 1_000_000
 _MONTAGE_RUN_MIN = 3
+
+#: VLM 语义规则：SEMANTIC_CONTINUITY 基础置信度（同幕/跨幕后续统一调整）。
+_VLM_CONTINUITY_CONFIDENCE = 0.75
+#: VLM 语义规则：SEMANTIC_CONTRAST 基础置信度。
+_VLM_CONTRAST_CONFIDENCE = 0.65
+#: VLM 语义规则：高对比 shot_function 相邻对（有序，与相邻镜头方向一致）。
+_VLM_CONTRAST_PAIRS = frozenset({
+    ("ESTABLISHING", "ACTION"),
+    ("ESTABLISHING", "REACTION"),
+    ("ACTION", "DETAIL"),
+    ("DETAIL", "ACTION"),
+    ("ATMOSPHERIC_EVIDENCE", "ACTION"),
+    ("ACTION", "ATMOSPHERIC_EVIDENCE"),
+})
 
 
 def _parse_claim(claim: str) -> dict:
@@ -152,6 +166,64 @@ def _montage_edges(tech_sorted: list[FilmObservation]) -> list[StoryEdge]:
     return edges
 
 
+def _vlm_semantic_edges(
+    tech_sorted: list[FilmObservation],
+    vlm_by_shot: dict[str, FilmObservation],
+) -> list[StoryEdge]:
+    """基于 VLM 语义观测推断相邻镜头关系边。
+
+    只对 ``tech_sorted`` 中的相邻镜头对生效，且双方都必须有成功的
+    VLM 观测（``claim_kind=MODEL_OBSERVATION``）。
+
+    - SEMANTIC_CONTINUITY：两镜头 ``proposed_role_v2`` 相同 → CAUSAL_CANDIDATE。
+    - SEMANTIC_CONTRAST：两镜头 ``shot_function`` 落在高对比集合 → EMOTIONAL_TURN。
+    - DISCARD_FILTER：任一镜头 role=discard，跳过该配对。
+    """
+    edges: list[StoryEdge] = []
+    for i in range(len(tech_sorted) - 1):
+        a = tech_sorted[i]
+        b = tech_sorted[i + 1]
+        va = vlm_by_shot.get(a.media_asset_id)
+        vb = vlm_by_shot.get(b.media_asset_id)
+        if va is None or vb is None:
+            continue
+
+        ca = _parse_claim(va.claim)
+        cb = _parse_claim(vb.claim)
+        role_a = ca.get("proposed_role_v2")
+        role_b = cb.get("proposed_role_v2")
+
+        # DISCARD_FILTER：涉及 discard 镜头的配对不生成任何 VLM 语义边
+        if role_a == "discard" or role_b == "discard":
+            continue
+
+        # SEMANTIC_CONTINUITY：相邻镜头 role 相同
+        if role_a and role_a == role_b:
+            edges.append(StoryEdge(
+                edge_id=f"semantic_continuity_{a.media_asset_id}__to__{b.media_asset_id}",
+                from_node=a.media_asset_id,
+                to_node=b.media_asset_id,
+                edge_type=StoryEdgeType.CAUSAL_CANDIDATE,
+                inference_status=INFERENCE_STATUS_INFERRED,
+                evidence_refs=[va.observation_id, vb.observation_id],
+                confidence=_VLM_CONTINUITY_CONFIDENCE,
+            ))
+
+        # SEMANTIC_CONTRAST：相邻镜头 shot_function 高对比对
+        func_pair = (ca.get("shot_function"), cb.get("shot_function"))
+        if func_pair in _VLM_CONTRAST_PAIRS:
+            edges.append(StoryEdge(
+                edge_id=f"semantic_contrast_{a.media_asset_id}__to__{b.media_asset_id}",
+                from_node=a.media_asset_id,
+                to_node=b.media_asset_id,
+                edge_type=StoryEdgeType.EMOTIONAL_TURN,
+                inference_status=INFERENCE_STATUS_INFERRED,
+                evidence_refs=[va.observation_id, vb.observation_id],
+                confidence=_VLM_CONTRAST_CONFIDENCE,
+            ))
+    return edges
+
+
 def infer_relations(
     observations: list[FilmObservation],
     graph: StoryGraph,
@@ -189,6 +261,18 @@ def infer_relations(
 
     for edge in _montage_edges(tech):
         _add(edge)
+
+    # ---- VLM 语义规则：仅当存在成功的 vlm_semantic 观测时生效 ----
+    # 没有 VLM 观测时该块整体跳过，函数行为与纯确定性规则一致（向后兼容）。
+    vlm_obs = [
+        o for o in observations
+        if o.observation_type == "vlm_semantic"
+        and o.claim_kind == ClaimKind.MODEL_OBSERVATION
+    ]
+    if vlm_obs:
+        vlm_by_shot = {o.media_asset_id: o for o in vlm_obs}
+        for edge in _vlm_semantic_edges(tech, vlm_by_shot):
+            _add(edge)
 
     # ---- 消费 graph：四幕节点 attributes["shot_ids"] 建立 shot -> act 映射 ----
     shot_to_act_node: dict[str, str] = {}
