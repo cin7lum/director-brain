@@ -167,24 +167,48 @@ class ZhipuVLMAdapter(VLMAdapter):
                 f"json parse failed; raw={raw_text[:120]}", FT_PARSE,
             )
 
+        warnings: list[str] = []
+
+        sf_raw = parsed.get("shot_function")
+        if sf_raw in _VALID_FUNCTIONS:
+            shot_function = sf_raw
+        else:
+            shot_function = "SENSORY_INSERT"
+            warnings.append(
+                f"shot_function: got {sf_raw!r}, fallback to 'SENSORY_INSERT'",
+            )
+
+        mo_raw = parsed.get("motion_amount")
+        if mo_raw in _VALID_MOTION:
+            motion_amount = mo_raw
+        else:
+            motion_amount = "subtle"
+            warnings.append(
+                f"motion_amount: got {mo_raw!r}, fallback to 'subtle'",
+            )
+
+        role_raw = parsed.get("proposed_role_v2")
+        if role_raw in _VALID_ROLES:
+            proposed_role_v2 = role_raw
+        else:
+            proposed_role_v2 = "broll"
+            warnings.append(
+                f"proposed_role_v2: got {role_raw!r}, fallback to 'broll'",
+            )
+
         return {
-            "shot_function": parsed.get("shot_function")
-            if parsed.get("shot_function") in _VALID_FUNCTIONS
-            else "SENSORY_INSERT",
+            "shot_function": shot_function,
             "sensory_wet_heat": _norm_float(parsed.get("sensory_wet_heat")),
             "sensory_mood_intensity": _norm_float(
                 parsed.get("sensory_mood_intensity"),
             ),
-            "motion_amount": parsed.get("motion_amount")
-            if parsed.get("motion_amount") in _VALID_MOTION
-            else "subtle",
-            "proposed_role_v2": parsed.get("proposed_role_v2")
-            if parsed.get("proposed_role_v2") in _VALID_ROLES
-            else "broll",
+            "motion_amount": motion_amount,
+            "proposed_role_v2": proposed_role_v2,
             "frame_description": desc,
             "status": OBSERVED,
-            "degraded": False,
+            "degraded": bool(warnings),
             "confidence_type": "SELF_REPORTED",
+            "_warnings": warnings,
         }
 
     def _degraded(self, reason: str, failure_type: str = FT_UNKNOWN) -> dict:
@@ -201,4 +225,5 @@ class ZhipuVLMAdapter(VLMAdapter):
             "confidence_type": "UNAVAILABLE",
             "failure_type": failure_type,
             "degrade_reason": reason,
+            "_warnings": [],
         }

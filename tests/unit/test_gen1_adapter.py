@@ -18,7 +18,11 @@ import pytest
 
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
-from gen1_adapter.heuristic_baseline import HeuristicBaseline, compute_clip_window
+from gen1_adapter.heuristic_baseline import (
+    HeuristicBaseline,
+    compute_clip_window,
+    generate_edl,
+)
 from gen1_adapter.v01_exporter import export_to_v01
 from gen1_adapter.v01_importer import import_v01_proposal
 
@@ -374,3 +378,51 @@ class TestImportLog:
         warnings = [entry for entry in log if entry.get("level") == "warning"]
         assert len(warnings) >= 1
         assert any("slot_01" in str(w.get("slot_id", "")) for w in warnings)
+
+
+# ---------------------------------------------------------------------------
+# 8. generate_edl 直接返回 EDL
+# ---------------------------------------------------------------------------
+
+class TestGenerateEdl:
+    """``generate_edl`` 返回 EditorialDecisionList，且可直接 import。"""
+
+    def test_returns_edl_instance(self):
+        candidates = [
+            _make_candidate("shot_01", blur=100.0, src_dur=3_000_000),
+            _make_candidate("shot_02", blur=200.0, src_dur=3_000_000),
+        ]
+        edl = generate_edl(
+            project_id="test_proj",
+            candidates=candidates,
+            target_duration_us=5_000_000,
+        )
+        assert isinstance(edl, EditorialDecisionList)
+        assert edl.timebase == 1_000_000
+        assert len(edl.ordered_edits) >= 1
+
+    def test_edits_carry_shot_ids_and_window(self):
+        candidates = [
+            _make_candidate("shot_01", blur=100.0, src_dur=3_000_000),
+        ]
+        edl = generate_edl(
+            project_id="test_proj",
+            candidates=candidates,
+            target_duration_us=5_000_000,
+        )
+        assert len(edl.ordered_edits) == 1
+        edit = edl.ordered_edits[0]
+        assert edit.source_asset_id == "shot_01"
+        assert edit.source_media_hash == "sha256:shot_01"
+        assert edit.in_frame < edit.out_frame
+        # heuristic slot 无 proposed_role，导入后 shot_function 为 None
+        assert edit.shot_function is None
+
+    def test_empty_candidates_returns_empty_edl(self):
+        edl = generate_edl(
+            project_id="test_proj",
+            candidates=[],
+            target_duration_us=5_000_000,
+        )
+        assert isinstance(edl, EditorialDecisionList)
+        assert edl.ordered_edits == []

@@ -194,6 +194,78 @@ class TestVLMSuccess:
             assert result["frame_description"], "frame_description 不应为空"
             assert "街道" in result["frame_description"]
             assert result["sensory_wet_heat"] is not None
+            assert result["_warnings"] == []
+        finally:
+            os.remove(img)
+
+
+# ---------------------------------------------------------------------------
+# 5b. 部分字段非法值被 fallback 时：degraded=True, status=OBSERVED, _warnings 记录
+# ---------------------------------------------------------------------------
+
+class TestPartialFallbackWarnings:
+    """模型输出部分非法值时静默 fallback 不可接受：
+    必须 degraded=True（但调用成功，status 仍为 OBSERVED），并在 _warnings 中
+    记录被 fallback 的字段名与原始值。
+    """
+
+    def test_ollama_invalid_shot_function_warns(self):
+        img = _make_dummy_image()
+        try:
+            reply_text = (
+                "画面描述。\n"
+                '{"shot_function": "UNKNOWN", '
+                '"sensory_wet_heat": 0.3, '
+                '"sensory_mood_intensity": 0.7, '
+                '"motion_amount": "subtle", '
+                '"proposed_role_v2": "hero"}'
+            )
+            response_bytes = json.dumps({
+                "message": {"content": reply_text}
+            }).encode("utf-8")
+            mock_resp = MagicMock()
+            mock_resp.__enter__.return_value.read.return_value = response_bytes
+
+            adapter = OllamaVLMAdapter()
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                result = adapter.analyze_frame(img)
+
+            assert result["status"] == OBSERVED
+            assert result["degraded"] is True
+            assert result["shot_function"] == "SENSORY_INSERT"
+            joined = " | ".join(result["_warnings"])
+            assert "shot_function" in joined
+            assert "UNKNOWN" in joined
+        finally:
+            os.remove(img)
+
+    def test_zhipu_invalid_shot_function_warns(self):
+        img = _make_dummy_image()
+        try:
+            reply_text = (
+                "画面描述。\n"
+                '{"shot_function": "BOGUS", '
+                '"sensory_wet_heat": 0.3, '
+                '"sensory_mood_intensity": 0.7, '
+                '"motion_amount": "subtle", '
+                '"proposed_role_v2": "hero"}'
+            )
+            response_bytes = json.dumps({
+                "choices": [{"message": {"content": reply_text}}]
+            }).encode("utf-8")
+            mock_resp = MagicMock()
+            mock_resp.__enter__.return_value.read.return_value = response_bytes
+
+            adapter = ZhipuVLMAdapter(api_key="test-key")
+            with patch("urllib.request.urlopen", return_value=mock_resp):
+                result = adapter.analyze_frame(img)
+
+            assert result["status"] == OBSERVED
+            assert result["degraded"] is True
+            assert result["shot_function"] == "SENSORY_INSERT"
+            joined = " | ".join(result["_warnings"])
+            assert "shot_function" in joined
+            assert "BOGUS" in joined
         finally:
             os.remove(img)
 

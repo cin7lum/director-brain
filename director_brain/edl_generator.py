@@ -18,6 +18,7 @@ def generate_edl(
     project_id: str,
     selected_shots: list[dict],
     timebase: int = 1_000_000,
+    source_ref: str | None = None,
 ) -> EditorialDecisionList:
     """从选中的镜头列表构建有序 EditorialDecisionList。
 
@@ -27,12 +28,17 @@ def generate_edl(
             ``in_frame``、``out_frame``，可选 ``shot_function``、``rationale``。
             顺序即成片顺序，不重新排序。
         timebase: 时间基（微秒/秒），默认 1_000_000。
+        source_ref: 源素材引用，语义应为视频路径或资产标识。未传入时回退到
+            ``project_id`` 以保持向后兼容。
 
     Returns:
         构建好的 :class:`EditorialDecisionList`，``approval_state="draft"``。
         空列表返回空 EDL（``ordered_edits=[]``, ``expected_duration=0``），
         不抛异常。
     """
+    # source_ref 语义为源素材引用，应传视频路径/资产标识；未传入时回退到
+    # project_id 以保持向后兼容。
+    resolved_source_ref = source_ref or project_id
     edits: list[EditItem] = []
     source_hashes: list[str] = []
     seen_hashes: set[str] = set()
@@ -65,7 +71,7 @@ def generate_edl(
         project_id=project_id,
         created_at=int(time.time()),
         producer=PRODUCER,
-        source_ref=project_id,
+        source_ref=resolved_source_ref,
         edl_id=f"edl_{project_id}_{short_hash(fingerprint)}",
         version="0.1",
         brief_version="0.1",

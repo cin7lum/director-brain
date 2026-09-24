@@ -17,6 +17,18 @@ class EntityType(str, enum.Enum):
     OBJECT = "object"
 
 
+class RelationType(str, enum.Enum):
+    """两个实体之间的关系类型。"""
+
+    FAMILY = "family"
+    FRIEND = "friend"
+    ROMANTIC = "romantic"
+    RIVAL = "rival"
+    COLLEAGUE = "colleague"
+    STRANGER = "stranger"
+    OTHER = "other"
+
+
 class FilmEntity(BaseRecord):
     """从素材中抽取的故事实体。"""
 
@@ -32,7 +44,7 @@ class StoryRelation(BaseRecord):
     relation_id: str
     from_entity: str
     to_entity: str
-    relation_type: str
+    relation_type: RelationType
     evidence_refs: list[str] = Field(default_factory=list)
     confirmation_state: str
     privacy_class: str

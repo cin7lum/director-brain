@@ -227,6 +227,23 @@ def test_overlap_fixed():
         assert sorted_edits[i].out_frame <= sorted_edits[i + 1].in_frame
 
 
+def test_rule6_large_overlap_removed_recorded():
+    # shot_a: 0-4M (dur=4M), shot_b: 2-3M (dur=1M)
+    # overlap = 4M-2M = 2M, smaller = 1M, ratio = 2.0 >= 0.5 → 大幅重叠移除 shot_b
+    edits = [
+        _edit("shot_a", in_frame=0, out_frame=4_000_000),
+        _edit("shot_b", in_frame=2_000_000, out_frame=3_000_000),
+    ]
+    edl = _edl(edits)
+    plan = _plan()
+    new_edl, new_plan = repair_plan(edl, plan, OBS)
+    # shot_b 被移除，只剩 shot_a
+    asset_ids = [e.source_asset_id for e in new_edl.ordered_edits]
+    assert asset_ids == ["shot_a"]
+    # open_questions 记录了移除
+    assert any("removed edit" in q for q in new_plan.open_questions)
+
+
 # ---------------------------------------------------------------------------
 # rule4: dedupe same source_asset_id
 # ---------------------------------------------------------------------------

@@ -8,9 +8,9 @@ TEMPORAL 顺序边。
 """
 from __future__ import annotations
 
-import hashlib
 import time
 
+from director_brain._utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.film_observation import FilmObservation
 from director_brain.models.story_graph import (
@@ -31,10 +31,6 @@ _ACTS: list[tuple[str, float, float, str]] = [
     ("peak", 0.50, 0.80, "高潮"),
     ("resolve", 0.80, 1.00, "收尾"),
 ]
-
-
-def _short_hash(text: str) -> str:
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
 
 
 def _assign_acts(tech_obs: list[FilmObservation], total_us: int):
@@ -122,7 +118,7 @@ def build_story_graph(
             )
         )
 
-    graph_id = f"graph_{brief.project_id}_{_short_hash(brief.source_ref)}"
+    graph_id = f"graph_{brief.project_id}_{short_hash(brief.source_ref)}"
 
     return StoryGraph(
         schema_version="1.0",

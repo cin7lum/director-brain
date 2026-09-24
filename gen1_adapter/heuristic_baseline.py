@@ -5,7 +5,12 @@
 """
 from __future__ import annotations
 
+import json
+import os
+import tempfile
 import uuid
+
+from director_brain.models.edl import EditorialDecisionList
 
 # ---------------------------------------------------------------------------
 # 常量（与 GEN-1 heuristic_proposal.py 保持一致）
@@ -179,3 +184,43 @@ class HeuristicBaseline:
             "ai_model": "heuristic_v0.2",
             "prompt_version": "heuristic_v0.2",
         }
+
+
+# ---------------------------------------------------------------------------
+# EDL 直出包装
+# ---------------------------------------------------------------------------
+
+def generate_edl(
+    project_id: str,
+    candidates: list[dict],
+    target_duration_us: int,
+) -> EditorialDecisionList:
+    """生成 EDL：先产出 V0.1 proposal dict，再经 v01_importer 转成 EDL。
+
+    ``import_v01_proposal`` 接受文件路径而非 dict，因此这里把
+    :meth:`HeuristicBaseline.generate` 的结果写入临时 JSON 文件，导入后取
+    返回三元组中的第一个元素（edl），并清理临时文件。
+
+    注意：heuristic 的 slot 不含 ``proposed_role``，导入后
+    :attr:`EditItem.shot_function` 为 None，由调用方（director_reasoner）按幕覆盖。
+    """
+    from gen1_adapter.v01_importer import import_v01_proposal
+
+    proposal = HeuristicBaseline.generate(
+        project_id=project_id,
+        candidates=candidates,
+        target_duration_us=target_duration_us,
+    )
+
+    tmp_path: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as tf:
+            json.dump(proposal, tf)
+            tmp_path = tf.name
+        edl, _plan, _log = import_v01_proposal(tmp_path)
+        return edl
+    finally:
+        if tmp_path is not None and os.path.exists(tmp_path):
+            os.unlink(tmp_path)

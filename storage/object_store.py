@@ -33,7 +33,15 @@ class LocalObjectStore:
         target.write_bytes(data)
         return hashlib.sha256(data).hexdigest()
 
-    def get(self, key: str) -> bytes:
+    def get(self, key: str) -> bytes | None:
+        """读取对象；key 不存在时返回 None（不抛异常）。"""
+        target = self._resolve(key)
+        if not target.exists():
+            return None
+        return target.read_bytes()
+
+    def get_or_raise(self, key: str) -> bytes:
+        """读取对象；key 不存在时抛 FileNotFoundError。"""
         return self._resolve(key).read_bytes()
 
     def delete(self, key: str) -> bool:

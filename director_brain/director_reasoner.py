@@ -20,7 +20,7 @@ from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
 from director_brain.models.story_graph import StoryGraph
-from gen1_adapter.heuristic_baseline import HeuristicBaseline, MIN_CLIP_US
+from gen1_adapter.heuristic_baseline import generate_edl, MIN_CLIP_US
 
 PRODUCER = "heuristic_director_reasoner_v0.1"
 TIMEBASE_US = 1_000_000
@@ -139,45 +139,39 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 MIN_CLIP_US,
             )
 
-            proposal = HeuristicBaseline.generate(
+            edl = generate_edl(
                 project_id=brief.project_id,
                 candidates=act_cands,
                 target_duration_us=per_act_target,
             )
-            slots = list(proposal.get("slots", []))
+            act_edits: list[EditItem] = list(edl.ordered_edits)
+            used_fallback = False
 
             # 兜底：本幕选不出镜头时，直接取 blur_score 最高的完整镜头
-            if not slots and act_cands:
+            if not act_edits and act_cands:
                 best = max(act_cands, key=lambda c: c["blur_score"])
-                slots.append({
-                    "source_shot_id": best["source_shot_id"],
-                    "source_media_hash": best["source_media_hash"],
-                    "proposed_in_us": best["source_in_us"],
-                    "proposed_out_us": best["source_out_us"],
-                    "reason": f"heuristic:blur={best['blur_score']}",
-                    "slot_id": f"{act_name}_fallback",
-                })
-
-            for slot in slots:
-                reason = slot.get("reason", "")
-                act_labeled_reason = f"act={act_name}, {reason}"
-                in_us = int(slot["proposed_in_us"])
-                out_us = int(slot["proposed_out_us"])
-                edit = EditItem(
-                    source_asset_id=slot["source_shot_id"],
-                    source_media_hash=slot["source_media_hash"],
-                    in_frame=in_us,
-                    out_frame=out_us,
+                act_edits = [EditItem(
+                    source_asset_id=best["source_shot_id"],
+                    source_media_hash=best["source_media_hash"],
+                    in_frame=int(best["source_in_us"]),
+                    out_frame=int(best["source_out_us"]),
                     timebase=TIMEBASE_US,
                     shot_function=_ACT_FUNCTION.get(act_name),
-                    rationale=act_labeled_reason,
-                )
+                    rationale=f"heuristic:blur={best['blur_score']}",
+                )]
+                used_fallback = True
+
+            for idx, edit in enumerate(act_edits):
+                edit.shot_function = _ACT_FUNCTION.get(act_name)
+                reason = edit.rationale or ""
+                edit.rationale = f"act={act_name}, {reason}"
+                slot_label = "fallback" if used_fallback else f"slot_{idx + 1:02d}"
                 decision = Decision(
-                    decision_id=f"dec_{act_name}_{slot['slot_id']}",
+                    decision_id=f"dec_{act_name}_{slot_label}",
                     purpose="select_shot",
-                    shot_refs=[slot["source_shot_id"]],
-                    evidence_refs=[shot_to_obs.get(slot["source_shot_id"], "")],
-                    rationale=act_labeled_reason,
+                    shot_refs=[edit.source_asset_id],
+                    evidence_refs=[shot_to_obs.get(edit.source_asset_id, "")],
+                    rationale=edit.rationale,
                     alternatives=[],
                     confidence=0.5,
                     requires_approval=False,

@@ -50,7 +50,13 @@ class AnalysisCache:
     Parameters
     ----------
     persist_path:
-        若提供，put 时整体重写该 JSON 文件；实例化时若文件已存在则自动加载。
+        若提供，实例化时若文件已存在则自动加载。
+
+    Notes
+    -----
+    ``put()`` / ``invalidate()`` 不再每次立即写盘，而是仅标记内存为 dirty。
+    调用方在批量操作结束后必须显式调用 :meth:`flush` 将内存状态持久化到磁盘；
+    未调用 ``flush()`` 即进程退出时，未写入的修改不会保留。
     """
 
     def __init__(self, persist_path: str | None = None) -> None:
@@ -58,15 +64,16 @@ class AnalysisCache:
         self._persist_path: Path | None = Path(persist_path) if persist_path else None
         self._hit_count = 0
         self._total_count = 0
+        self._dirty: bool = False
 
         if self._persist_path is not None and self._persist_path.exists():
             self._load()
 
     def put(self, fingerprint: str, observations: list[FilmObservation]) -> None:
-        """写入指纹 → observations 映射，并按需持久化。"""
+        """写入指纹 → observations 映射，标记为 dirty（不立即写盘）。"""
         self._store[fingerprint] = list(observations)
         if self._persist_path is not None:
-            self._flush()
+            self._dirty = True
 
     def get(self, fingerprint: str) -> list[FilmObservation] | None:
         """读取缓存；每次调用计入 total_count，命中计入 hit_count。"""
@@ -77,10 +84,10 @@ class AnalysisCache:
         return None
 
     def invalidate(self, fingerprint: str) -> bool:
-        """删除指定指纹缓存，返回是否实际删除成功。"""
+        """删除指定指纹缓存，返回是否实际删除成功。标记为 dirty（不立即写盘）。"""
         existed = self._store.pop(fingerprint, None) is not None
         if existed and self._persist_path is not None:
-            self._flush()
+            self._dirty = True
         return existed
 
     def hit_rate(self) -> float:
@@ -88,6 +95,19 @@ class AnalysisCache:
         if self._total_count == 0:
             return 0.0
         return self._hit_count / self._total_count
+
+    # -- 持久化公共接口 ------------------------------------------------------
+
+    def flush(self) -> None:
+        """将内存中的 dirty 状态持久化到磁盘；未 dirty 时不触发写入。
+
+        调用方在批量 put / invalidate 操作结束后应显式调用此方法，
+        否则修改不会写入磁盘文件。
+        """
+        if self._persist_path is None or not self._dirty:
+            return
+        self._flush()
+        self._dirty = False
 
     # -- 持久化内部方法 ------------------------------------------------------
 

@@ -18,7 +18,12 @@ from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_context import ContextLayer, FilmContextSnapshot
-from director_brain.models.film_entity import EntityType, FilmEntity, StoryRelation
+from director_brain.models.film_entity import (
+    EntityType,
+    FilmEntity,
+    RelationType,
+    StoryRelation,
+)
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.revision import RevisionProposal
 from director_brain.models.story_graph import (
@@ -92,7 +97,7 @@ MINIMAL = {
         relation_id="rel-001",
         from_entity="ent-001",
         to_entity="ent-002",
-        relation_type="knows",
+        relation_type="friend",
         confirmation_state="inferred",
         privacy_class="public",
     ),
@@ -319,3 +324,21 @@ def test_entity_type_enum_values():
     assert EntityType.LOCATION
     assert EntityType.EVENT
     assert EntityType.OBJECT
+
+
+# ---------------------------------------------------------------------------
+# RelationType 枚举：合法字符串自动转换，非法值报 ValidationError
+# ---------------------------------------------------------------------------
+def test_relation_type_accepts_enum_member():
+    rel = _make(StoryRelation, relation_type=RelationType.FRIEND)
+    assert rel.relation_type is RelationType.FRIEND
+
+
+def test_relation_type_accepts_legal_string():
+    rel = _make(StoryRelation, relation_type="friend")
+    assert rel.relation_type is RelationType.FRIEND
+
+
+def test_relation_type_invalid_string_raises():
+    with pytest.raises(ValidationError):
+        _make(StoryRelation, relation_type="invalid")

@@ -322,6 +322,27 @@ def test_object_store_crud(tmp_path):
     assert store.delete("shots/a/frame1.bin") is False
 
 
+def test_object_store_get_nonexistent_returns_none(tmp_path):
+    """get() 对不存在的 key 返回 None，不抛异常。"""
+    store = LocalObjectStore(base_path=str(tmp_path / "objects"))
+    assert store.get("nonexistent/key.bin") is None
+
+
+def test_object_store_get_or_raise_nonexistent_raises(tmp_path):
+    """get_or_raise() 对不存在的 key 抛 FileNotFoundError。"""
+    store = LocalObjectStore(base_path=str(tmp_path / "objects"))
+    with pytest.raises(FileNotFoundError):
+        store.get_or_raise("nonexistent/key.bin")
+
+
+def test_object_store_get_or_raise_existent_returns_bytes(tmp_path):
+    """get_or_raise() 对存在的 key 正常返回 bytes。"""
+    store = LocalObjectStore(base_path=str(tmp_path / "objects"))
+    payload = b"hello-world"
+    store.put("data/k.bin", payload)
+    assert store.get_or_raise("data/k.bin") == payload
+
+
 # ---------------------------------------------------------------------------
 # 5. 工厂函数
 # ---------------------------------------------------------------------------

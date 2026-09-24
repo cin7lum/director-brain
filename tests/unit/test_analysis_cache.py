@@ -178,6 +178,7 @@ def test_persist_roundtrip(tmp_path):
 
     cache1 = AnalysisCache(persist_path=str(persist_file))
     cache1.put(fp, [obs1, obs2])
+    cache1.flush()
 
     # 重新实例化，应从磁盘加载
     cache2 = AnalysisCache(persist_path=str(persist_file))
@@ -233,3 +234,77 @@ def test_sampling_config_order_independent():
         timebase=25,
     )
     assert a == b
+
+
+# ---------------------------------------------------------------------------
+# 9. 批量 put 仅在 flush() 时落盘（dirty flag 批写）
+# ---------------------------------------------------------------------------
+def test_batch_put_persists_only_after_flush(tmp_path):
+    """连续 100 次 put 后未 flush，重新实例化读取为空；flush 后数据持久化。"""
+    persist_file = tmp_path / "cache.json"
+    cache1 = AnalysisCache(persist_path=str(persist_file))
+
+    for i in range(100):
+        obs = _make_observation(observation_id=f"obs-batch-{i:03d}")
+        cache1.put(f"fp-batch-{i:03d}", [obs])
+
+    # 未调用 flush()：重新实例化应读不到任何数据
+    cache_unflushed = AnalysisCache(persist_path=str(persist_file))
+    for i in range(100):
+        assert cache_unflushed.get(f"fp-batch-{i:03d}") is None
+
+    # 调用 flush() 后数据才写入磁盘
+    cache1.flush()
+    cache2 = AnalysisCache(persist_path=str(persist_file))
+    for i in range(100):
+        got = cache2.get(f"fp-batch-{i:03d}")
+        assert got is not None
+        assert len(got) == 1
+        assert got[0].observation_id == f"obs-batch-{i:03d}"
+
+
+# ---------------------------------------------------------------------------
+# 10. _dirty 标志行为：put 置 dirty=True，flush 置 False，未 dirty 不写盘
+# ---------------------------------------------------------------------------
+def test_dirty_flag_behavior(tmp_path, monkeypatch):
+    """put 后 _dirty=True；flush 后 _dirty=False；未 dirty 时 flush 不触发写盘。"""
+    persist_file = tmp_path / "cache.json"
+    cache = AnalysisCache(persist_path=str(persist_file))
+
+    # 初始状态：未 dirty
+    assert cache._dirty is False
+
+    # 计 _flush 调用次数
+    flush_calls = 0
+    original_flush = cache._flush
+
+    def counting_flush():
+        nonlocal flush_calls
+        flush_calls += 1
+        original_flush()
+
+    monkeypatch.setattr(cache, "_flush", counting_flush)
+
+    # put 后应标记 dirty，但尚未写盘
+    obs = _make_observation()
+    cache.put("fp-dirty", [obs])
+    assert cache._dirty is True
+    assert flush_calls == 0, "put 不应立即触发 _flush"
+
+    # 未 dirty 时 flush() 不触发写入（这里先手动重置 dirty=False）
+    cache._dirty = False
+    cache.flush()
+    assert flush_calls == 0, "未 dirty 时 flush() 不应触发 _flush"
+
+    # invalidate 实际删除后也应标记 dirty
+    cache._dirty = False
+    cache.put("fp-to-inv", [obs])   # 这会把 dirty 设回 True
+    cache.flush()                    # 写盘并清 dirty
+    assert flush_calls == 1
+    assert cache._dirty is False
+
+    cache.invalidate("fp-to-inv")
+    assert cache._dirty is True
+    cache.flush()
+    assert flush_calls == 2
+    assert cache._dirty is False

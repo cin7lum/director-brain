@@ -31,6 +31,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
@@ -162,7 +163,15 @@ def repair_plan(
             no_overlap.append(e)
         else:
             # 大幅重叠：移除 curr（保留先出现的 prev）
-            pass
+            new_plan.open_questions.append(
+                f"repair: removed edit {e.source_asset_id} (overlap >50% with prev)"
+            )
+            logging.debug(
+                "rule6: removed edit %s (in=%d, out=%d) due to >50%% overlap "
+                "with prev %s (in=%d, out=%d)",
+                e.source_asset_id, e.in_frame, e.out_frame,
+                prev.source_asset_id, prev.in_frame, prev.out_frame,
+            )
     edits = no_overlap
 
     # ---- rule7: 按 in_frame 升序排序 ----

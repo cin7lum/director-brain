@@ -142,3 +142,15 @@ def test_default_timebase():
     edl = generate_edl("proj_tb", selected_shots=shots)
     assert edl.timebase == 1_000_000
     assert edl.ordered_edits[0].timebase == 1_000_000
+
+
+def test_source_ref_used_when_provided():
+    shots = [_shot(0)]
+    edl = generate_edl("proj", shots, source_ref="/path/to/video.mp4")
+    assert edl.source_ref == "/path/to/video.mp4"
+
+
+def test_source_ref_defaults_to_project_id():
+    shots = [_shot(0)]
+    edl = generate_edl("proj", shots)
+    assert edl.source_ref == "proj"
