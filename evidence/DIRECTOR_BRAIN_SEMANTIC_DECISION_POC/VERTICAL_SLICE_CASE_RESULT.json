@@ -1,0 +1,50 @@
+{
+  "input": "让下一句声音提前一点进入，让镜头切换更自然，但不要改变画面的切点，也不要加转场。",
+  "model_output": {
+    "decision_id": "SD-01",
+    "creative_intent": "通过让下一句声音先于画面进入，使镜头切换在感知上更自然流畅",
+    "target": [
+      "incoming_dialogue",
+      "incoming_picture",
+      "current_picture_cut",
+      "transition_point"
+    ],
+    "desired_relation_or_change": [
+      "audio_precedes_picture"
+    ],
+    "must_preserve": [
+      "picture_cut_position"
+    ],
+    "must_avoid": [
+      "transition"
+    ],
+    "parameterization": {
+      "magnitude": "slight",
+      "exact_value": null,
+      "unit": null,
+      "certainty": "inferred"
+    },
+    "required_context": [
+      "dialogue_onset_timing",
+      "current_cut_point",
+      "audio_waveform"
+    ],
+    "confidence": 0.85,
+    "evidence": [
+      "让下一句声音提前一点进入",
+      "不要改变画面的切点",
+      "不要加转场"
+    ],
+    "status": "NEEDS_CONTEXT",
+    "user_terminology": []
+  },
+  "pass": true,
+  "checks": {
+    "positive_audio_before_picture": true,
+    "picture_cut_preserved": true,
+    "no_transition": true,
+    "creative_purpose_retained": true,
+    "exact_offset_not_fabricated": true,
+    "needs_context_explicit": true
+  }
+}

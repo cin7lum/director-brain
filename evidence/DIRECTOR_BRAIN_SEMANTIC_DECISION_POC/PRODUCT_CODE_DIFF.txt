@@ -1,0 +1,13 @@
+Product code modifications: 0
+
+02 AI-Director: 0 modifications to production code.
+03 Arsenal: 0 modifications.
+
+POC code (experiments/director_semantic_poc/):
+- schema.py — DirectorDecision Pydantic model (POC-only)
+- prompt.md — thin system prompt
+- benchmark.jsonl — 32 test inputs
+- human_reference.jsonl — 32 human-annotated gold references
+- model_outputs.jsonl — 32 LLM structured outputs
+- evaluate.py — deterministic evaluation script
+- eval_results.json — computed metrics

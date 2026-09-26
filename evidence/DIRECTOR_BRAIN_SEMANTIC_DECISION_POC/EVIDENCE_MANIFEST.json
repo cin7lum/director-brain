@@ -1,0 +1,21 @@
+{
+  "poc": "DIRECTOR_BRAIN_SEMANTIC_DECISION_POC",
+  "base_commit": "cc6b25e",
+  "status": "PROVEN",
+  "model_used": "Doubao (structured JSON output)",
+  "benchmark_size": 32,
+  "metrics": {
+    "schema_valid_rate": 1.0,
+    "positive_intent_recall": 1.0,
+    "negative_constraint_recall": 0.9375,
+    "relation_direction_accuracy": 1.0,
+    "ambiguity_abstention_accuracy": 1.0,
+    "status_match_accuracy": 1.0,
+    "exact_parameter_hallucination": 0,
+    "tool_leakage": 0,
+    "vertical_slice_case_pass": true
+  },
+  "product_code_modifications_02": 0,
+  "product_code_modifications_03": 0,
+  "success_gate_passed": true
+}

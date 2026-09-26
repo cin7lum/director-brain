@@ -1,0 +1,28 @@
+{
+  "total_samples": 32,
+  "schema_valid_rate": 1.0,
+  "positive_intent_recall": 1.0,
+  "negative_constraint_recall": 0.9375,
+  "relation_direction_accuracy": 1.0,
+  "ambiguity_abstention_accuracy": 1.0,
+  "status_match_accuracy": 1.0,
+  "exact_parameter_hallucination_count": 0,
+  "tool_leakage_count": 0,
+  "vertical_slice_case_pass": true,
+  "vertical_slice_details": {
+    "positive_audio_before_picture": true,
+    "picture_cut_preserved": true,
+    "no_transition": true,
+    "creative_purpose_retained": true,
+    "exact_offset_not_fabricated": true,
+    "needs_context_explicit": true
+  },
+  "positive_misses": [],
+  "negative_misses": [
+    [
+      "SD-28",
+      "conflicting_constraints"
+    ]
+  ],
+  "direction_misses": []
+}
