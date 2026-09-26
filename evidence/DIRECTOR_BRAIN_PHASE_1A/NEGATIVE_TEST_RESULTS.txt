@@ -1,0 +1,14 @@
+Negative test results (I7, I10, I11):
+
+I7 Negative audio advance:
+  - "声音别抢在画面前面" → no audio_precedes_picture, must_avoid=[audio_lead] PASS
+  - "不要让下一句声音提前" → no audio_precedes_picture, must_avoid=[audio_lead] PASS
+
+I10 Tool/API leakage:
+  - Core fields: 0 forbidden terms PASS
+  - user_terminology exempt: J-cut preserved in user_terminology PASS
+
+I11 Fail closed:
+  - LLM connection error → SEMANTIC_REASONER_UNAVAILABLE, decision=None PASS
+  - Invalid JSON → SEMANTIC_REASONER_UNAVAILABLE PASS
+  - No keyword fallback on LLM failure PASS

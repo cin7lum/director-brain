@@ -1,0 +1,16 @@
+New files:
+  director_brain/models/director_decision.py  (canonical schema)
+  director_brain/llm_adapter.py               (thin LLM adapter)
+  director_brain/semantic_reasoner.py         (SemanticDirectorReasoner)
+  tests/unit/test_semantic_reasoner.py        (I1-I12 integration tests)
+  evidence/DIRECTOR_BRAIN_PHASE_1A/           (evidence bundle)
+
+Modified files:
+  (none — existing production code unchanged)
+
+Not modified:
+  director_brain/director_reasoner.py         (Heuristic, unchanged)
+  director_brain/brief_compiler.py            (unchanged)
+  director_brain/models/director_brief.py     (unchanged)
+  director_brain/models/edl.py                (unchanged)
+  director_brain/edl_generator.py             (unchanged)
