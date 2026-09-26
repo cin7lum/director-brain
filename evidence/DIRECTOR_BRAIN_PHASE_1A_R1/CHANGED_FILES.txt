@@ -1,0 +1,19 @@
+Modified (existing product):
+  director_brain/llm_adapter.py
+
+Added (product runtime):
+  director_brain/service.py
+
+Added (tests):
+  tests/unit/test_phase1a_r1.py
+
+Added (evidence):
+  evidence/DIRECTOR_BRAIN_PHASE_1A_R1/
+
+Unchanged:
+  director_brain/models/director_decision.py (Phase-1A)
+  director_brain/semantic_reasoner.py (Phase-1A)
+  director_brain/director_reasoner.py (Heuristic, unchanged)
+  director_brain/brief_compiler.py (unchanged)
+  director_brain/models/director_brief.py (unchanged)
+  director_brain/models/edl.py (unchanged)

@@ -1,0 +1,81 @@
+{
+  "total": 32,
+  "schema_valid": 32,
+  "schema_valid_rate": 1.0,
+  "positive_intent_recall": 0.8571428571428571,
+  "positive_correct": 18,
+  "positive_total": 21,
+  "negative_constraint_recall": 0.625,
+  "negative_correct": 10,
+  "negative_total": 16,
+  "relation_direction_accuracy": 1.0,
+  "direction_correct": 8,
+  "direction_total": 8,
+  "ambiguity_abstention": 1.0,
+  "ambiguous_correct": 4,
+  "ambiguous_total": 4,
+  "status_match": 0.65625,
+  "status_correct": 21,
+  "status_total": 32,
+  "exact_parameter_hallucination": 0,
+  "tool_leakage": 0,
+  "status_mismatches": [
+    [
+      "SD-02",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-03",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-05",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-06",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-07",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-12",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-15",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-20",
+      "NEEDS_CONTEXT",
+      "READY"
+    ],
+    [
+      "SD-24",
+      "UNDERSPECIFIED",
+      "NEEDS_CONTEXT"
+    ],
+    [
+      "SD-28",
+      "CONFLICTING_CONSTRAINTS",
+      "READY"
+    ],
+    [
+      "SD-32",
+      "NEEDS_CONTEXT",
+      "READY"
+    ]
+  ],
+  "model": "qwen2.5:14b",
+  "adapter": "director_brain.llm_adapter.LLMAdapter (production, schema-constrained)"
+}

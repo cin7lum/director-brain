@@ -1,0 +1,434 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- D:\新建豆包\arsenal\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\新建豆包\AI-Director
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 325 items
+
+tests/contract/test_brief_schema.py::test_valid_accepted PASSED          [  0%]
+tests/contract/test_brief_schema.py::test_empty_edl_rejected_with_reason PASSED [  0%]
+tests/contract/test_brief_schema.py::test_reverse_interval_rejected PASSED [  0%]
+tests/contract/test_brief_schema.py::test_unknown_asset_rejected_with_asset_id PASSED [  1%]
+tests/integration/test_pipeline_smoke.py::test_pipeline_smoke_observations_to_validated_edl PASSED [  1%]
+tests/unit/test_analysis_cache.py::test_fingerprint_stable_for_same_input PASSED [  1%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override0] PASSED [  2%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override1] PASSED [  2%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override2] PASSED [  2%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override3] PASSED [  3%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override4] PASSED [  3%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override5] PASSED [  3%]
+tests/unit/test_analysis_cache.py::test_fingerprint_changes_on_any_input[override6] PASSED [  4%]
+tests/unit/test_analysis_cache.py::test_put_then_get_returns_observations PASSED [  4%]
+tests/unit/test_analysis_cache.py::test_get_miss_returns_none PASSED     [  4%]
+tests/unit/test_analysis_cache.py::test_invalidate_removes_entry PASSED  [  4%]
+tests/unit/test_analysis_cache.py::test_invalidate_nonexistent_returns_false PASSED [  5%]
+tests/unit/test_analysis_cache.py::test_hit_rate_stats PASSED            [  5%]
+tests/unit/test_analysis_cache.py::test_hit_rate_zero_when_no_calls PASSED [  5%]
+tests/unit/test_analysis_cache.py::test_persist_roundtrip PASSED         [  6%]
+tests/unit/test_analysis_cache.py::test_empty_sampling_config_changes_fingerprint PASSED [  6%]
+tests/unit/test_analysis_cache.py::test_sampling_config_order_independent PASSED [  6%]
+tests/unit/test_analysis_cache.py::test_batch_put_persists_only_after_flush PASSED [  7%]
+tests/unit/test_analysis_cache.py::test_dirty_flag_behavior PASSED       [  7%]
+tests/unit/test_asset_index.py::test_create_tables_in_memory PASSED      [  7%]
+tests/unit/test_asset_index.py::test_upsert_media_and_list PASSED        [  8%]
+tests/unit/test_asset_index.py::test_upsert_media_idempotent PASSED      [  8%]
+tests/unit/test_asset_index.py::test_upsert_shot_15_shots PASSED         [  8%]
+tests/unit/test_asset_index.py::test_upsert_shot_idempotent PASSED       [  8%]
+tests/unit/test_asset_index.py::test_get_shot_by_id PASSED               [  9%]
+tests/unit/test_asset_index.py::test_get_shots_by_media_hash PASSED      [  9%]
+tests/unit/test_asset_index.py::test_is_analyzed_true_false PASSED       [  9%]
+tests/unit/test_asset_index.py::test_bool_fields_roundtrip PASSED        [ 10%]
+tests/unit/test_asset_index.py::test_technical_usable_roundtrip PASSED   [ 10%]
+tests/unit/test_asset_index.py::test_close PASSED                        [ 10%]
+tests/unit/test_asset_index.py::test_file_based_db PASSED                [ 11%]
+tests/unit/test_audit_trail.py::test_log_decision_saves_and_returns_entry PASSED [ 11%]
+tests/unit/test_audit_trail.py::test_get_decision_history_sorted_ascending PASSED [ 11%]
+tests/unit/test_audit_trail.py::test_get_decision_history_filters_by_decision_id PASSED [ 12%]
+tests/unit/test_audit_trail.py::test_generate_audit_report_has_required_sections PASSED [ 12%]
+tests/unit/test_audit_trail.py::test_evidence_integrity_detects_missing_assets PASSED [ 12%]
+tests/unit/test_audit_trail.py::test_evidence_integrity_all_assets_found PASSED [ 12%]
+tests/unit/test_audit_trail.py::test_edit_traceability_matches_observation PASSED [ 13%]
+tests/unit/test_brief_compiler.py::test_empty_observations_returns_valid_brief_with_default_duration PASSED [ 13%]
+tests/unit/test_brief_compiler.py::test_technical_observations_set_duration_and_source PASSED [ 13%]
+tests/unit/test_brief_compiler.py::test_speech_transcript_observations_populate_source_text PASSED [ 14%]
+tests/unit/test_brief_compiler.py::test_explicit_target_duration_us_overrides_default PASSED [ 14%]
+tests/unit/test_brief_compiler.py::test_brief_id_and_version_fields PASSED [ 14%]
+tests/unit/test_brief_compiler.py::test_intent_text_drives_semantic_fields PASSED [ 15%]
+tests/unit/test_brief_compiler.py::test_intent_must_avoid_extraction PASSED [ 15%]
+tests/unit/test_brief_compiler.py::test_intent_none_preserves_legacy_behavior PASSED [ 15%]
+tests/unit/test_brief_compiler.py::test_intent_unknown_keywords_stay_not_determined PASSED [ 16%]
+tests/unit/test_context_gateway.py::test_build_asset_index_returns_snapshot_with_asset_layer PASSED [ 16%]
+tests/unit/test_context_gateway.py::test_asset_index_has_count_and_evidence_refs PASSED [ 16%]
+tests/unit/test_context_gateway.py::test_empty_observations_returns_empty_index PASSED [ 16%]
+tests/unit/test_context_gateway.py::test_nonexistent_video_degrades PASSED [ 17%]
+tests/unit/test_context_gateway.py::test_get_asset_context_reads_from_repository PASSED [ 17%]
+tests/unit/test_context_gateway.py::test_context_id_stable_across_calls PASSED [ 17%]
+tests/unit/test_context_gateway.py::test_context_id_changes_when_observation_ids_differ PASSED [ 18%]
+tests/unit/test_context_gateway.py::test_source_content_hashes_nonempty_for_real_file PASSED [ 18%]
+tests/unit/test_director_reasoner.py::test_generate_plan_returns_tuple_of_edl_and_plan PASSED [ 18%]
+tests/unit/test_director_reasoner.py::test_edl_fields PASSED             [ 19%]
+tests/unit/test_director_reasoner.py::test_plan_decisions_match_editems PASSED [ 19%]
+tests/unit/test_director_reasoner.py::test_llm_reasoner_raises_not_implemented PASSED [ 19%]
+tests/unit/test_director_reasoner.py::test_factory_heuristic PASSED      [ 20%]
+tests/unit/test_director_reasoner.py::test_factory_llm PASSED            [ 20%]
+tests/unit/test_director_reasoner.py::test_factory_unknown_raises PASSED [ 20%]
+tests/unit/test_director_reasoner.py::test_four_act_selection_each_act_has_decision_and_act_order PASSED [ 20%]
+tests/unit/test_director_reasoner.py::test_candidates_include_vlm_fields PASSED [ 21%]
+tests/unit/test_director_reasoner.py::test_no_vlm_observations_fields_none PASSED [ 21%]
+tests/unit/test_director_reasoner.py::test_discard_role_gets_downgraded_in_edl PASSED [ 21%]
+tests/unit/test_director_reasoner.py::test_vlm_rationale_propagates_to_decision PASSED [ 22%]
+tests/unit/test_edl_exporter.py::test_us_to_tc_basic PASSED              [ 22%]
+tests/unit/test_edl_exporter.py::test_us_to_tc_frame_clamp PASSED        [ 22%]
+tests/unit/test_edl_exporter.py::test_edl_header PASSED                  [ 23%]
+tests/unit/test_edl_exporter.py::test_edl_record_count PASSED            [ 23%]
+tests/unit/test_edl_exporter.py::test_edl_record_fields PASSED           [ 23%]
+tests/unit/test_edl_exporter.py::test_record_timecode_accumulation PASSED [ 24%]
+tests/unit/test_edl_exporter.py::test_output_dir_creation PASSED         [ 24%]
+tests/unit/test_edl_exporter.py::test_empty_edl PASSED                   [ 24%]
+tests/unit/test_edl_generator.py::test_empty_returns_empty_edl PASSED    [ 24%]
+tests/unit/test_edl_generator.py::test_normal_shots_count_and_timebase PASSED [ 25%]
+tests/unit/test_edl_generator.py::test_edititem_field_mapping PASSED     [ 25%]
+tests/unit/test_edl_generator.py::test_producer_field PASSED             [ 25%]
+tests/unit/test_edl_generator.py::test_metadata_fields PASSED            [ 26%]
+tests/unit/test_edl_generator.py::test_source_asset_hashes_dedup_preserving_order PASSED [ 26%]
+tests/unit/test_edl_generator.py::test_expected_duration_sum PASSED      [ 26%]
+tests/unit/test_edl_generator.py::test_order_preserved_not_resorted PASSED [ 27%]
+tests/unit/test_edl_generator.py::test_default_timebase PASSED           [ 27%]
+tests/unit/test_edl_generator.py::test_source_ref_used_when_provided PASSED [ 27%]
+tests/unit/test_edl_generator.py::test_source_ref_defaults_to_project_id PASSED [ 28%]
+tests/unit/test_gen1_adapter.py::TestImportRealFile::test_small_proposal_slot_count PASSED [ 28%]
+tests/unit/test_gen1_adapter.py::TestImportRealFile::test_multi_slot_proposal_slot_count PASSED [ 28%]
+tests/unit/test_gen1_adapter.py::TestImportRealFile::test_public_fields_filled PASSED [ 28%]
+tests/unit/test_gen1_adapter.py::TestFieldMapping::test_edit_item_mapping PASSED [ 29%]
+tests/unit/test_gen1_adapter.py::TestFieldMapping::test_decision_mapping PASSED [ 29%]
+tests/unit/test_gen1_adapter.py::TestExportRoundTrip::test_round_trip_key_fields PASSED [ 29%]
+tests/unit/test_gen1_adapter.py::TestExportRoundTrip::test_exported_slot_structure PASSED [ 30%]
+tests/unit/test_gen1_adapter.py::TestExportRoundTrip::test_export_has_clip_instance_id_and_rough_cut_id PASSED [ 30%]
+tests/unit/test_gen1_adapter.py::TestHeuristicDuration::test_total_duration_band PASSED [ 30%]
+tests/unit/test_gen1_adapter.py::TestHeuristicDuration::test_producer_is_v02 PASSED [ 31%]
+tests/unit/test_gen1_adapter.py::TestHeuristicDuration::test_skip_too_short_shots PASSED [ 31%]
+tests/unit/test_gen1_adapter.py::TestHeuristicWeights::test_atmospheric_ranked_above_discard PASSED [ 31%]
+tests/unit/test_gen1_adapter.py::TestHeuristicWeights::test_confidence_type_vlm_vs_heuristic PASSED [ 32%]
+tests/unit/test_gen1_adapter.py::TestHeuristicWeights::test_compute_clip_window_midpoint PASSED [ 32%]
+tests/unit/test_gen1_adapter.py::TestHeuristicWeights::test_compute_clip_window_clamp PASSED [ 32%]
+tests/unit/test_gen1_adapter.py::TestEmptyInput::test_empty_slots_no_exception PASSED [ 32%]
+tests/unit/test_gen1_adapter.py::TestImportLog::test_missing_source_shot_id_warns PASSED [ 33%]
+tests/unit/test_gen1_adapter.py::TestGenerateEdl::test_returns_edl_instance PASSED [ 33%]
+tests/unit/test_gen1_adapter.py::TestGenerateEdl::test_edits_carry_shot_ids_and_window PASSED [ 33%]
+tests/unit/test_gen1_adapter.py::TestGenerateEdl::test_empty_candidates_returns_empty_edl PASSED [ 34%]
+tests/unit/test_models.py::test_record_instantiable[DirectorBrief] PASSED [ 34%]
+tests/unit/test_models.py::test_record_instantiable[FilmContextSnapshot] PASSED [ 34%]
+tests/unit/test_models.py::test_record_instantiable[FilmObservation] PASSED [ 35%]
+tests/unit/test_models.py::test_record_instantiable[FilmEntity] PASSED   [ 35%]
+tests/unit/test_models.py::test_record_instantiable[StoryRelation] PASSED [ 35%]
+tests/unit/test_models.py::test_record_instantiable[StoryGraph] PASSED   [ 36%]
+tests/unit/test_models.py::test_record_instantiable[EditorialDecisionList] PASSED [ 36%]
+tests/unit/test_models.py::test_record_instantiable[DirectorDecisionPlan] PASSED [ 36%]
+tests/unit/test_models.py::test_record_instantiable[RevisionProposal] PASSED [ 36%]
+tests/unit/test_models.py::test_missing_required_raises[DirectorBrief] PASSED [ 37%]
+tests/unit/test_models.py::test_missing_required_raises[FilmContextSnapshot] PASSED [ 37%]
+tests/unit/test_models.py::test_missing_required_raises[FilmObservation] PASSED [ 37%]
+tests/unit/test_models.py::test_missing_required_raises[FilmEntity] PASSED [ 38%]
+tests/unit/test_models.py::test_missing_required_raises[StoryRelation] PASSED [ 38%]
+tests/unit/test_models.py::test_missing_required_raises[StoryGraph] PASSED [ 38%]
+tests/unit/test_models.py::test_missing_required_raises[EditorialDecisionList] PASSED [ 39%]
+tests/unit/test_models.py::test_missing_required_raises[DirectorDecisionPlan] PASSED [ 39%]
+tests/unit/test_models.py::test_missing_required_raises[RevisionProposal] PASSED [ 39%]
+tests/unit/test_models.py::test_claim_kind_has_exactly_six_values PASSED [ 40%]
+tests/unit/test_models.py::test_claim_kind_accepted[measured] PASSED     [ 40%]
+tests/unit/test_models.py::test_claim_kind_accepted[model_observation] PASSED [ 40%]
+tests/unit/test_models.py::test_claim_kind_accepted[human_confirmed] PASSED [ 40%]
+tests/unit/test_models.py::test_claim_kind_accepted[inferred] PASSED     [ 41%]
+tests/unit/test_models.py::test_claim_kind_accepted[user_asserted] PASSED [ 41%]
+tests/unit/test_models.py::test_claim_kind_accepted[not_determined] PASSED [ 41%]
+tests/unit/test_models.py::test_claim_kind_invalid_string_raises PASSED  [ 42%]
+tests/unit/test_models.py::test_edititem_frames_are_int PASSED           [ 42%]
+tests/unit/test_models.py::test_edititem_has_required_clip_fields PASSED [ 42%]
+tests/unit/test_models.py::test_edititem_missing_required_raises PASSED  [ 43%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[DirectorBrief] PASSED [ 43%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[FilmContextSnapshot] PASSED [ 43%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[FilmObservation] PASSED [ 44%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[FilmEntity] PASSED [ 44%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[StoryRelation] PASSED [ 44%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[StoryGraph] PASSED [ 44%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[EditorialDecisionList] PASSED [ 45%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[DirectorDecisionPlan] PASSED [ 45%]
+tests/unit/test_models.py::test_record_extra_field_forbidden[RevisionProposal] PASSED [ 45%]
+tests/unit/test_models.py::test_embedded_extra_field_forbidden[EditItem-kwargs0] PASSED [ 46%]
+tests/unit/test_models.py::test_embedded_extra_field_forbidden[Decision-kwargs1] PASSED [ 46%]
+tests/unit/test_models.py::test_embedded_extra_field_forbidden[StoryNode-kwargs2] PASSED [ 46%]
+tests/unit/test_models.py::test_embedded_extra_field_forbidden[StoryEdge-kwargs3] PASSED [ 47%]
+tests/unit/test_models.py::test_edl_ordered_edits_is_list_of_edititem PASSED [ 47%]
+tests/unit/test_models.py::test_plan_decisions_is_list_of_decision PASSED [ 47%]
+tests/unit/test_models.py::test_storygraph_holds_nodes_and_edges PASSED  [ 48%]
+tests/unit/test_models.py::test_schema_version_present_on_records[DirectorBrief] PASSED [ 48%]
+tests/unit/test_models.py::test_schema_version_present_on_records[FilmContextSnapshot] PASSED [ 48%]
+tests/unit/test_models.py::test_schema_version_present_on_records[FilmObservation] PASSED [ 48%]
+tests/unit/test_models.py::test_schema_version_present_on_records[FilmEntity] PASSED [ 49%]
+tests/unit/test_models.py::test_schema_version_present_on_records[StoryRelation] PASSED [ 49%]
+tests/unit/test_models.py::test_schema_version_present_on_records[StoryGraph] PASSED [ 49%]
+tests/unit/test_models.py::test_schema_version_present_on_records[EditorialDecisionList] PASSED [ 50%]
+tests/unit/test_models.py::test_schema_version_present_on_records[DirectorDecisionPlan] PASSED [ 50%]
+tests/unit/test_models.py::test_schema_version_present_on_records[RevisionProposal] PASSED [ 50%]
+tests/unit/test_models.py::test_context_layer_enum_values PASSED         [ 51%]
+tests/unit/test_models.py::test_entity_type_enum_values PASSED           [ 51%]
+tests/unit/test_models.py::test_relation_type_accepts_enum_member PASSED [ 51%]
+tests/unit/test_models.py::test_relation_type_accepts_legal_string PASSED [ 52%]
+tests/unit/test_models.py::test_relation_type_invalid_string_raises PASSED [ 52%]
+tests/unit/test_phase1a_r1.py::TestR1SchemaConstrained::test_r1_1_adapter_uses_model_json_schema PASSED [ 52%]
+tests/unit/test_phase1a_r1.py::TestR1SchemaConstrained::test_r1_1_payload_contains_schema_as_format PASSED [ 52%]
+tests/unit/test_phase1a_r1.py::TestR1SchemaConstrained::test_r1_1_model_validate_json_used PASSED [ 53%]
+tests/unit/test_phase1a_r1.py::TestR1SchemaConstrained::test_r1_1_invalid_json_fails_validation PASSED [ 53%]
+tests/unit/test_phase1a_r1.py::TestR1SchemaConstrained::test_r1_1_extra_fields_rejected PASSED [ 53%]
+tests/unit/test_phase1a_r1.py::TestR1Entrypoint::test_r1_5_service_entrypoint_exists PASSED [ 54%]
+tests/unit/test_phase1a_r1.py::TestR1Entrypoint::test_r1_5_service_wires_reasoner PASSED [ 54%]
+tests/unit/test_phase1a_r1.py::TestR1Entrypoint::test_r1_5_needs_context_propagates PASSED [ 54%]
+tests/unit/test_phase1a_r1.py::TestR1Entrypoint::test_r1_5_model_failure_propagates PASSED [ 55%]
+tests/unit/test_phase1a_r1.py::TestR1FailClosed::test_r1_6_connection_error PASSED [ 55%]
+tests/unit/test_phase1a_r1.py::TestR1FailClosed::test_r1_6_timeout PASSED [ 55%]
+tests/unit/test_phase1a_r1.py::TestR1FailClosed::test_r1_6_invalid_schema_output PASSED [ 56%]
+tests/unit/test_phase1a_r1.py::TestR1NoHeuristicFallback::test_r1_7_reasoner_does_not_import_heuristic PASSED [ 56%]
+tests/unit/test_phase1a_r1.py::TestR1NoHeuristicFallback::test_r1_7_service_does_not_fallback_to_heuristic PASSED [ 56%]
+tests/unit/test_phase1a_r1.py::TestR1NoHeuristicFallback::test_r1_7_heuristic_still_exists_as_specialist PASSED [ 56%]
+tests/unit/test_phase1a_r1.py::TestR1Regression::test_r1_8_no_new_test_failures PASSED [ 57%]
+tests/unit/test_phase1a_r1.py::TestR1Regression::test_r1_8_existing_modules_unchanged PASSED [ 57%]
+tests/unit/test_phase1a_r1.py::TestR1RealModel::test_r1_2_real_model_callable PASSED [ 57%]
+tests/unit/test_plan_repair.py::test_unknown_asset_removed PASSED        [ 58%]
+tests/unit/test_plan_repair.py::test_in_ge_out_swapped_when_out_positive PASSED [ 58%]
+tests/unit/test_plan_repair.py::test_in_ge_out_removed_when_out_zero PASSED [ 58%]
+tests/unit/test_plan_repair.py::test_too_short_clip_extended_when_source_long PASSED [ 59%]
+tests/unit/test_plan_repair.py::test_too_short_clip_removed_when_source_short PASSED [ 59%]
+tests/unit/test_plan_repair.py::test_too_long_clip_truncated PASSED      [ 59%]
+tests/unit/test_plan_repair.py::test_overlap_fixed PASSED                [ 60%]
+tests/unit/test_plan_repair.py::test_rule6_large_overlap_removed_recorded PASSED [ 60%]
+tests/unit/test_plan_repair.py::test_dedupe_same_asset PASSED            [ 60%]
+tests/unit/test_plan_repair.py::test_sorted_by_in_frame PASSED           [ 60%]
+tests/unit/test_plan_repair.py::test_expected_duration_recomputed PASSED [ 61%]
+tests/unit/test_plan_repair.py::test_plan_validation_status_updated PASSED [ 61%]
+tests/unit/test_plan_repair.py::test_bad_edl_errors_reduced PASSED       [ 61%]
+tests/unit/test_plan_repair.py::test_original_not_modified PASSED        [ 62%]
+tests/unit/test_plan_repair.py::test_empty_edl_returns_empty PASSED      [ 62%]
+tests/unit/test_plan_repair.py::test_producer_updated PASSED             [ 62%]
+tests/unit/test_plan_repair.py::test_rule10_extends_and_appends_when_too_short PASSED [ 63%]
+tests/unit/test_plan_repair.py::test_rule10_truncates_when_too_long PASSED [ 63%]
+tests/unit/test_plan_validator.py::test_empty_edl_errors PASSED          [ 63%]
+tests/unit/test_plan_validator.py::test_in_ge_out_caught PASSED          [ 64%]
+tests/unit/test_plan_validator.py::test_overlap_caught PASSED            [ 64%]
+tests/unit/test_plan_validator.py::test_gap_is_acceptable PASSED         [ 64%]
+tests/unit/test_plan_validator.py::test_unknown_asset_id_caught PASSED   [ 64%]
+tests/unit/test_plan_validator.py::test_valid_edl_no_constraint PASSED   [ 65%]
+tests/unit/test_plan_validator.py::test_duration_outside_target_range_caught PASSED [ 65%]
+tests/unit/test_plan_validator.py::test_duration_within_target_range_ok PASSED [ 65%]
+tests/unit/test_plan_validator.py::test_no_target_duration_skips_rule6 PASSED [ 66%]
+tests/unit/test_project_layout.py::TestCreateProject::test_creates_all_directories PASSED [ 66%]
+tests/unit/test_project_layout.py::TestCreateProject::test_idempotent PASSED [ 66%]
+tests/unit/test_project_layout.py::TestCreateProject::test_writes_manifest PASSED [ 67%]
+tests/unit/test_project_layout.py::TestGetProjectPaths::test_returns_correct_paths PASSED [ 67%]
+tests/unit/test_project_layout.py::TestGetProjectPaths::test_does_not_create_directories PASSED [ 67%]
+tests/unit/test_relation_inference.py::test_empty_observations_returns_empty PASSED [ 68%]
+tests/unit/test_relation_inference.py::test_less_than_two_shots_returns_empty PASSED [ 68%]
+tests/unit/test_relation_inference.py::test_reaction_edge_on_small_blur_diff PASSED [ 68%]
+tests/unit/test_relation_inference.py::test_contrast_edge_on_brightness_jump PASSED [ 68%]
+tests/unit/test_relation_inference.py::test_montage_edges_on_consecutive_short_shots PASSED [ 69%]
+tests/unit/test_relation_inference.py::test_all_edges_have_inferred_status_and_evidence PASSED [ 69%]
+tests/unit/test_relation_inference.py::test_no_duplicate_edges_for_same_pair_and_type PASSED [ 69%]
+tests/unit/test_relation_inference.py::test_same_act_edge_gets_confidence_boost_and_act_evidence PASSED [ 70%]
+tests/unit/test_relation_inference.py::test_semantic_continuity_same_role PASSED [ 70%]
+tests/unit/test_relation_inference.py::test_semantic_contrast_function_diff PASSED [ 70%]
+tests/unit/test_relation_inference.py::test_discard_filter_skips_edges PASSED [ 71%]
+tests/unit/test_relation_inference.py::test_no_vlm_observations_fallback PASSED [ 71%]
+tests/unit/test_relation_inference.py::test_vlm_and_deterministic_edges_coexist PASSED [ 71%]
+tests/unit/test_renderer.py::test_render_edl_empty_edl_raises PASSED     [ 72%]
+tests/unit/test_renderer.py::test_render_edl_source_not_found PASSED     [ 72%]
+tests/unit/test_renderer.py::test_filter_complex_with_audio PASSED       [ 72%]
+tests/unit/test_renderer.py::test_filter_complex_without_audio PASSED    [ 72%]
+tests/unit/test_renderer.py::test_ffmpeg_failure_raises_with_stderr PASSED [ 73%]
+tests/unit/test_renderer.py::test_edl_to_ffmpeg_concat_generates_file PASSED [ 73%]
+tests/unit/test_revision_engine.py::test_produce_valid_proposal_for_all_types[extend_peak-\u9ad8\u6f6e\u5e55\u5f20\u529b\u4e0d\u8db3] PASSED [ 73%]
+tests/unit/test_revision_engine.py::test_produce_valid_proposal_for_all_types[remove_low_quality-blur<50 \u7684\u955c\u5934\u8d28\u91cf\u4e0d\u8db3] PASSED [ 74%]
+tests/unit/test_revision_engine.py::test_produce_valid_proposal_for_all_types[adjust_duration-\u603b\u65f6\u957f\u504f\u79bb\u76ee\u6807] PASSED [ 74%]
+tests/unit/test_revision_engine.py::test_produce_valid_proposal_for_all_types[reorder-\u53d9\u4e8b\u5f27\u987a\u5e8f\u9519\u4e71] PASSED [ 74%]
+tests/unit/test_revision_engine.py::test_remove_low_quality_detects_blur_below_threshold PASSED [ 75%]
+tests/unit/test_revision_engine.py::test_remove_low_quality_empty_when_all_high_quality PASSED [ 75%]
+tests/unit/test_revision_engine.py::test_extend_peak_targets_peak_shot PASSED [ 75%]
+tests/unit/test_revision_engine.py::test_adjust_duration_targets_last_edit PASSED [ 76%]
+tests/unit/test_revision_engine.py::test_reorder_targets_all_edits PASSED [ 76%]
+tests/unit/test_revision_engine.py::test_apply_remove_low_quality_removes_edit_and_decision PASSED [ 76%]
+tests/unit/test_revision_engine.py::test_apply_remove_low_quality_empty_target_leaves_edl_unchanged PASSED [ 76%]
+tests/unit/test_revision_engine.py::test_apply_extend_peak_increases_out_frame PASSED [ 77%]
+tests/unit/test_revision_engine.py::test_apply_adjust_duration_extends_when_below_target PASSED [ 77%]
+tests/unit/test_revision_engine.py::test_apply_adjust_duration_truncates_when_above_target PASSED [ 77%]
+tests/unit/test_revision_engine.py::test_apply_reorder_sorts_by_in_frame PASSED [ 78%]
+tests/unit/test_revision_engine.py::test_list_revisions_reads_from_repository PASSED [ 78%]
+tests/unit/test_revision_engine.py::test_unknown_revision_type_raises PASSED [ 78%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_dry_run_does_not_render FAILED [ 79%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_normal_run_calls_render FAILED [ 79%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_input_not_found_returns_error FAILED [ 79%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_validation_failure_triggers_repair FAILED [ 80%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_render_failure_returns_error FAILED [ 80%]
+tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_argparse_defaults PASSED [ 80%]
+tests/unit/test_semantic_reasoner.py::TestI1Entrypoint::test_i1_reasoner_can_be_called PASSED [ 80%]
+tests/unit/test_semantic_reasoner.py::TestI1Entrypoint::test_i1_empty_input_fails_closed PASSED [ 81%]
+tests/unit/test_semantic_reasoner.py::TestI2SchemaValid::test_i2_decision_validates PASSED [ 81%]
+tests/unit/test_semantic_reasoner.py::TestI2SchemaValid::test_i2_extra_fields_rejected PASSED [ 81%]
+tests/unit/test_semantic_reasoner.py::TestI2SchemaValid::test_i2_invalid_status_rejected PASSED [ 82%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_positive_audio_before_picture PASSED [ 82%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_picture_cut_preserved PASSED [ 82%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_no_transition PASSED [ 83%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_exact_offset_not_fabricated PASSED [ 83%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_needs_context_explicit PASSED [ 83%]
+tests/unit/test_semantic_reasoner.py::TestI3VerticalSlice::test_i3_no_tool_leakage PASSED [ 84%]
+tests/unit/test_semantic_reasoner.py::TestI4Ambiguous::test_i4_ambiguous_underspecified[\u8fd9\u91cc\u81ea\u7136\u4e00\u70b9] PASSED [ 84%]
+tests/unit/test_semantic_reasoner.py::TestI4Ambiguous::test_i4_ambiguous_underspecified[\u60c5\u7eea\u518d\u538b\u4e00\u70b9] PASSED [ 84%]
+tests/unit/test_semantic_reasoner.py::TestI4Ambiguous::test_i4_ambiguous_underspecified[\u8282\u594f\u8212\u670d\u4e00\u70b9] PASSED [ 84%]
+tests/unit/test_semantic_reasoner.py::TestI4Ambiguous::test_i4_ambiguous_underspecified[\u8fd9\u91cc\u9ad8\u7ea7\u4e00\u70b9] PASSED [ 85%]
+tests/unit/test_semantic_reasoner.py::TestI5NeedsContext::test_i5_vague_param_needs_context PASSED [ 85%]
+tests/unit/test_semantic_reasoner.py::TestI5NeedsContext::test_i5_explicit_param_ready PASSED [ 85%]
+tests/unit/test_semantic_reasoner.py::TestI6Conflict::test_i6_conflict_detected PASSED [ 86%]
+tests/unit/test_semantic_reasoner.py::TestI6Conflict::test_i6_conflict_does_not_pick_side PASSED [ 86%]
+tests/unit/test_semantic_reasoner.py::TestI7NegativeAudio::test_i7_no_positive_audio_relation[\u58f0\u97f3\u522b\u62a2\u5728\u753b\u9762\u524d\u9762] PASSED [ 86%]
+tests/unit/test_semantic_reasoner.py::TestI7NegativeAudio::test_i7_no_positive_audio_relation[\u4e0d\u8981\u8ba9\u4e0b\u4e00\u53e5\u58f0\u97f3\u63d0\u524d] PASSED [ 87%]
+tests/unit/test_semantic_reasoner.py::TestI8Direction::test_i8_jcut_direction PASSED [ 87%]
+tests/unit/test_semantic_reasoner.py::TestI8Direction::test_i8_lcut_direction PASSED [ 87%]
+tests/unit/test_semantic_reasoner.py::TestI9NoHallucination::test_i9_slight_no_exact_value PASSED [ 88%]
+tests/unit/test_semantic_reasoner.py::TestI9NoHallucination::test_i9_explicit_value_preserved PASSED [ 88%]
+tests/unit/test_semantic_reasoner.py::TestI10NoLeakage::test_i10_no_tool_names_in_core_fields PASSED [ 88%]
+tests/unit/test_semantic_reasoner.py::TestI10NoLeakage::test_i10_user_terminology_exempt PASSED [ 88%]
+tests/unit/test_semantic_reasoner.py::TestI11FailClosed::test_i11_llm_connection_error PASSED [ 89%]
+tests/unit/test_semantic_reasoner.py::TestI11FailClosed::test_i11_invalid_json_fails_closed PASSED [ 89%]
+tests/unit/test_semantic_reasoner.py::TestI11FailClosed::test_i11_no_keyword_fallback PASSED [ 89%]
+tests/unit/test_semantic_reasoner.py::TestI12HeuristicRegression::test_i12_heuristic_importable PASSED [ 90%]
+tests/unit/test_semantic_reasoner.py::TestI12HeuristicRegression::test_i12_heuristic_is_shot_selection PASSED [ 90%]
+tests/unit/test_semantic_reasoner.py::TestRealModelSmoke::test_real_model_vertical_slice PASSED [ 90%]
+tests/unit/test_storage.py::test_roundtrip_director_brief PASSED         [ 91%]
+tests/unit/test_storage.py::test_roundtrip_film_observation PASSED       [ 91%]
+tests/unit/test_storage.py::test_roundtrip_edl_with_edit_item PASSED     [ 91%]
+tests/unit/test_storage.py::test_roundtrip_plan_with_decision PASSED     [ 92%]
+tests/unit/test_storage.py::test_roundtrip_ledger PASSED                 [ 92%]
+tests/unit/test_storage.py::test_list_filters_by_project_id PASSED       [ 92%]
+tests/unit/test_storage.py::test_update_partial_fields PASSED            [ 92%]
+tests/unit/test_storage.py::test_update_rejects_invalid_field PASSED     [ 93%]
+tests/unit/test_storage.py::test_update_valid_field_succeeds PASSED      [ 93%]
+tests/unit/test_storage.py::test_object_store_crud PASSED                [ 93%]
+tests/unit/test_storage.py::test_object_store_get_nonexistent_returns_none PASSED [ 94%]
+tests/unit/test_storage.py::test_object_store_get_or_raise_nonexistent_raises PASSED [ 94%]
+tests/unit/test_storage.py::test_object_store_get_or_raise_existent_returns_bytes PASSED [ 94%]
+tests/unit/test_storage.py::test_factory_functions PASSED                [ 95%]
+tests/unit/test_storage.py::test_invalidate_context PASSED               [ 95%]
+tests/unit/test_storage.py::test_delete PASSED                           [ 95%]
+tests/unit/test_story_graph_builder.py::test_empty_observations_still_returns_four_nodes_and_three_edges PASSED [ 96%]
+tests/unit/test_story_graph_builder.py::test_four_act_nodes_present PASSED [ 96%]
+tests/unit/test_story_graph_builder.py::test_three_temporal_edges_in_order PASSED [ 96%]
+tests/unit/test_story_graph_builder.py::test_shot_ids_partition_obs PASSED [ 96%]
+tests/unit/test_strategy_selector.py::test_generate_variants_one_per_config PASSED [ 97%]
+tests/unit/test_strategy_selector.py::test_compare_plans_fields_and_math PASSED [ 97%]
+tests/unit/test_strategy_selector.py::test_narrative_coverage_all_keys_present_when_empty PASSED [ 97%]
+tests/unit/test_strategy_selector.py::test_unmatched_asset_skipped_in_blur_and_exposure PASSED [ 98%]
+tests/unit/test_strategy_selector.py::test_malformed_claim_falls_back PASSED [ 98%]
+tests/unit/test_strategy_selector.py::test_select_best_duration_picks_closest_to_target PASSED [ 98%]
+tests/unit/test_strategy_selector.py::test_select_best_duration_requires_target PASSED [ 99%]
+tests/unit/test_strategy_selector.py::test_select_best_duration_returns_legal_index PASSED [ 99%]
+tests/unit/test_strategy_selector.py::test_select_best_quality_picks_highest_blur PASSED [ 99%]
+tests/unit/test_strategy_selector.py::test_generate_variants_blur_threshold_changes_edl PASSED [100%]
+
+================================== FAILURES ===================================
+________________ TestRoughcutCLI.test_dry_run_does_not_render _________________
+tests\unit\test_roughcut_cli.py:176: in test_dry_run_does_not_render
+    mod = _load_roughcut()
+          ^^^^^^^^^^^^^^^^
+tests\unit\test_roughcut_cli.py:34: in _load_roughcut
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:999: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+scripts\roughcut.py:29: in <module>
+    from observation_service.pipeline import analyze_media
+observation_service\__init__.py:10: in <module>
+    from observation_service.deterministic_analysis import analyze_shot
+observation_service\deterministic_analysis.py:12: in <module>
+    import cv2
+E   ModuleNotFoundError: No module named 'cv2'
+________________ TestRoughcutCLI.test_normal_run_calls_render _________________
+tests\unit\test_roughcut_cli.py:196: in test_normal_run_calls_render
+    mod = _load_roughcut()
+          ^^^^^^^^^^^^^^^^
+tests\unit\test_roughcut_cli.py:34: in _load_roughcut
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:999: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+scripts\roughcut.py:29: in <module>
+    from observation_service.pipeline import analyze_media
+observation_service\__init__.py:10: in <module>
+    from observation_service.deterministic_analysis import analyze_shot
+observation_service\deterministic_analysis.py:12: in <module>
+    import cv2
+E   ModuleNotFoundError: No module named 'cv2'
+_____________ TestRoughcutCLI.test_input_not_found_returns_error ______________
+tests\unit\test_roughcut_cli.py:215: in test_input_not_found_returns_error
+    mod = _load_roughcut()
+          ^^^^^^^^^^^^^^^^
+tests\unit\test_roughcut_cli.py:34: in _load_roughcut
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:999: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+scripts\roughcut.py:29: in <module>
+    from observation_service.pipeline import analyze_media
+observation_service\__init__.py:10: in <module>
+    from observation_service.deterministic_analysis import analyze_shot
+observation_service\deterministic_analysis.py:12: in <module>
+    import cv2
+E   ModuleNotFoundError: No module named 'cv2'
+___________ TestRoughcutCLI.test_validation_failure_triggers_repair ___________
+tests\unit\test_roughcut_cli.py:224: in test_validation_failure_triggers_repair
+    mod = _load_roughcut()
+          ^^^^^^^^^^^^^^^^
+tests\unit\test_roughcut_cli.py:34: in _load_roughcut
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:999: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+scripts\roughcut.py:29: in <module>
+    from observation_service.pipeline import analyze_media
+observation_service\__init__.py:10: in <module>
+    from observation_service.deterministic_analysis import analyze_shot
+observation_service\deterministic_analysis.py:12: in <module>
+    import cv2
+E   ModuleNotFoundError: No module named 'cv2'
+______________ TestRoughcutCLI.test_render_failure_returns_error ______________
+tests\unit\test_roughcut_cli.py:256: in test_render_failure_returns_error
+    mod = _load_roughcut()
+          ^^^^^^^^^^^^^^^^
+tests\unit\test_roughcut_cli.py:34: in _load_roughcut
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:999: in exec_module
+    ???
+<frozen importlib._bootstrap>:488: in _call_with_frames_removed
+    ???
+scripts\roughcut.py:29: in <module>
+    from observation_service.pipeline import analyze_media
+observation_service\__init__.py:10: in <module>
+    from observation_service.deterministic_analysis import analyze_shot
+observation_service\deterministic_analysis.py:12: in <module>
+    import cv2
+E   ModuleNotFoundError: No module named 'cv2'
+============================== warnings summary ===============================
+tests/unit/test_director_reasoner.py::test_factory_llm
+  D:\新建豆包\AI-Director\tests\unit\test_director_reasoner.py:150: UserWarning: LLM director reasoner is not implemented; returning a placeholder instance whose generate_plan() raises NotImplementedError. Use strategy='heuristic' for the deterministic reasoner.
+    reasoner = get_director_reasoner("llm", provider="ollama", config={"model": "x"})
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_dry_run_does_not_render
+FAILED tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_normal_run_calls_render
+FAILED tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_input_not_found_returns_error
+FAILED tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_validation_failure_triggers_repair
+FAILED tests/unit/test_roughcut_cli.py::TestRoughcutCLI::test_render_failure_returns_error
+================== 5 failed, 320 passed, 1 warning in 19.84s ==================
+

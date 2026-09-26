@@ -1,0 +1,26 @@
+{
+  "phase": "DIRECTOR_BRAIN_PHASE_1A_R1",
+  "base_commit": "2de3404",
+  "status": "IMPLEMENTATION_READY_FOR_REVIEW",
+  "model": "qwen2.5:14b",
+  "schema_constrained": true,
+  "real_model_benchmark": {
+    "schema_valid_rate": 1.0,
+    "positive_intent_recall": 0.8571428571428571,
+    "negative_constraint_recall": 0.625,
+    "relation_direction_accuracy": 1.0,
+    "ambiguity_abstention": 1.0,
+    "status_match": 0.65625,
+    "exact_parameter_hallucination": 0,
+    "tool_leakage": 0
+  },
+  "vertical_slice_hard_case": "PASS",
+  "new_regressions": 0,
+  "existing_product_files_modified": [
+    "director_brain/llm_adapter.py"
+  ],
+  "new_product_runtime_files": [
+    "director_brain/service.py"
+  ],
+  "heuristic_fallback": "NONE (verified)"
+}

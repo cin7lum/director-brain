@@ -1,0 +1,39 @@
+{
+  "input": "让下一句声音提前一点进入，让镜头切换更自然，但不要改变画面的切点，也不要加转场。",
+  "adapter": "director_brain.llm_adapter.LLMAdapter (production, qwen2.5:14b)",
+  "schema_constrained": true,
+  "result": {
+    "decision_id": "SD-01",
+    "creative_intent": "让下一句声音提前一点进入，让镜头切换更自然，但不要改变画面的切点，也不要加转场。",
+    "target": [],
+    "desired_relation_or_change": [
+      "audio_precedes_picture"
+    ],
+    "must_preserve": [
+      "picture_cut_position"
+    ],
+    "must_avoid": [
+      "transition"
+    ],
+    "parameterization": {
+      "magnitude": null,
+      "exact_value": null,
+      "unit": null,
+      "certainty": "unknown"
+    },
+    "required_context": [],
+    "confidence": 0.0,
+    "evidence": [],
+    "status": "NEEDS_CONTEXT",
+    "user_terminology": []
+  },
+  "checks": {
+    "audio_precedes_picture": true,
+    "picture_cut_preserved": true,
+    "transition_avoided": true,
+    "exact_value_null": true,
+    "status_needs_context": true,
+    "no_tool_leakage": true
+  },
+  "gate": "PASS"
+}
