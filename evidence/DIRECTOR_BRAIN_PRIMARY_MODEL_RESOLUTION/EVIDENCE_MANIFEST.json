@@ -1,0 +1,37 @@
+{
+  "phase": "DIRECTOR_BRAIN_PRIMARY_MODEL_RESOLUTION",
+  "base_commit": "188df15a9014af2f42e5972a7e6d6eda30c2c647",
+  "head_commit": "see git log",
+  "final_status": "NO_MODEL_ADMITTED",
+  "files": [
+    "EXECUTION_REPORT.md",
+    "BASE_COMMIT.txt",
+    "LOCAL_MODEL_CAPACITY.md",
+    "CANDIDATE_SELECTION.md",
+    "MODEL_IDENTITIES.md",
+    "PROVIDER_ADAPTER_DIFF.md",
+    "RESULTS_BY_MODEL.json",
+    "SEMANTIC_METRICS.md",
+    "NEGATIVE_CONSTRAINT_ANALYSIS.md",
+    "LATENCY_RESOURCE_USAGE.md",
+    "VERTICAL_SLICE_HARD_CASE.md",
+    "ADMISSION_DECISION.md",
+    "PRODUCT_CODE_DIFF.txt",
+    "KNOWN_ISSUES.md",
+    "glm4_flash_outputs.jsonl",
+    "glm4_flash_eval.json"
+  ],
+  "models_tested": [
+    "qwen2.5:14b (local, REJECT)",
+    "qwen3-vl:latest (local, REJECT)",
+    "glm-4-flash (external, REJECT)",
+    "doubao (POC reference only, not callable)"
+  ],
+  "models_not_tested": [
+    "qwen3:30b (hardware infeasible, user confirmed)",
+    "glm-4-air/plus (insufficient API balance)",
+    "other external providers (no credentials)"
+  ],
+  "admission_threshold_met": false,
+  "product_code_modifications": "0 existing files modified; 1 new thin transport adapter (zhipu_adapter.py)"
+}

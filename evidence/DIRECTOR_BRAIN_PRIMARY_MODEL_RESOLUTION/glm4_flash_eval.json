@@ -1,0 +1,23 @@
+{
+  "model": "glm-4-flash",
+  "total_cases": 32,
+  "schema_valid_rate": 100.0,
+  "positive_intent_recall": 62.5,
+  "negative_constraint_recall": 56.2,
+  "relation_direction_accuracy": 84.4,
+  "ambiguity_abstention_accuracy": 62.5,
+  "status_match": 46.9,
+  "exact_parameter_hallucination_count": 0,
+  "tool_api_leakage_count": 3,
+  "average_latency_ms": 9820.0,
+  "admission_threshold": {
+    "schema_valid_rate": ">=95",
+    "positive_intent_recall": ">=95",
+    "negative_constraint_recall": ">=90",
+    "relation_direction_accuracy": ">=95",
+    "ambiguity_abstention_accuracy": ">=95",
+    "status_match": ">=90",
+    "exact_parameter_hallucination": "=0",
+    "tool_api_leakage": "=0"
+  }
+}

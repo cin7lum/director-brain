@@ -1,0 +1,31 @@
+# Product Code Diff Classification
+
+## EXISTING_PRODUCT_FILES_MODIFIED
+0
+
+## NEW_PRODUCT_RUNTIME_FILES_ADDED
+1. director_brain/zhipu_adapter.py
+   - Classification: NEW_MODEL_ADAPTER_ONLY
+   - Purpose: Thin transport adapter for Zhipu OpenAI-compatible API
+   - Lines: ~170
+   - Semantic impact: None (transport only)
+
+## TEST_FILES_ADDED_OR_MODIFIED
+0
+
+## TEMPORARY_SCRIPTS (not product code, not committed)
+- _zhipu_benchmark.py — benchmark runner
+- _check_leaks.py — leakage analysis helper
+- _check_sd01.py — SD-01 output inspector
+- _zhipu_test.json — single API test output
+- _primary_model_benchmark.py — prior benchmark runner (may exist from previous round)
+
+## SEMANTIC_CHANGES
+None. The following remain unmodified:
+- director_brain/models/director_decision.py (Canonical DirectorDecision)
+- director_brain/llm_adapter.py (ollama adapter)
+- director_brain/semantic_reasoner.py (SemanticDirectorReasoner)
+- director_brain/service.py (SemanticDirectorService)
+- director_brain/heuristic_reasoner.py (HeuristicDirectorReasoner)
+- All existing tests
+- experiments/director_semantic_poc/ (POC assets)
