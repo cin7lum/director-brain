@@ -1,0 +1,35 @@
+{
+  "gate": "DIRECTOR_BRAIN_MODEL_ADMISSION",
+  "base_commit": "dd70624",
+  "result": "NO_MODEL_ADMITTED",
+  "primary_model": null,
+  "candidates": {
+    "doubao_poc": {
+      "classification": "POC_REFERENCE_ONLY",
+      "callable": false
+    },
+    "qwen2.5:14b": {
+      "classification": "REJECT_PRIMARY / LOCAL_BASELINE_CANDIDATE",
+      "callable": true
+    },
+    "qwen3-vl:latest": {
+      "classification": "REJECT_PRIMARY",
+      "callable": true
+    }
+  },
+  "thresholds": {
+    "schema_valid_rate": 0.95,
+    "positive_intent_recall": 0.95,
+    "negative_constraint_recall": 0.9,
+    "relation_direction_accuracy": 0.95,
+    "ambiguity_abstention_accuracy": 0.95,
+    "status_match": 0.9,
+    "exact_parameter_hallucination": 0,
+    "tool_api_leakage": 0,
+    "vertical_slice": "PASS"
+  },
+  "benchmark_sha256": "834239E94D634C4FC85CFE705409148C1DB4CDC6C902574B529E78AAED0FCACF",
+  "schema_sha256": "B66CD89758522ACB25AF57A8CEE0765C0433E66764C1D6F294EBDE7B16492B5F",
+  "prompt_version": "1.1",
+  "product_code_modifications": 0
+}

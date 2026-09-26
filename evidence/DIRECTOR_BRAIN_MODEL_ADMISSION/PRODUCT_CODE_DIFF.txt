@@ -1,0 +1,11 @@
+Product code modifications: 0
+
+No Director Brain product files modified.
+No new model adapter added (Doubao not callable, no thin adapter needed).
+No architecture changes.
+
+Files added (evidence only):
+  evidence/DIRECTOR_BRAIN_MODEL_ADMISSION/
+
+Temporary script (removed after use):
+  _model_admission.py (benchmark runner, not committed)
