@@ -17,6 +17,7 @@ import pytest
 from director_brain.brief_compiler import compile_brief
 from director_brain.director_reasoner import (
     DirectorReasoner,
+    EvidenceTooPoorError,
     _build_candidates,
     get_director_reasoner,
     HeuristicDirectorReasoner,
@@ -26,6 +27,7 @@ from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.story_graph import StoryGraph, StoryNode, StoryNodeType
 from director_brain.story_graph_builder import build_story_graph
 
 
@@ -300,3 +302,183 @@ def test_no_shot_selected_twice():
             f"镜头 {sorted_by_in[k].source_asset_id} 与 "
             f"{sorted_by_in[k + 1].source_asset_id} 区间重叠"
         )
+
+
+# ---------------------------------------------------------------------------
+# T2：静默降级显式化
+# ---------------------------------------------------------------------------
+
+def test_clean_input_not_degraded():
+    """证据充足的正常输入：degraded=False、无降级事件（防"永远标降级"假通过）。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=200.0),
+        _make_tech_obs(1, 20_000_000, 22_000_000, blur_score=180.0),
+        _make_tech_obs(2, 60_000_000, 62_000_000, blur_score=300.0),
+        _make_tech_obs(3, 90_000_000, 92_000_000, blur_score=150.0),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert plan.degraded is False
+    assert plan.degradation_events == []
+
+
+def test_global_relaxation_recorded():
+    """blur 全部低于阈值但曝光合格 → level=1 放宽（仅曝光）→ 必须留痕。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=5.0),
+        _make_tech_obs(1, 20_000_000, 22_000_000, blur_score=5.0),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+
+    assert plan.degraded is True
+    assert any(
+        e.startswith("relax_technical_usable:scope=global:level=1")
+        for e in plan.degradation_events
+    ), plan.degradation_events
+    # 放宽后仍应产出可用选片
+    assert len(edl.ordered_edits) >= 1
+
+
+def test_evidence_too_poor_raises():
+    """候选 >=2 却没有 2 个曝光合格 → 抛 EvidenceTooPoorError（fail-closed）。
+
+    历史行为是把全部镜头强制 usable 静默注水——已废除。
+    """
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=200.0, exposure_ok=False),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=200.0, exposure_ok=False),
+        _make_tech_obs(2, 4_000_000, 6_000_000, blur_score=200.0, exposure_ok=False),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    with pytest.raises(EvidenceTooPoorError):
+        HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+
+
+def test_single_unusable_shot_raises():
+    """唯一的镜头也不曝光合格 → 零证据锚点 → 抛 EvidenceTooPoorError。"""
+    obs = [_make_tech_obs(0, 0, 2_000_000, blur_score=200.0, exposure_ok=False)]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    with pytest.raises(EvidenceTooPoorError):
+        HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+
+
+def test_level2_force_all_recorded_when_one_anchor():
+    """有 1 个曝光锚点但原始可用不足 2 个 → level=2 强制可用必须留痕。
+
+    构造：shot0 曝光合格但 blur 低（锚点，blur 判据不过）、shot1 曝光不合格。
+    原始可用 0 个 → level1（仅曝光）剩 1 个 → level2 强制全部 → 留痕。
+    """
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=5.0, exposure_ok=True),
+        _make_tech_obs(1, 20_000_000, 22_000_000, blur_score=200.0, exposure_ok=False),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert plan.degraded is True
+    assert any(
+        e.startswith("relax_technical_usable:scope=global:level=2")
+        for e in plan.degradation_events
+    ), plan.degradation_events
+    assert len(edl.ordered_edits) >= 1
+
+
+def test_degraded_selection_forces_approval_and_low_confidence():
+    """放宽入选的镜头：confidence 按原始可用率计算 → 低分且 requires_approval。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=5.0, exposure_ok=True),
+        _make_tech_obs(1, 20_000_000, 22_000_000, blur_score=200.0, exposure_ok=False),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    _, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert plan.degraded is True
+    # 原始可用 0/2 → confidence 上限 0.4*0 + blur 项 < 0.6 → 全部要求审批
+    assert all(d.requires_approval for d in plan.decisions), [
+        (d.decision_id, d.confidence, d.requires_approval) for d in plan.decisions
+    ]
+    assert any(d.confidence is not None and d.confidence < 0.6 for d in plan.decisions)
+
+
+def test_borrowed_shot_recorded():
+    """空幕借片（从未用池借用）→ borrowed_shot 事件留痕。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=200.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=180.0),
+        _make_tech_obs(2, 90_000_000, 92_000_000, blur_score=150.0),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert plan.degraded is True
+    assert any(e.startswith("borrowed_shot:act=") for e in plan.degradation_events), (
+        plan.degradation_events
+    )
+
+
+def _act_graph(act_shots: dict[str, list[str]]) -> StoryGraph:
+    """手工构造四幕图（只含 ACT 节点），用于精确控制每幕的候选集合。"""
+    nodes = [
+        StoryNode(
+            node_id=f"act_{name}",
+            node_type=StoryNodeType.ACT,
+            ref_id=f"act_{name}",
+            attributes={"act": name, "shot_ids": ids},
+        )
+        for name, ids in act_shots.items()
+    ]
+    return StoryGraph(
+        schema_version="1.0", project_id="test_proj", created_at=0,
+        producer="test", source_ref="dummy.mp4",
+        graph_id="graph_test", version="0.1", nodes=nodes, edges=[],
+    )
+
+
+def test_act_duration_relaxation_recorded():
+    """本幕选中时长 < 目标 50% → 放宽本幕判据重选并采纳 → 必须留痕。
+
+    构造：hook 幕含 A（1s，blur=200 可用）与 C（3s，blur=5 不可用），
+    全局池另有 B（可用）保证不触发全局放宽。首选只有 A（1s < 2.25s 的
+    50%），放宽后 C 入选补足时长 → 采纳 → act 级 relax 事件。
+    """
+    obs = [
+        _make_tech_obs(0, 0, 1_000_000, blur_score=200.0),          # A：可用、短
+        _make_tech_obs(2, 6_000_000, 9_000_000, blur_score=5.0),    # C：不可用、长
+        _make_tech_obs(1, 10_000_000, 13_000_000, blur_score=200.0),  # B：可用
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs, target_duration_us=15_000_000)
+    graph = _act_graph({
+        "hook": ["shot_00000000", "shot_00000002"],
+        "develop": ["shot_00000001"],
+    })
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+
+    assert plan.degraded is True
+    act_events = [
+        e for e in plan.degradation_events
+        if e.startswith("relax_technical_usable:scope=act:hook:")
+    ]
+    assert act_events, plan.degradation_events
+    # 放宽后 hook 幕时长应被补足（> 1s）
+    hook_edits = [e for e in edl.ordered_edits if "act=hook" in (e.rationale or "")]
+    hook_dur = sum(e.out_frame - e.in_frame for e in hook_edits)
+    assert hook_dur > 1_000_000, f"hook_dur={hook_dur}"
+
+
+def test_degraded_plan_still_consistent_and_valid():
+    """降级选片的 plan↔EDL 一致性不受影响（T1 校验对降级计划同样成立）。"""
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=5.0),
+        _make_tech_obs(1, 20_000_000, 22_000_000, blur_score=5.0),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert plan.degraded is True
+    assert plan.sequence == [e.source_asset_id for e in edl.ordered_edits]
+    assert len(plan.decisions) == len(edl.ordered_edits)

@@ -3,10 +3,16 @@
 当前生产推理器为 :class:`HeuristicDirectorReasoner`（确定性算法：基于
 blur_score × vlm_multiplier 排序 + 四幕选片）。
 :class:`LLMDirectorReasoner` 为预留骨架，未实现，``generate_plan`` 抛
-:class:`NotImplementedError`；通过 ``get_director_reasoner(strategy="llm")``
+:class:`NotImplementedError`；通过 ``get_director_reasoner(strategy="llm")`
 获取时会提前发出 warning。
 
 时间统一微秒，timebase=1_000_000。
+
+T2（静默降级显式化）：任何判据放宽/兜底/借用都写入
+``plan.degradation_events`` 并置 ``plan.degraded=True``；候选池为空或
+没有任何镜头通过最低技术判据（曝光合格）时，抛
+:class:`EvidenceTooPoorError` 拒绝导演（fail-closed）；有锚点但不足时
+响亮降级继续工作，confidence 按原始可用率计算并强制 requires_approval。
 """
 from __future__ import annotations
 
@@ -28,6 +34,19 @@ PRODUCER = "heuristic_director_reasoner_v0.1"
 TIMEBASE_US = 1_000_000
 #: primary technical_usable 阈值：exposure_ok 且 blur_score 高于此值。
 _BLUR_USABLE_THRESHOLD = 10.0
+
+
+class EvidenceTooPoorError(RuntimeError):
+    """素材技术证据不足以支撑导演决策（T2 fail-closed）。
+
+    触发条件（结构性证据缺失，拒绝导演）：
+    - 素材未检出任何镜头（候选池为空）；
+    - 没有任何镜头通过最低技术判据（曝光合格）——连一个证据锚点都没有。
+
+    有锚点但不足 2 个时**不拒绝**：走响亮降级（degraded + 事件留痕 +
+    原始可用率拉低 confidence + requires_approval），保证真实世界的不完美
+    素材仍可工作，且用户看得见每一处放宽。
+    """
 
 #: 四幕顺序（用于 EDL 排序）与 shot_function 映射。
 _ACT_ORDER: dict[str, int] = {"hook": 0, "develop": 1, "peak": 2, "resolve": 3}
@@ -102,15 +121,25 @@ def _build_candidates(
             "vlm_motion": vlm_claim.get("motion_amount"),
         })
 
+    # T2：原始（未放宽）判据结果单独留档——confidence 用它计算，
+    # 防止"注水后可用率变高、置信度反而上升"的历史假象。
     for c in candidates:
         c["technical_usable"] = c["exposure_ok"] and c["blur_score"] > threshold
+        c["_primary_usable"] = c["technical_usable"]
 
+    # T2：判据放宽必须可追溯。放宽级别写入每个候选的 _usability_relaxed
+    # （0=未放宽，1=仅曝光，2=强制可用），由 generate_plan 汇总为降级事件。
+    relaxation_level = 0
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
             c["technical_usable"] = c["exposure_ok"]
+        relaxation_level = 1
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
             c["technical_usable"] = True
+        relaxation_level = 2
+    for c in candidates:
+        c["_usability_relaxed"] = relaxation_level
     return candidates
 
 
@@ -148,6 +177,28 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         ]
         candidates = _build_candidates(tech_obs, vlm_obs, self.blur_threshold)
         shot_to_obs = {o.media_asset_id: o.observation_id for o in tech_obs}
+
+        # ---- T2 fail-closed：结构性证据缺失时拒绝导演 ----
+        # 候选池为空，或没有任何镜头通过最低技术判据（曝光合格）——
+        # 连一个证据锚点都没有，成片无据可依（历史行为是静默注水）。
+        # 有锚点但不足 2 个时不拒绝：响亮降级（见 degradation_events）。
+        if not candidates or not any(c["exposure_ok"] for c in candidates):
+            exposure_ok_count = sum(1 for c in candidates if c["exposure_ok"])
+            raise EvidenceTooPoorError(
+                f"候选镜头 {len(candidates)} 个中仅 {exposure_ok_count} 个曝光合格"
+                f"——没有任何证据锚点，技术证据不足以支撑选片，"
+                f"拒绝导演（fail-closed）；请更换素材、放宽目标或人工介入"
+            )
+
+        # ---- T2：降级事件汇总（判据放宽/借用/兜底全部显式化）----
+        degradation_events: list[str] = []
+        global_relax = max(
+            (c.get("_usability_relaxed", 0) for c in candidates), default=0
+        )
+        if global_relax > 0:
+            degradation_events.append(
+                f"relax_technical_usable:scope=global:level={global_relax}"
+            )
 
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
         act_nodes = [
@@ -198,6 +249,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         act_cands = [copy.deepcopy(sorted_cands[mid])]
                     borrowed = True
                     borrowed_any = True
+                    degradation_events.append(
+                        f"borrowed_shot:act={act_name}:"
+                        f"shot={act_cands[0]['source_shot_id']}"
+                    )
                 # pool 为空：可用镜头已全被前幕选用（或仅剩 discard），本幕保持空
 
             per_act_target = max(
@@ -231,6 +286,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         relaxed_dur = sum(e.out_frame - e.in_frame for e in relaxed_edits)
                         if relaxed_dur > act_dur:
                             act_edits = relaxed_edits
+                            degradation_events.append(
+                                "relax_technical_usable:scope=act:"
+                                f"{act_name}:reason=act_duration_below_50pct"
+                            )
 
             # 兜底：本幕选不出镜头时，直接取 blur_score 最高的完整镜头
             if not act_edits and act_cands:
@@ -246,9 +305,17 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 )]
                 used_fallback = True
                 fallback_any = True
+                degradation_events.append(
+                    f"fallback_selection:act={act_name}:shot={best['source_shot_id']}"
+                )
 
             act_total = len(act_cands)
-            act_usable = sum(1 for c in act_cands if c.get("technical_usable"))
+            # T2：confidence 按原始（未放宽）可用率计算——放宽入选的镜头
+            # 会拉低置信度并触发 requires_approval，而不是注水抬高它。
+            act_usable = sum(
+                1 for c in act_cands
+                if c.get("_primary_usable", c.get("technical_usable", False))
+            )
             usable_ratio = act_usable / act_total if act_total else 0.0
             max_blur = max((c["blur_score"] for c in act_cands), default=1.0) or 1.0
             for idx, edit in enumerate(act_edits):
@@ -300,6 +367,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             open_questions.append("borrowed_shots_from_other_acts")
         if fallback_any:
             open_questions.append("fallback_selection_used")
+        if degradation_events:
+            open_questions.append("degraded_selection_used")
 
         source_hashes: list[str] = []
         seen_hashes: set[str] = set()
@@ -341,6 +410,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             decisions=decisions,
             constraints=[f"target_duration_us={brief.target_duration}"],
             open_questions=open_questions,
+            degraded=bool(degradation_events),
+            degradation_events=degradation_events,
             validation_status="pending",
             approval_state="draft",
         )

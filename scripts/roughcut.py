@@ -20,7 +20,7 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from director_brain.brief_compiler import compile_brief
-from director_brain.director_reasoner import get_director_reasoner
+from director_brain.director_reasoner import EvidenceTooPoorError, get_director_reasoner
 from director_brain.plan_repair import repair_plan
 from director_brain.plan_validator import validate_plan
 from director_brain.relation_inference import infer_relations
@@ -52,6 +52,9 @@ def _print_edl_summary(edl, plan, validation_result, relations_count):
 
     is_valid, errors = validation_result
 
+    degraded = getattr(plan, "degraded", False)
+    events = getattr(plan, "degradation_events", [])
+
     print("=" * 60)
     print("EDL 摘要")
     print("=" * 60)
@@ -60,6 +63,9 @@ def _print_edl_summary(edl, plan, validation_result, relations_count):
     print(f"  四幕分配:   {act_counts}")
     print(f"  关系边数:   {relations_count}")
     print(f"  验证状态:   {'PASS' if is_valid else 'FAIL'}")
+    print(f"  降级:       {'是（' + str(len(events)) + ' 项，见下）' if degraded else '否'}")
+    for ev in events:
+        print(f"    - {ev}")
     if errors:
         for err in errors:
             print(f"    - {err}")
@@ -118,7 +124,12 @@ def run_roughcut(
         # ---- 5. 生成计划 ----
         print("[6/7] 生成导演计划...")
         reasoner = get_director_reasoner("heuristic")
-        edl, plan = reasoner.generate_plan(brief, graph, all_obs)
+        try:
+            edl, plan = reasoner.generate_plan(brief, graph, all_obs)
+        except EvidenceTooPoorError as exc:
+            # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
+            print(f"      导演放弃（evidence_too_poor）: {exc}")
+            return 1
 
         # ---- 6. 验证 + 修复 ----
         print("[7/7] 验证计划...")

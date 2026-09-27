@@ -290,6 +290,30 @@ class TestRoughcutCLI:
         mocks["render"].assert_not_called()
         assert not output_file.exists()
 
+    def test_evidence_too_poor_fails_closed(self, monkeypatch, tmp_path):
+        """generate_plan 抛 EvidenceTooPoorError → 明确报错、返回非 0、不渲染。"""
+        from director_brain.director_reasoner import EvidenceTooPoorError
+
+        mod = _load_roughcut()
+        mocks = _patch_pipeline(monkeypatch, mod)
+        mocks["reasoner"].generate_plan.side_effect = EvidenceTooPoorError(
+            "候选镜头 3 个中仅 0 个曝光合格"
+        )
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "out.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            dry_run=False,
+        )
+
+        assert rc == 1
+        mocks["render"].assert_not_called()
+        assert not output_file.exists()
+
     def test_render_failure_returns_error(self, monkeypatch, tmp_path):
         """render_edl 抛 RuntimeError 时返回非 0。"""
         mod = _load_roughcut()

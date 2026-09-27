@@ -32,6 +32,11 @@ class DirectorDecisionPlan(BaseRecord):
     decisions: list[Decision] = Field(default_factory=list)
     constraints: list[str] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
+    #: T2：是否存在任何判据放宽/兜底/借用（静默降级显式化；正常输入为 False）
+    degraded: bool = False
+    #: T2：降级事件列表（append-only，受控前缀：relax_technical_usable /
+    #: borrowed_shot / fallback_selection）
+    degradation_events: list[str] = Field(default_factory=list)
     validation_status: str
     approval_state: str
     supersedes_plan_id: str | None = None

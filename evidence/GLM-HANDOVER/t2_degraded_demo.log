@@ -1,0 +1,10 @@
+=== 正样本：blur 低于阈值（放宽 level=1）===
+  plan.degraded          = True
+  plan.degradation_events= ['relax_technical_usable:scope=global:level=1', 'borrowed_shot:act=develop:shot=shot_00000001']
+  plan.open_questions    = ['some_decisions_require_approval', 'borrowed_shots_from_other_acts', 'degraded_selection_used']
+  选片                   = ['shot_00000000', 'shot_00000001']
+
+=== 负样本：0/2 曝光合格（历史行为：静默强制可用）===
+  [PASS] EvidenceTooPoorError: 候选镜头 2 个中仅 0 个曝光合格——没有任何证据锚点，技术证据不足以支撑选片，拒绝导演（fail-closed）；请更换素材、放宽目标或人工介入
+
+>>> T2 演示通过：降级显式留痕 + 证据不足 fail-closed。
