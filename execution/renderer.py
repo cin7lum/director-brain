@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 import subprocess
+from pathlib import Path
 import tempfile
 
 from director_brain.models.edl import EditorialDecisionList
@@ -154,6 +155,19 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
         has_audio,
     )
 
+    # 阶段 8a-1：软字幕（subtitle_refs 内的 SRT 路径，mov_text 流，可开关）
+    subtitle_inputs: list[tuple[str, str]] = []  # (srt_path, lang)
+    for ref in edl.subtitle_refs:
+        # 约定：条目为 SRT 文件路径；可选 "path|lang" 形式指定语言
+        if "|" in ref:
+            path, lang = ref.split("|", 1)
+        else:
+            path, lang = ref, "chi"
+        if Path(path).is_file():
+            subtitle_inputs.append((path, lang))
+        else:
+            logger.warning("字幕文件不存在，跳过: %s", path)
+
     out_dir = os.path.dirname(output_path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
@@ -164,13 +178,19 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
             "-y",
             "-i",
             source_video,
-            "-filter_complex",
-            filter_complex,
-            "-map",
-            "[v]",
         ]
+        for srt_path, _lang in subtitle_inputs:
+            cmd += ["-i", srt_path]
+        cmd += ["-filter_complex", filter_complex, "-map", "[v]"]
         if has_audio:
             cmd += ["-map", "[a]"]
+        # 字幕流：第 i 个 SRT 是输入 i+1（源视频为输入 0），各取其 0 号流
+        for idx, (_srt_path, lang) in enumerate(subtitle_inputs):
+            cmd += [
+                "-map", f"{idx + 1}:0",
+                "-c:s", "mov_text",
+                "-metadata:s:s:{0}".format(idx), f"language={lang}",
+            ]
         cmd += _video_codec_args(encoder) + ["-c:a", "aac", output_path]
         return cmd
 

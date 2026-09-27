@@ -1,0 +1,11 @@
+ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：Library cublas64_12.dll is not found or cannot be loaded
+[1] 观测: 技术 15 + 语音 2
+    11.9-14.4s: What brings you to the land of the gatekeepers?
+    14.4-20.1s: I'm searching for someone.
+[2] EDL: 7 镜头, 17.8s
+[3] SRT 写出: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\subtitle_e2e.mp4.srt (59 字节)
+[4] 渲染完成: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\subtitle_e2e.mp4
+[5] 成片流: ['video', 'audio', 'subtitle']
+    字幕流验证: mov_text, language=chi
+
+[PASS] 真实语音 → 成片字幕流，端到端全通。

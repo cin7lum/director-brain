@@ -217,7 +217,9 @@ def test_model_load_failure_logs_warning(caplog):
         patcher.stop()
 
     assert result == []
-    assert any("模型加载失败" in record.getMessage() for record in caplog.records)
+    # P2-a 设备协商后：cuda 失败响亮回退 CPU，全部失败有总告警
+    assert any("GPU 不可用" in record.getMessage() for record in caplog.records)
+    assert any("全部设备尝试失败" in record.getMessage() for record in caplog.records)
 
 
 # ---------------------------------------------------------------------------

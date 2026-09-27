@@ -37,32 +37,6 @@ _DEFAULT_CONFIDENCE = 0.8
 _MEDIA_HASH_PLACEHOLDER = "asr_placeholder"
 
 
-def _load_model(model_name: str):
-    """按设备策略加载 WhisperModel：auto=GPU 优先、响亮回退 CPU。
-
-    Returns:
-        (model, device)；完全失败抛出最后一次异常（由调用方降级）。
-    """
-    pref = os.environ.get("ASR_DEVICE", "auto").lower()
-    attempts = [("cuda", "float16"), ("cpu", "int8")] if pref in ("auto", "cuda") \
-        else [("cpu", "int8")]
-    last_exc: Exception | None = None
-    for device, compute in attempts:
-        try:
-            whisper_cls = _whisper_cls()
-            loaded = whisper_cls(model_name, device=device, compute_type=compute)
-            logger.info("ASR 模型加载成功: device=%s compute=%s", device, compute)
-            return loaded, device
-        except Exception as exc:  # noqa: BLE001
-            last_exc = exc
-            if device == "cuda":
-                logger.warning(
-                    "ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：%s",
-                    str(exc)[:200],
-                )
-    raise last_exc  # type: ignore[misc]
-
-
 def _whisper_cls():
     from faster_whisper import WhisperModel
 
@@ -110,58 +84,75 @@ def transcribe(
         logger.warning("ASR 不可用：import faster_whisper 失败：%s", exc)
         return []
 
-    # 模型加载失败（路径不存在 / 权重损坏 / 下载失败 / GPU 回退后仍失败）：
-    # 降级空列表并 warning
-    try:
-        model, device = _load_model(model_name)
-    except Exception as exc:
-        logger.warning("ASR 模型加载失败 (model=%s)：%s", model_name, exc)
-        return []
+    # P2-a 修正：加载与转写必须在**同一**设备尝试回路内——faster-whisper
+    # 的模型是惰性初始化，构造成功不代表该设备真能转写（实测 GPU 构造
+    # 成功、首次转写才抛 cublas 缺库）。回退判定必须以"真实转写一次"为准。
+    pref = os.environ.get("ASR_DEVICE", "auto").lower()
+    attempts = [("cuda", "float16"), ("cpu", "int8")] if pref in ("auto", "cuda")         else [("cpu", "int8")]
 
-    # 转写阶段异常：降级空列表并 warning；视频无语音 / 空 segments 属正常空结果
-    try:
-        segments, _info = model.transcribe(
-            video_path,
-            language=language,
-            vad_filter=True,
-        )
+    media_asset_id = Path(video_path).name or "unknown"
+    media_hash = _media_sha256(video_path)
+    now = int(time.time())
+    last_exc: Exception | None = None
 
-        media_asset_id = Path(video_path).name or "unknown"
-        media_hash = _media_sha256(video_path)
-        now = int(time.time())
-
-        observations: list[FilmObservation] = []
-        for index, seg in enumerate(segments):
-            text = (seg.text or "").strip()
-            observations.append(
-                FilmObservation(
-                    observation_id=f"asr_{index:04d}",
-                    media_asset_id=media_asset_id,
-                    media_hash=media_hash,
-                    start_frame=int(float(seg.start) * _TIMEBASE_US),
-                    end_frame=int(float(seg.end) * _TIMEBASE_US),
-                    timebase=_TIMEBASE_US,
-                    observation_type="speech_transcript",
-                    claim=text,
-                    provider="faster_whisper",
-                    model_version=model_name,
-                    prompt_version="n/a",
-                    confidence=_DEFAULT_CONFIDENCE,
-                    review_state="auto_generated",
-                    claim_kind=ClaimKind.MODEL_OBSERVATION,
-                    schema_version="1.0",
-                    project_id="unknown",
-                    created_at=now,
-                    producer="faster_whisper",
-                    source_ref=video_path,
-                )
+    for device, compute in attempts:
+        try:
+            whisper_cls = _whisper_cls()
+            model = whisper_cls(model_name, device=device, compute_type=compute)
+            segments, _info = model.transcribe(
+                video_path,
+                language=language,
+                vad_filter=True,
             )
-        return observations
-    except Exception as exc:
-        # 无音轨视频在 faster-whisper 内部表现为 PyAV 取音频流越界（IndexError /
-        # "tuple index out of range"），属「视频无语音」的正常空结果，不打 warning。
-        if isinstance(exc, IndexError) or "tuple index out of range" in str(exc):
-            logger.debug("ASR 无音轨/空转写结果 (video=%s)：%s", video_path, exc)
-        else:
-            logger.warning("ASR 转写失败 (video=%s)：%s", video_path, exc)
-        return []
+
+            observations: list[FilmObservation] = []
+            for index, seg in enumerate(segments):
+                text = (seg.text or "").strip()
+                observations.append(
+                    FilmObservation(
+                        observation_id=f"asr_{index:04d}",
+                        media_asset_id=media_asset_id,
+                        media_hash=media_hash,
+                        start_frame=int(float(seg.start) * _TIMEBASE_US),
+                        end_frame=int(float(seg.end) * _TIMEBASE_US),
+                        timebase=_TIMEBASE_US,
+                        observation_type="speech_transcript",
+                        claim=text,
+                        provider="faster_whisper",
+                        model_version=model_name,
+                        prompt_version="n/a",
+                        confidence=_DEFAULT_CONFIDENCE,
+                        review_state="auto_generated",
+                        claim_kind=ClaimKind.MODEL_OBSERVATION,
+                        schema_version="1.0",
+                        project_id="unknown",
+                        created_at=now,
+                        producer="faster_whisper",
+                        source_ref=video_path,
+                    )
+                )
+            logger.info("ASR 转写成功: device=%s, %d 段", device, len(observations))
+            return observations
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            # 无音轨视频在 faster-whisper 内部表现为 PyAV 取音频流越界
+            # （IndexError / "tuple index out of range"）——任何设备上都是
+            # 「视频无语音」的正常空结果，直接返回，不做设备回退。
+            if isinstance(exc, IndexError) or "tuple index out of range" in str(exc):
+                logger.debug("ASR 无音轨/空转写结果 (video=%s)：%s", video_path, exc)
+                return []
+            if device == "cuda":
+                logger.warning(
+                    "ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：%s",
+                    str(exc)[:200],
+                )
+            else:
+                logger.warning(
+                    "ASR 在 device=%s 上失败 (video=%s)：%s",
+                    device, video_path, str(exc)[:200],
+                )
+
+    logger.warning("ASR 全部设备尝试失败 (video=%s)：%s",
+                   video_path, str(last_exc)[:200])
+    return []
+
