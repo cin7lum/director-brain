@@ -2,6 +2,10 @@
 
 单源视频场景使用 ffmpeg ``filter_complex`` concat 直接渲染，全程不产生中间文件；
 ``edl_to_ffmpeg_concat`` 为多源场景预留的 concat demuxer 配置生成接口。
+
+P2-a 硬件加速：检测到 NVIDIA GPU（ffmpeg 带 h264_nvenc）时自动用硬件编码，
+失败自动回退 libx264 软编（响亮留痕）。回退同时覆盖 NVENC 最小帧尺寸限制
+（低于 145px 宽的微型视频硬件编码器会拒绝）。
 """
 from __future__ import annotations
 
@@ -13,6 +17,31 @@ import tempfile
 from director_brain.models.edl import EditorialDecisionList
 
 logger = logging.getLogger(__name__)
+
+_NVENC_CACHE: bool | None = None
+
+
+def _nvenc_available() -> bool:
+    """探测 ffmpeg 是否带 h264_nvenc 硬件编码器（结果缓存）。"""
+    global _NVENC_CACHE
+    if _NVENC_CACHE is None:
+        try:
+            result = subprocess.run(
+                ["ffmpeg", "-hide_banner", "-encoders"],
+                capture_output=True, text=True, check=False, timeout=30,
+            )
+            _NVENC_CACHE = "h264_nvenc" in (result.stdout or "")
+        except (OSError, subprocess.TimeoutExpired):
+            _NVENC_CACHE = False
+        logger.info("NVENC 检测: %s", "可用" if _NVENC_CACHE else "不可用")
+    return _NVENC_CACHE
+
+
+def _video_codec_args(encoder: str) -> list[str]:
+    """编码参数：NVENC p4+vbr(cq23) 与 x264 preset fast 质量语义对齐。"""
+    if encoder == "h264_nvenc":
+        return ["-c:v", "h264_nvenc", "-preset", "p4", "-rc", "vbr", "-cq", "23"]
+    return ["-c:v", "libx264", "-preset", "fast"]
 
 
 def _has_audio_stream(video_path: str) -> bool:
@@ -82,10 +111,20 @@ def _build_filter_complex(edl: EditorialDecisionList, has_audio: bool) -> str:
     return "".join(parts)
 
 
+def _run_ffmpeg(cmd: list[str]) -> None:
+    """执行 ffmpeg 命令，失败抛 RuntimeError（含 stderr 尾部）。"""
+    logger.debug("ffmpeg 命令: %s", " ".join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        stderr_tail = (result.stderr or "")[-2000:]
+        raise RuntimeError(f"ffmpeg render failed: {stderr_tail}")
+
+
 def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) -> str:
     """将 EDL 渲染为视频文件（单源视频主路径）。
 
     使用 ffmpeg ``filter_complex`` concat 直接裁剪并拼接镜头，不产生中间文件。
+    编码器自动选择：有 NVIDIA GPU 用 h264_nvenc 硬编，失败自动回退 libx264。
 
     Args:
         edl: 编辑决策表。
@@ -119,34 +158,33 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    cmd = [
-        "ffmpeg",
-        "-y",
-        "-i",
-        source_video,
-        "-filter_complex",
-        filter_complex,
-        "-map",
-        "[v]",
-    ]
-    if has_audio:
-        cmd += ["-map", "[a]"]
-    cmd += [
-        "-c:v",
-        "libx264",
-        "-c:a",
-        "aac",
-        "-preset",
-        "fast",
-        output_path,
-    ]
+    def _build_cmd(encoder: str) -> list[str]:
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            source_video,
+            "-filter_complex",
+            filter_complex,
+            "-map",
+            "[v]",
+        ]
+        if has_audio:
+            cmd += ["-map", "[a]"]
+        cmd += _video_codec_args(encoder) + ["-c:a", "aac", output_path]
+        return cmd
 
-    logger.debug("ffmpeg 命令: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-    if result.returncode != 0:
-        stderr_tail = (result.stderr or "")[-2000:]
-        raise RuntimeError(f"ffmpeg render failed: {stderr_tail}")
-
+    if _nvenc_available():
+        try:
+            _run_ffmpeg(_build_cmd("h264_nvenc"))
+            return output_path
+        except RuntimeError as exc:
+            # 响亮回退：硬件编码失败（驱动/最小分辨率/会话数限制）不掩盖
+            logger.warning(
+                "NVENC 硬件编码失败，回退 libx264 软编：%s",
+                str(exc)[-300:],
+            )
+    _run_ffmpeg(_build_cmd("libx264"))
     return output_path
 
 

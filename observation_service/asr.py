@@ -8,10 +8,16 @@ segment 映射成一条 :class:`~director_brain.models.film_observation.FilmObse
 异常都会通过 ``logging.warning`` 输出原因，便于区分「模型不可用」与「视频无
 语音」。视频无语音 / 转写结果为空属于正常空结果，不打 warning。时间以微秒为
 整数帧存储，``timebase=1_000_000``。
+
+P2-a 设备策略：``ASR_DEVICE`` 环境变量 = ``auto``（默认，先试 GPU
+cuda/float16，失败响亮回退 CPU int8）/ ``cuda`` / ``cpu``。GPU 需要
+CUDA 运行库（cublas/cudnn，见 .env.example 注释的安装配方）；缺库时
+auto 会自动落到 CPU，不阻断转写。
 """
 from __future__ import annotations
 
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -29,6 +35,38 @@ _DEFAULT_CONFIDENCE = 0.8
 
 #: 视频文件不可读（mock 测试 / 文件缺失）时 media_hash 的回退占位符。
 _MEDIA_HASH_PLACEHOLDER = "asr_placeholder"
+
+
+def _load_model(model_name: str):
+    """按设备策略加载 WhisperModel：auto=GPU 优先、响亮回退 CPU。
+
+    Returns:
+        (model, device)；完全失败抛出最后一次异常（由调用方降级）。
+    """
+    pref = os.environ.get("ASR_DEVICE", "auto").lower()
+    attempts = [("cuda", "float16"), ("cpu", "int8")] if pref in ("auto", "cuda") \
+        else [("cpu", "int8")]
+    last_exc: Exception | None = None
+    for device, compute in attempts:
+        try:
+            whisper_cls = _whisper_cls()
+            loaded = whisper_cls(model_name, device=device, compute_type=compute)
+            logger.info("ASR 模型加载成功: device=%s compute=%s", device, compute)
+            return loaded, device
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if device == "cuda":
+                logger.warning(
+                    "ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：%s",
+                    str(exc)[:200],
+                )
+    raise last_exc  # type: ignore[misc]
+
+
+def _whisper_cls():
+    from faster_whisper import WhisperModel
+
+    return WhisperModel
 
 
 def _media_sha256(video_path: str) -> str:
@@ -67,15 +105,15 @@ def transcribe(
 
     # 模型不可用（faster_whisper 未安装 / import 失败）：降级空列表并 warning
     try:
-        from faster_whisper import WhisperModel
+        _whisper_cls()
     except Exception as exc:
         logger.warning("ASR 不可用：import faster_whisper 失败：%s", exc)
         return []
 
-    # 模型加载失败（路径不存在 / 权重损坏 / 下载失败）：降级空列表并 warning
+    # 模型加载失败（路径不存在 / 权重损坏 / 下载失败 / GPU 回退后仍失败）：
+    # 降级空列表并 warning
     try:
-        # CPU + int8 是最稳的降级路径；GPU 不可用时不崩
-        model = WhisperModel(model_name, device="cpu", compute_type="int8")
+        model, device = _load_model(model_name)
     except Exception as exc:
         logger.warning("ASR 模型加载失败 (model=%s)：%s", model_name, exc)
         return []
