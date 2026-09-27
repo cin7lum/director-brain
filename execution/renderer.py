@@ -76,8 +76,21 @@ def _has_audio_stream(video_path: str) -> bool:
     return bool(output)
 
 
-def _build_filter_complex(edl: EditorialDecisionList, has_audio: bool) -> str:
-    """根据 EDL 剪辑点构建 ffmpeg filter_complex 字符串。"""
+def _build_filter_complex(
+    edl: EditorialDecisionList,
+    has_audio: bool,
+    audio_out_label: str = "a",
+) -> str:
+    """根据 EDL 剪辑点构建 ffmpeg filter_complex 字符串。
+
+    audio_out_label：音频链末端标签（8a-2 配乐混音时传 "abase"，混音图再
+    产出最终 [a]；无配乐时保持默认 [a]）。
+    转场（8a-3）：type=xfade 的接缝走链式 xfade/acrossfade（总时长 = Σd −
+    ΣD，offset 数学来自 :mod:`director_brain.timeline`）；cut 或全缺省走
+    concat（原路径，行为不变）。
+    """
+    from director_brain.timeline import compute_output_timeline
+
     parts: list[str] = []
     v_labels: list[str] = []
     a_labels: list[str] = []
@@ -88,27 +101,76 @@ def _build_filter_complex(edl: EditorialDecisionList, has_audio: bool) -> str:
         end_s = f"{end:.6f}"
         parts.append(
             f"[0:v]trim=start={start_s}:end={end_s},setpts=PTS-STARTPTS,"
-            f"scale=trunc(iw/2)*2:trunc(ih/2)*2[v{i}];"
+            f"settb=AVTB,scale=trunc(iw/2)*2:trunc(ih/2)*2[v{i}];"
         )
-        v_labels.append(f"[v{i}]")
+        v_labels.append(f"v{i}")
         if has_audio:
             parts.append(
                 f"[0:a]atrim=start={start_s}:end={end_s},asetpts=PTS-STARTPTS[a{i}];"
             )
-            a_labels.append(f"[a{i}]")
+            a_labels.append(f"a{i}")
 
+    timeline = compute_output_timeline(edl)
     n = len(edl.ordered_edits)
-    if has_audio:
-        # 交错排列：[v0][a0][v1][a1]...
-        interleaved: list[str] = []
-        for v, a in zip(v_labels, a_labels):
-            interleaved.extend([v, a])
-        concat_input = "".join(interleaved)
-        parts.append(f"{concat_input}concat=n={n}:v=1:a=1[v][a]")
-    else:
-        concat_input = "".join(v_labels)
-        parts.append(f"{concat_input}concat=n={n}:v=1:a=0[v]")
+    use_xfade = any(
+        tl.transition_to_next is not None
+        and tl.transition_to_next.type == "xfade"
+        for tl in timeline[: n - 1]
+    )
 
+    if not use_xfade:
+        if has_audio:
+            interleaved: list[str] = []
+            for v, a in zip(v_labels, a_labels):
+                interleaved.extend([f"[{v}][{a}]"])
+            parts.append(
+                f"{''.join(interleaved)}concat=n={n}:v=1:a=1[v][{audio_out_label}]"
+            )
+        else:
+            concat_input = "".join(f"[{v}]" for v in v_labels)
+            parts.append(f"{concat_input}concat=n={n}:v=1:a=0[v]")
+        return "".join(parts)
+
+    # ---- 链式转场：逐接缝 xfade（视频）/acrossfade（音频），cut 接缝 concat ----
+    acc_v = v_labels[0]
+    acc_a = a_labels[0] if has_audio else None
+    for k in range(n - 1):
+        tl = timeline[k]
+        junction = tl.transition_to_next
+        next_v = v_labels[k + 1]
+        is_xfade = (junction is not None and junction.type == "xfade")
+        if is_xfade:
+            dur_s = junction.duration_us / 1_000_000
+            offset_s = (tl.out_start_us + tl.duration_us - junction.duration_us) / 1_000_000
+            if offset_s < 0:
+                offset_s = 0.0
+            parts.append(
+                f"[{acc_v}][{next_v}]xfade=transition={junction.name}:"
+                f"duration={dur_s:.6f}:offset={offset_s:.6f}[vx{k}];"
+            )
+            acc_v = f"vx{k}"
+            if has_audio:
+                adur_s = ((junction.audio_duration_us or junction.duration_us)
+                          / 1_000_000)
+                parts.append(
+                    f"[{acc_a}][{a_labels[k + 1]}]acrossfade=d={adur_s:.6f}[ax{k}];"
+                )
+                acc_a = f"ax{k}"
+        else:
+            if has_audio:
+                parts.append(
+                    f"[{acc_v}][{next_v}]concat=n=2:v=1:a=0[vc{k}];"
+                    f"[{acc_a}][{a_labels[k + 1]}]concat=n=2:v=0:a=1[ac{k}];"
+                )
+                acc_v, acc_a = f"vc{k}", f"ac{k}"
+            else:
+                parts.append(f"[{acc_v}][{next_v}]concat=n=2:v=1:a=0[vc{k}];")
+                acc_v = f"vc{k}"
+
+    if has_audio:
+        parts.append(f"[{acc_v}][{acc_a}]concat=n=1:v=1:a=1[v][{audio_out_label}]")
+    else:
+        parts.append(f"[{acc_v}]null[v]")
     return "".join(parts)
 
 
@@ -147,13 +209,6 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
         raise FileNotFoundError(f"source video not found: {source_video}")
 
     has_audio = _has_audio_stream(source_video)
-    filter_complex = _build_filter_complex(edl, has_audio)
-    logger.info(
-        "render EDL: %d edits, source=%s, has_audio=%s",
-        len(edl.ordered_edits),
-        source_video,
-        has_audio,
-    )
 
     # 阶段 8a-1：软字幕（subtitle_refs 内的 SRT 路径，mov_text 流，可开关）
     subtitle_inputs: list[tuple[str, str]] = []  # (srt_path, lang)
@@ -168,21 +223,70 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
         else:
             logger.warning("字幕文件不存在，跳过: %s", path)
 
+    # 阶段 8a-2：配乐混音（audio_refs: "path|gain_db"，MVP=amix 固定增益）
+    # gain_db 缺省 -8；ducking（sidechaincompress）为二期
+    music_inputs: list[tuple[str, float]] = []
+    for ref in edl.audio_refs:
+        if "|" in ref:
+            path, gain_raw = ref.split("|", 1)
+            try:
+                gain = float(gain_raw)
+            except ValueError:
+                gain = -8.0
+        else:
+            path, gain = ref, -8.0
+        if Path(path).is_file():
+            music_inputs.append((path, gain))
+        else:
+            logger.warning("配乐文件不存在，跳过: %s", path)
+
+    # 混音图必须在命令组装**之前**完成拼接（filter_complex 是不可变字符串）
+    audio_out_label = "abase" if (music_inputs and has_audio) else "a"
+    filter_complex = _build_filter_complex(edl, has_audio, audio_out_label)
+    if music_inputs:
+        base_idx = 1 + len(subtitle_inputs)
+        total_us = sum(e.out_frame - e.in_frame for e in edl.ordered_edits)
+        total_s = f"{total_us / 1_000_000:.6f}"
+        fade_start = f"{max(0.0, total_us / 1_000_000 - 0.5):.6f}"
+        for j, (_mpath, gain) in enumerate(music_inputs):
+            in_idx = base_idx + j
+            filter_complex += (
+                f";[{in_idx}:a]aloop=loop=-1:size=2000000000,"
+                f"atrim=0:{total_s},volume={gain}dB,"
+                f"afade=t=in:d=0.5,afade=t=out:st={fade_start}:d=0.5[bg{j}]"
+            )
+        music_labels = "".join(f"[bg{j}]" for j in range(len(music_inputs)))
+        if has_audio:
+            n = 1 + len(music_inputs)
+            filter_complex += (
+                f";[abase]{music_labels}"
+                f"amix=inputs={n}:duration=first:normalize=0[a]"
+            )
+        else:
+            n = len(music_inputs)
+            filter_complex += (
+                f";{music_labels}amix=inputs={n}:duration=first:normalize=0[a]"
+            )
+
+    logger.info(
+        "render EDL: %d edits, source=%s, has_audio=%s, music=%d, subs=%d",
+        len(edl.ordered_edits), source_video, has_audio,
+        len(music_inputs), len(subtitle_inputs),
+    )
+
     out_dir = os.path.dirname(output_path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
     def _build_cmd(encoder: str) -> list[str]:
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-i",
-            source_video,
-        ]
+        cmd = ["ffmpeg", "-y", "-i", source_video]
         for srt_path, _lang in subtitle_inputs:
             cmd += ["-i", srt_path]
+        for music_path, _gain in music_inputs:
+            cmd += ["-i", music_path]
         cmd += ["-filter_complex", filter_complex, "-map", "[v]"]
-        if has_audio:
+        # 混音/原声都从 filter_complex 的 [a] 出；无音轨且无配乐则无音频流
+        if has_audio or music_inputs:
             cmd += ["-map", "[a]"]
         # 字幕流：第 i 个 SRT 是输入 i+1（源视频为输入 0），各取其 0 号流
         for idx, (_srt_path, lang) in enumerate(subtitle_inputs):

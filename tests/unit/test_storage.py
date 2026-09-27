@@ -205,7 +205,8 @@ def test_roundtrip_edl_with_edit_item(repo: SqliteRepository):
     got = repo.get(EditorialDecisionList, "e-1")
     assert got is not None
     assert got == edl
-    assert got.ordered_edits[0].transition == "cut"
+    from director_brain.models.edl import TransitionSpec
+    assert got.ordered_edits[0].transition == TransitionSpec(type="cut")
 
 
 def test_roundtrip_plan_with_decision(repo: SqliteRepository):

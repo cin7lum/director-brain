@@ -30,14 +30,13 @@
           "transition": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/$defs/TransitionSpec"
               },
               {
                 "type": "null"
               }
             ],
-            "default": null,
-            "title": "Transition"
+            "default": null
           },
           "effect_refs": {
             "items": {
@@ -103,6 +102,41 @@
           "timebase"
         ],
         "title": "EditItem",
+        "type": "object"
+      },
+      "TransitionSpec": {
+        "additionalProperties": false,
+        "description": "转场规格（挂在出点侧：本镜头与下一镜头之间；P2-b 证据包裁定）。\n\ntype=\"cut\" 为硬切（渲染器 concat 路径，缺省行为）；\ntype=\"xfade\" 走链式 xfade/acrossfade（总时长 = Σd − ΣD，时间线由\n:mod:`director_brain.timeline` 统一计算，字幕自动跟随）。",
+        "properties": {
+          "type": {
+            "default": "cut",
+            "title": "Type",
+            "type": "string"
+          },
+          "name": {
+            "default": "fade",
+            "title": "Name",
+            "type": "string"
+          },
+          "duration_us": {
+            "default": 500000,
+            "title": "Duration Us",
+            "type": "integer"
+          },
+          "audio_duration_us": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Audio Duration Us"
+          }
+        },
+        "title": "TransitionSpec",
         "type": "object"
       }
     },

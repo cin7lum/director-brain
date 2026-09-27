@@ -2,7 +2,8 @@
 
 职责边界（P2-b 证据包裁定）：
 - **导演层（本模块）**负责把素材时间线的语音观测映射到**成片时间线**
-  （按 EDL 逐镜头映射，转场引入后时间线变化时只改这里，字幕永远对齐）；
+  （时间线数学统一取自 :mod:`director_brain.timeline`——转场重叠语义在此
+  单点定义，字幕自动跟随转场，两处各算各的必然漂移）；
 - **渲染器**对字幕时间戳零假设，只负责把 SRT 文件作为流/滤镜接入。
 
 SRT 是公开固定格式（``HH:MM:SS,mmm``），本模块是薄序列化封装，非自研格式。
@@ -11,6 +12,7 @@ from __future__ import annotations
 
 from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
+from director_brain.timeline import compute_output_timeline
 
 
 def _fmt_ts(us: int) -> str:
@@ -30,31 +32,34 @@ def map_observations_to_output_timeline(
 ) -> list[dict]:
     """把素材时间线的语音观测经 EDL 映射到成片时间线。
 
-    concat 语义（无转场重叠）：输出时间 = 前序镜头时长之和 + 片内偏移。
+    时间线语义（含转场重叠）统一取自 :mod:`director_brain.timeline`：
+    - cut：下一镜头内容起点 = 累计时长；
+    - xfade：下一镜头**内容起点** = 累计输出时长 − 重叠 D（其头部 D 微秒
+      与上一镜头尾部混合呈现，字幕在该区间可能与上一条轻微叠显——真实
+      crossfade 的固有语义）。
+
     跨镜头的语音段按镜头边界切开；落在剪辑弃用区间的语音自然丢弃。
 
     Returns:
         ``[{"start_us", "end_us", "text"}]``，按成片时间升序。
     """
     segments = sorted(speech_obs, key=lambda o: o.start_frame)
+    timeline = compute_output_timeline(edl)
     mapped: list[dict] = []
-    out_cursor = 0
-    for edit in edl.ordered_edits:
-        edit_dur = edit.out_frame - edit.in_frame
+    for tl in timeline:
         for seg in segments:
-            overlap_start = max(seg.start_frame, edit.in_frame)
-            overlap_end = min(seg.end_frame, edit.out_frame)
+            overlap_start = max(seg.start_frame, tl.source_in_us)
+            overlap_end = min(seg.end_frame, tl.source_out_us)
             if overlap_end <= overlap_start:
                 continue
             text = (seg.claim or "").strip()
             if not text:
                 continue
             mapped.append({
-                "start_us": out_cursor + (overlap_start - edit.in_frame),
-                "end_us": out_cursor + (overlap_end - edit.in_frame),
+                "start_us": tl.out_start_us + (overlap_start - tl.source_in_us),
+                "end_us": tl.out_start_us + (overlap_end - tl.source_in_us),
                 "text": text,
             })
-        out_cursor += edit_dur
     mapped.sort(key=lambda m: m["start_us"])
     return mapped
 

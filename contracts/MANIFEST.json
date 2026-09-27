@@ -4,7 +4,7 @@
     "film_observation.schema.json": "3f845219d1caf97e0692ce19c6274de0b5bdd68aaf5ee235628dbca7232275ba",
     "director_brief.schema.json": "a71970e32c0203c56a88f8c61764b16210c5f985447ba103e12cbddac6a873a8",
     "story_graph.schema.json": "c3beb8b3870a40352c3d435f7fb88381bb13b06a2a74319b9c7ba213ccc729a8",
-    "editorial_decision_list.schema.json": "95ce60a71482ca22a37e3c55b221d9253caad1c54d6a1f23edcd65fe23071bf6",
+    "editorial_decision_list.schema.json": "0a46f1d91306e99e2494434bcb3e67702ef135dc762f6d6d004bad699948bfdc",
     "director_decision_plan.schema.json": "47526e48879a3e605231142b154c861c31baef68a8ce830a0d8bec6373a405bc",
     "director_decision.schema.json": "b45293325c70189397f804b09abf904a8a10ef548f6526898c77a2b5130fa83d"
   }
