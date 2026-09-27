@@ -1,4 +1,5 @@
 """POC evaluation: deterministic field comparison against human reference."""
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -19,7 +20,11 @@ def load_jsonl(path):
 
 benchmark = load_jsonl(POC_DIR / "benchmark.jsonl")
 references = {r["id"]: r for r in load_jsonl(POC_DIR / "human_reference.jsonl")}
-outputs_raw = load_jsonl(POC_DIR / "model_outputs.jsonl")
+_ap = argparse.ArgumentParser()
+_ap.add_argument("--outputs", default="model_outputs.jsonl",
+                 help="模型输出 jsonl（默认沿用历史文件）")
+_args, _ = _ap.parse_known_args()
+outputs_raw = load_jsonl(POC_DIR / _args.outputs)
 
 # ── Schema validation ──
 schema_valid = 0
