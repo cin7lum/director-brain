@@ -1,0 +1,37 @@
+[1/7] 分析媒体: sintel_ref_480p.mp4
+      技术观测: 4 条
+[2/7] 语音转写...
+      语音观测: 0 条（ASR 归因: 视频无音轨 → 0 条为预期，非通路故障）
+[3/7] 编译 Brief...
+      Brief ID: brief_sintel_ref_480p_0c0506a58bf6ad34, 目标时长: 15.0s
+[4/7] 构建故事图...
+      图节点: 4, 边: 3
+[5/7] 推断关系...
+      推断关系边: 3 条（通路: EXPERIMENTAL——影子信号，不进决策）
+        - shot_14e84f63e820baff → shot_d436405b68ace2ff [visual_transition] conf=0.499
+        - shot_d436405b68ace2ff → shot_8ba9176ce8066d29 [visual_transition] conf=0.95
+        - shot_8ba9176ce8066d29 → shot_1f1c6135af9b7940 [visual_transition] conf=0.691
+[6/7] 生成导演计划...
+[7/7] 验证计划...
+      验证未通过 (1 个错误)，执行修复...
+      物理调整 3 处（已留痕 plan.open_questions）
+      修复后验证: PASS
+============================================================
+EDL 摘要
+============================================================
+  镜头数:     4
+  总时长:     13.50s (13500000us)
+  四幕分配:   {'hook': 1, 'develop': 2, 'peak': 1}
+  关系边数:   3（影子信号，逐条见上方）
+  验证状态:   PASS
+  降级:       是（1 项，见下）
+    - relax_technical_usable:scope=global:level=2
+  通路状态（T4 shadow 协议）:
+    - vlm_semantic: EXPERIMENTAL —— VLM 逐镜头语义观测（shot_function/role/motion）
+    - relation_inference: EXPERIMENTAL —— 镜头间关系边（技术信号 + 可选 VLM 语义）
+    - asr_transcript: EXPERIMENTAL —— ASR 语音转写观测
+  EDL ID:     edl_sintel_ref_480p_75234387c79cae97_repaired
+  Plan ID:    plan_sintel_ref_480p_75234387c79cae97_repaired
+============================================================
+渲染中 -> C:/Users/ADMINI~1.001/AppData/Local/Temp/glm_e2e_t4.mp4
+渲染完成: C:/Users/ADMINI~1.001/AppData/Local/Temp/glm_e2e_t4.mp4 (253.9 KB)

@@ -28,7 +28,20 @@ from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph, StoryNode, StoryNodeType
+from director_brain.pathway_protocol import (
+    PathwayNotActiveError,
+    PathwayStatus,
+    set_pathway_status,
+)
 from director_brain.story_graph_builder import build_story_graph
+
+
+@pytest.fixture()
+def vlm_pathway_active():
+    """把 vlm_semantic 通路临时置为 ACTIVE（T4 闸门：默认 EXPERIMENTAL 不可进决策）。"""
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    yield
+    set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
 
 
 def _make_tech_obs(
@@ -193,6 +206,7 @@ def test_four_act_selection_each_act_has_decision_and_act_order():
     assert "closing" in funcs
 
 
+@pytest.mark.usefixtures("vlm_pathway_active")
 def test_candidates_include_vlm_fields():
     """直接调用 _build_candidates，验证 VLM 语义字段写入 candidate。"""
     tech_obs = [
@@ -250,6 +264,7 @@ def _vlm_competing_context():
     return brief, graph, observations
 
 
+@pytest.mark.usefixtures("vlm_pathway_active")
 def test_discard_role_gets_downgraded_in_edl():
     """blur 更高的 discard 镜头因 VLM 降权(x0.2)而落选，hero(x1.1) 被选中。"""
     brief, graph, observations = _vlm_competing_context()
@@ -262,6 +277,7 @@ def test_discard_role_gets_downgraded_in_edl():
     assert "shot_00000001" in selected_ids, selected_ids
 
 
+@pytest.mark.usefixtures("vlm_pathway_active")
 def test_vlm_rationale_propagates_to_decision():
     """VLM 权重命中时，decision.rationale 含 'vlm:' 字样。"""
     brief, graph, observations = _vlm_competing_context()

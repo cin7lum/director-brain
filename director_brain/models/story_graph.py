@@ -30,6 +30,9 @@ class StoryEdgeType(str, enum.Enum):
 
     TEMPORAL = "temporal"
     CAUSAL_CANDIDATE = "causal_candidate"
+    #: 技术信号：相邻镜头的亮度/模糊/抖动等视觉指标突变（T4 正名——
+    #: 技术突变 ≠ 情绪转折，情绪语义必须由 VLM/ASR/用户意图等语义证据支撑）
+    VISUAL_TRANSITION = "visual_transition"
     EMOTIONAL_TURN = "emotional_turn"
     NARRATIVE_LINK = "narrative_link"
 

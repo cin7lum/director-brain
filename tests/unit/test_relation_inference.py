@@ -133,7 +133,7 @@ def test_contrast_edge_on_brightness_jump():
     edges = infer_relations(obs, _graph(obs))
     contrast = [e for e in edges if e.edge_id.startswith("contrast_")]
     assert len(contrast) >= 1
-    assert contrast[0].edge_type == StoryEdgeType.EMOTIONAL_TURN
+    assert contrast[0].edge_type == StoryEdgeType.VISUAL_TRANSITION
     assert 0.5 <= contrast[0].confidence <= 0.9
 
 
@@ -233,7 +233,7 @@ def test_semantic_contrast_function_diff():
     edges = infer_relations(obs, _graph(obs))
     contrast = [e for e in edges if e.edge_id.startswith("semantic_contrast_")]
     assert len(contrast) == 1
-    assert contrast[0].edge_type == StoryEdgeType.EMOTIONAL_TURN
+    assert contrast[0].edge_type == StoryEdgeType.VISUAL_TRANSITION
     assert contrast[0].from_node == "shot_00000000"
     assert contrast[0].to_node == "shot_00000001"
 
@@ -267,7 +267,7 @@ def test_no_vlm_observations_fallback():
 
 
 def test_vlm_and_deterministic_edges_coexist():
-    """VLM 边与确定性边共存：reaction（CAUSAL_CANDIDATE）+ semantic_contrast（EMOTIONAL_TURN）。"""
+    """VLM 边与确定性边共存：reaction（CAUSAL_CANDIDATE）+ semantic_contrast（VISUAL_TRANSITION）。"""
     # blur 差 20（<50）、时长 2s → 确定性 reaction 边触发；brightness 相同 → 无确定性 contrast
     tech = [
         _make_tech_obs(0, 0, 2_000_000, blur_score=100.0, brightness_mean=100.0),
@@ -285,7 +285,7 @@ def test_vlm_and_deterministic_edges_coexist():
     assert len(reaction) == 1
     assert reaction[0].edge_type == StoryEdgeType.CAUSAL_CANDIDATE
     assert len(vlm_contrast) == 1
-    assert vlm_contrast[0].edge_type == StoryEdgeType.EMOTIONAL_TURN
+    assert vlm_contrast[0].edge_type == StoryEdgeType.VISUAL_TRANSITION
 
     # 同一对镜头允许不同类型边共存，但 (from, to, type) 不重复
     keys = [(e.from_node, e.to_node, e.edge_type) for e in edges]

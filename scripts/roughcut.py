@@ -21,6 +21,8 @@ if _PROJECT_ROOT not in sys.path:
 
 from director_brain.brief_compiler import compile_brief
 from director_brain.director_reasoner import EvidenceTooPoorError, get_director_reasoner
+from director_brain.pathway_protocol import describe as describe_pathways
+from director_brain.pathway_protocol import get_pathway_status
 from director_brain.plan_repair import repair_plan
 from director_brain.plan_validator import validate_plan
 from director_brain.relation_inference import infer_relations
@@ -28,12 +30,13 @@ from director_brain.story_graph_builder import build_story_graph
 from execution.renderer import render_edl
 from observation_service.pipeline import analyze_media
 from observation_service.asr import transcribe
+from observation_service.media_info import probe_audio_stream
 
 _DEFAULT_TARGET_DURATION = 15  # 秒
 
 
-def _print_edl_summary(edl, plan, validation_result, relations_count):
-    """打印 EDL 摘要：镜头数、总时长、四幕分配、验证状态。"""
+def _print_edl_summary(edl, plan, validation_result, relations, pathway_report):
+    """打印 EDL 摘要：镜头数、总时长、四幕分配、验证状态、通路状态。"""
     edits = edl.ordered_edits
     total_us = sum(e.out_frame - e.in_frame for e in edits)
     total_s = total_us / 1_000_000
@@ -61,7 +64,7 @@ def _print_edl_summary(edl, plan, validation_result, relations_count):
     print(f"  镜头数:     {len(edits)}")
     print(f"  总时长:     {total_s:.2f}s ({total_us}us)")
     print(f"  四幕分配:   {act_counts}")
-    print(f"  关系边数:   {relations_count}")
+    print(f"  关系边数:   {len(relations)}（影子信号，逐条见上方）")
     print(f"  验证状态:   {'PASS' if is_valid else 'FAIL'}")
     print(f"  降级:       {'是（' + str(len(events)) + ' 项，见下）' if degraded else '否'}")
     for ev in events:
@@ -69,6 +72,8 @@ def _print_edl_summary(edl, plan, validation_result, relations_count):
     if errors:
         for err in errors:
             print(f"    - {err}")
+    if pathway_report:
+        print(f"  {pathway_report.replace(chr(10), chr(10) + '  ')}")
     print(f"  EDL ID:     {edl.edl_id}")
     print(f"  Plan ID:    {plan.plan_id}")
     print("=" * 60)
@@ -101,8 +106,25 @@ def run_roughcut(
         print(f"      技术观测: {len(tech_obs)} 条")
 
         print("[2/7] 语音转写...")
+        track = probe_audio_stream(input_path)
         speech_obs = transcribe(input_path)
-        print(f"      语音观测: {len(speech_obs)} 条")
+        if not track.ok:
+            print(
+                f"      语音观测: {len(speech_obs)} 条"
+                f"（ASR 归因: 音轨探测失败——{track.reason}）"
+            )
+        elif not track.has_audio:
+            print(
+                f"      语音观测: {len(speech_obs)} 条"
+                f"（ASR 归因: 视频无音轨 → 0 条为预期，非通路故障）"
+            )
+        elif speech_obs:
+            print(f"      语音观测: {len(speech_obs)} 条（ASR 归因: 有音轨且有转写）")
+        else:
+            print(
+                "      语音观测: 0 条"
+                "（ASR 归因: 有音轨但无有效转写——静音/无语音，详见服务日志）"
+            )
 
         all_obs = tech_obs + speech_obs
 
@@ -124,10 +146,19 @@ def run_roughcut(
         graph = build_story_graph(brief, all_obs)
         print(f"      图节点: {len(graph.nodes)}, 边: {len(graph.edges)}")
 
-        # ---- 4. 关系推断 ----
+        # ---- 4. 关系推断（影子信号：全量上报，不并入图、不进决策）----
         print("[5/7] 推断关系...")
         relations = infer_relations(all_obs, graph)
-        print(f"      推断关系边: {len(relations)} 条")
+        relation_status = get_pathway_status("relation_inference")
+        print(
+            f"      推断关系边: {len(relations)} 条"
+            f"（通路: {relation_status.value}——影子信号，不进决策）"
+        )
+        for edge in relations:
+            print(
+                f"        - {edge.from_node} → {edge.to_node} "
+                f"[{edge.edge_type.value}] conf={edge.confidence}"
+            )
 
         # ---- 5. 生成计划 ----
         print("[6/7] 生成导演计划...")
@@ -150,7 +181,7 @@ def run_roughcut(
                 # Plan=导演依据：修复器无权增删镜头，物理修复不可行时 fail-closed 上抛
                 print(f"      修复放弃（repair_requires_director）: {outcome.reason_code}")
                 print(f"      原因: {outcome.reason}")
-                _print_edl_summary(edl, plan, validation_result, len(relations))
+                _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
                 return 1
             edl, plan = outcome.edl, outcome.plan
             if outcome.adjustments:
@@ -160,7 +191,7 @@ def run_roughcut(
             print(f"      修复后验证: {'PASS' if is_valid else 'FAIL'}")
 
         # ---- 打印摘要 ----
-        _print_edl_summary(edl, plan, validation_result, len(relations))
+        _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
 
         # ---- 7. 渲染 ----
         if dry_run:

@@ -26,6 +26,7 @@ from director_brain.plan_repair import (
     REASON_DURATION_UNREACHABLE,
     RepairOutcome,
 )
+from observation_service.media_info import AudioTrackInfo
 
 
 def _load_roughcut():
@@ -145,6 +146,10 @@ def _patch_pipeline(monkeypatch, mod, *, validate_result=(True, []), repair_resu
 
     monkeypatch.setattr(mod, "analyze_media", mock_analyze)
     monkeypatch.setattr(mod, "transcribe", mock_transcribe)
+    monkeypatch.setattr(
+        mod, "probe_audio_stream",
+        MagicMock(return_value=AudioTrackInfo(ok=True, has_audio=False)),
+    )
     monkeypatch.setattr(mod, "compile_brief", mock_brief)
     monkeypatch.setattr(mod, "build_story_graph", mock_graph)
     monkeypatch.setattr(mod, "infer_relations", mock_infer)
@@ -242,6 +247,29 @@ class TestRoughcutCLI:
 
         assert rc == 0
         mocks["render"].assert_called_once()
+
+    def test_summary_reports_pathway_status_and_asr_attribution(
+        self, monkeypatch, tmp_path, capsys
+    ):
+        """T4：摘要必须含通路状态表与 ASR 归因（禁止静默 0 条）。"""
+        mod = _load_roughcut()
+        mocks = _patch_pipeline(monkeypatch, mod)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "output.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            dry_run=True,
+        )
+        out = capsys.readouterr().out
+
+        assert rc == 0
+        assert "通路状态（T4 shadow 协议）" in out
+        assert "vlm_semantic: EXPERIMENTAL" in out
+        assert "ASR 归因: 视频无音轨" in out  # 探测桩 has_audio=False
 
     def test_input_not_found_returns_error(self, tmp_path):
         """输入视频不存在时返回非 0，不抛异常。"""

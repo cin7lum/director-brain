@@ -1,16 +1,22 @@
-"""M2.2 Relation Inference：从确定性技术指标推断镜头间叙事关系。
+"""M2.2 Relation Inference：从确定性技术指标推断镜头间关系边。
 
 迁移 GEN-1 Tier-A 规则到确定性实现（当前无 VLM 标签，用 OpenCV 技术指标替代）：
 
 - REACTION：相邻镜头 blur 差异小（|Δblur|<50）且两镜头时长均在
   0.5s-8s → 动作连续，edge_type=CAUSAL_CANDIDATE。
 - CONTRAST：相邻镜头 brightness 突变（|Δbrightness|>60）或 blur 突变
-  （|Δblur|>100）或 shake 相对比值 >=3 → 情绪转折，edge_type=EMOTIONAL_TURN。
+  （|Δblur|>100）或 shake 相对比值 >=3 → 视觉突变，edge_type=VISUAL_TRANSITION。
+  （T4 正名：技术指标突变在电影语义上不等于情绪转折——亮度突变可能只是
+  室内外切换。EMOTIONAL_TURN 保留在枚举中，供未来真正的语义证据
+  （VLM 情绪观测/用户意图）使用，技术信号一律不得直推情绪语义。）
 - MONTAGE：连续 3+ 个镜头每个时长 <1s → 快速蒙太奇，对序列内每对相邻镜头
   加一条 TEMPORAL 边。
 
 边界：只处理 deterministic_technical 观测；空观测或 <2 个镜头返回空列表，
 不抛异常。同一对 (from, to, 关系类型) 只产出一条边。
+
+T4 通路状态：本模块产出为 SHADOW 信号——主链（roughcut）不将其并入
+故事图、不传给 reasoner，只做全量上报（逐条边，不只计数）。
 """
 from __future__ import annotations
 
@@ -129,7 +135,7 @@ def _contrast_edge(a: FilmObservation, b: FilmObservation, ma: dict, mb: dict) -
         edge_id=f"contrast_{a.media_asset_id}__to__{b.media_asset_id}",
         from_node=a.media_asset_id,
         to_node=b.media_asset_id,
-        edge_type=StoryEdgeType.EMOTIONAL_TURN,
+        edge_type=StoryEdgeType.VISUAL_TRANSITION,
         inference_status=INFERENCE_STATUS_INFERRED,
         evidence_refs=[a.observation_id, b.observation_id],
         confidence=round(confidence, 3),
@@ -176,7 +182,8 @@ def _vlm_semantic_edges(
     VLM 观测（``claim_kind=MODEL_OBSERVATION``）。
 
     - SEMANTIC_CONTINUITY：两镜头 ``proposed_role_v2`` 相同 → CAUSAL_CANDIDATE。
-    - SEMANTIC_CONTRAST：两镜头 ``shot_function`` 落在高对比集合 → EMOTIONAL_TURN。
+    - SEMANTIC_CONTRAST：两镜头 ``shot_function`` 落在高对比集合 → VISUAL_TRANSITION
+      （镜头功能对比属风格信号，仍非情绪证据）。
     - DISCARD_FILTER：任一镜头 role=discard，跳过该配对。
     """
     edges: list[StoryEdge] = []
@@ -216,7 +223,7 @@ def _vlm_semantic_edges(
                 edge_id=f"semantic_contrast_{a.media_asset_id}__to__{b.media_asset_id}",
                 from_node=a.media_asset_id,
                 to_node=b.media_asset_id,
-                edge_type=StoryEdgeType.EMOTIONAL_TURN,
+                edge_type=StoryEdgeType.VISUAL_TRANSITION,
                 inference_status=INFERENCE_STATUS_INFERRED,
                 evidence_refs=[va.observation_id, vb.observation_id],
                 confidence=_VLM_CONTRAST_CONFIDENCE,

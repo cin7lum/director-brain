@@ -28,6 +28,7 @@ from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
+from director_brain.pathway_protocol import ensure_decision_use_allowed
 from director_brain.providers.heuristic import generate_edl, MIN_CLIP_US
 
 PRODUCER = "heuristic_director_reasoner_v0.1"
@@ -88,12 +89,19 @@ def _build_candidates(
     technical_usable 主条件为 ``exposure_ok and blur_score > threshold``；过滤后可用
     候选 <2 时逐级放宽（去掉 blur 阈值 → 全部可用），保证至少有候选。
 
+    T4 通路闸门：``vlm_obs`` 非空即意味着 VLM 信号将影响选片排序（决策），
+    必须 ``vlm_semantic`` 通路处于 ACTIVE，否则抛
+    :class:`PathwayNotActiveError`（fail-closed；影子期的 VLM 信号只记录不驱动）。
+
     若传入 ``vlm_obs``，从中筛选 ``claim_kind == MODEL_OBSERVATION`` 的 VLM
     语义观测，按 ``media_asset_id`` 建立 claim 映射，把
     ``shot_function / proposed_role_v2 / motion_amount`` 作为
     ``vlm_shot_function / vlm_role / vlm_motion`` 写入 candidate；无对应
     VLM 观测时这三个字段为 ``None``（``_vlm_multiplier`` 返回 1.0，行为不变）。
     """
+    if vlm_obs:
+        ensure_decision_use_allowed("vlm_semantic")
+
     vlm_by_shot: dict[str, dict] = {}
     if vlm_obs:
         for o in vlm_obs:
