@@ -30,6 +30,11 @@ from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
 from director_brain.pathway_protocol import ensure_decision_use_allowed
 from director_brain.providers.heuristic import generate_edl, MIN_CLIP_US
+from director_brain.intent_constraints import (
+    TechnicalAvoidRule,
+    candidate_violated_rules,
+    interpret_constraints,
+)
 
 PRODUCER = "heuristic_director_reasoner_v0.1"
 TIMEBASE_US = 1_000_000
@@ -124,6 +129,9 @@ def _build_candidates(
             "blur_score": blur if blur is not None else 0.0,
             "exposure_ok": exposure_ok,
             "_obs_id": o.observation_id,
+            # P1-a：完整 claim 指标透传（意图约束解释器按需读取
+            # brightness_mean / shake_score 等）
+            "_claim_metrics": data,
             "vlm_shot_function": vlm_claim.get("shot_function"),
             "vlm_role": vlm_claim.get("proposed_role_v2"),
             "vlm_motion": vlm_claim.get("motion_amount"),
@@ -206,6 +214,40 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         if global_relax > 0:
             degradation_events.append(
                 f"relax_technical_usable:scope=global:level={global_relax}"
+            )
+
+        # ---- P1-a：意图约束解释与过滤（must_avoid 技术子集）----
+        # 用户约束不再是一张单程票：技术词表内的 must_avoid 生成排除规则
+        # （选片过滤 + 编码进 plan.constraints 供 validator 判红）；语义类
+        # 约束诚实标注"当前证据无法验证"，不静默假装执行。
+        directives = interpret_constraints(brief)
+        constraint_questions: list[str] = []
+        applied_rules: list[TechnicalAvoidRule] = []
+        if directives.avoid_rules:
+            applied_rules = [rule for _, rule in directives.avoid_rules]
+            kept: list[dict] = []
+            for c in candidates:
+                violated = candidate_violated_rules(c, applied_rules)
+                if violated:
+                    for rule in violated:
+                        constraint_questions.append(
+                            f"constraint: must_avoid「{rule.term}」排除镜头 "
+                            f"{c['source_shot_id']}"
+                            f"（{rule.metric} {rule.predicate} {rule.threshold}）"
+                        )
+                else:
+                    kept.append(c)
+            if not kept:
+                raise EvidenceTooPoorError(
+                    f"全部 {len(candidates)} 个候选镜头均违反 must_avoid 约束"
+                    f"（{[r.term for r in applied_rules]}）——素材无法满足用户"
+                    f"约束，拒绝导演（fail-closed）；请更换素材或调整意图"
+                )
+            candidates = kept
+        for kind, text in directives.unverifiable:
+            constraint_questions.append(
+                f"constraint_unverifiable: {kind}「{text}」"
+                f"（当前技术观测无法验证语义内容，待语义证据通路）"
             )
 
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
@@ -377,6 +419,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             open_questions.append("fallback_selection_used")
         if degradation_events:
             open_questions.append("degraded_selection_used")
+        open_questions.extend(constraint_questions)
 
         source_hashes: list[str] = []
         seen_hashes: set[str] = set()
@@ -416,7 +459,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             film_state_version="0.1",
             sequence=[e.source_asset_id for e in edits],
             decisions=decisions,
-            constraints=[f"target_duration_us={brief.target_duration}"],
+            constraints=[f"target_duration_us={brief.target_duration}"]
+            + [rule.encode() for rule in applied_rules],
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,

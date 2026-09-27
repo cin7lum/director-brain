@@ -13,18 +13,41 @@
    EDL 静默分裂仍报 PASS）
 8. plan↔EDL 一致性：所有 ``decision.shot_refs`` 摊平后与 EDL 的
    source_asset_id 集合一致（多重集比较，T1 修复新增）
+9. must_avoid 技术约束：``plan.constraints`` 中由意图约束解释器编码的
+   ``must_avoid:<metric><op>:<threshold>:<term>`` 条目，对每条 edit 的
+   观测指标判红（P1-a 新增——用户"避免模糊"等约束从安慰剂变为硬校验）
 
 Validator 如实报告所有错误，不做修复——修复由 :mod:`plan_repair` 或人工决定。
 """
 from __future__ import annotations
 
+import json
 import re
 
+from director_brain.intent_constraints import TechnicalAvoidRule
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
 
 _TARGET_DUR_RE = re.compile(r"target_duration_us=(\d+)")
+_MUST_AVOID_RE = re.compile(r"must_avoid:([a-z_]+)([<>])([0-9.]+):(.+)")
+
+
+def _parse_must_avoid_constraints(constraints: list[str]) -> list[TechnicalAvoidRule]:
+    """从 plan.constraints 解码 must_avoid 技术约束（P1-a 编码的逆操作）。"""
+    rules: list[TechnicalAvoidRule] = []
+    for c in constraints:
+        m = _MUST_AVOID_RE.match(c.strip())
+        if not m:
+            continue
+        metric, op, threshold, term = m.group(1), m.group(2), m.group(3), m.group(4)
+        rules.append(TechnicalAvoidRule(
+            term=term,
+            metric=metric,
+            predicate="below" if op == "<" else "above",
+            threshold=float(threshold),
+        ))
+    return rules
 
 
 def validate_plan(
@@ -103,6 +126,27 @@ def validate_plan(
             f"plan/edl split: flattened decision.shot_refs {sorted(shot_refs)} != "
             f"EDL source_asset_id set {sorted(edl_ids)}"
         )
+
+    # ---- Rule 9: must_avoid 技术约束判红（P1-a 新增）----
+    avoid_rules = _parse_must_avoid_constraints(plan.constraints)
+    if avoid_rules:
+        obs_metrics: dict[str, dict] = {}
+        for o in observations:
+            try:
+                data = json.loads(o.claim)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if isinstance(data, dict):
+                obs_metrics[o.media_asset_id] = data
+        for e in edits:
+            metrics = obs_metrics.get(e.source_asset_id, {})
+            for rule in avoid_rules:
+                if rule.violated(metrics):
+                    errors.append(
+                        f"must_avoid violation: 「{rule.term}」 edit "
+                        f"{e.source_asset_id} {rule.metric} 违反 "
+                        f"{rule.predicate} {rule.threshold}"
+                    )
 
     return (len(errors) == 0, errors)
 
