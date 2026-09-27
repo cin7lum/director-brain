@@ -1,0 +1,2 @@
+base import OK: analyze_media + validate_plan + numpy 2.5.3 + cv2 5.0.0
+import_exit=0

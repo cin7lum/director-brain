@@ -23,6 +23,10 @@ from unittest.mock import patch
 
 import pytest
 
+# T3：ASR 是可选依赖（pyproject [asr] 组）。缺 faster_whisper 时整模块
+# skip（不是 fail）——"可选功能缺依赖优雅降级"的标准形态。
+pytest.importorskip("faster_whisper")
+
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from observation_service.asr import transcribe
 

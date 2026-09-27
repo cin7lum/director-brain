@@ -4,6 +4,17 @@ __pycache__/
 *.pyo
 *.pyd
 
+# 环境与密钥（.env 永不入库；模板见 .env.example）
+.env
+.env.local
+.venv/
+venv/
+
+# 构建/分发产物（pip install -e . 会在仓内生成 build/，属可再生工件）
+build/
+dist/
+*.egg-info/
+
 # pytest
 .pytest_cache/
 

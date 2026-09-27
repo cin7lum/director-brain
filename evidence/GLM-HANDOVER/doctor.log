@@ -1,0 +1,10 @@
+[OK] python 3.14.0（要求 >=3.11）
+[OK] pydantic（数据契约）
+[OK] numpy（确定性分析）
+[OK] opencv-python（镜头切分/技术观测）
+[OK] faster-whisper（ASR 语音转写（可选，缺省跳过））
+[OK] ffmpeg（渲染成片）
+[OK] ffprobe（媒体元信息）
+[OK] .env 存在（字段: VLM_PROVIDER, VLM_MODEL, OLLAMA_BASE_URL；值不打印）
+==================================================
+环境自检通过：主链可运行（可选依赖缺失的功能会自动跳过）。
