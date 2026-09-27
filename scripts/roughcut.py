@@ -271,6 +271,15 @@ def run_roughcut(
         result_path = render_edl(edl, input_path, output_path)
         file_size = os.path.getsize(result_path)
         print(f"渲染完成: {result_path} ({file_size / 1024:.1f} KB)")
+        # P1 配套：剪辑清单 sidecar（L1 指标脚本 / 审计 / 复算的数据源）
+        try:
+            edl_json = f"{output_path}.edl.json"
+            plan_json = f"{output_path}.plan.json"
+            Path(edl_json).write_text(edl.model_dump_json(indent=2), encoding="utf-8")
+            Path(plan_json).write_text(plan.model_dump_json(indent=2), encoding="utf-8")
+            print(f"      剪辑清单: {edl_json} + {plan_json}")
+        except Exception as exc:  # noqa: BLE001
+            print(f"      警告：剪辑清单写入失败（L1 指标将缺少 EDL 维度）：{exc}")
         _safe_log(ledger, plan.plan_id, "render_completed", {
             "output_path": result_path,
             "file_size_bytes": file_size,
