@@ -14,10 +14,11 @@ def restore_statuses():
         pp.set_pathway_status(name, pp.PathwayStatus.EXPERIMENTAL)
 
 
-def test_defaults_all_experimental():
-    """三条通路默认 EXPERIMENTAL（止血态，不可进决策）。"""
-    for name in ("vlm_semantic", "relation_inference", "asr_transcript"):
-        assert pp.get_pathway_status(name) is pp.PathwayStatus.EXPERIMENTAL
+def test_defaults_experimental_with_asr_shadow():
+    """vlm/relation 默认 EXPERIMENTAL（止血态）；asr 已随主链计算+归因上报 → SHADOW。"""
+    assert pp.get_pathway_status("vlm_semantic") is pp.PathwayStatus.EXPERIMENTAL
+    assert pp.get_pathway_status("relation_inference") is pp.PathwayStatus.EXPERIMENTAL
+    assert pp.get_pathway_status("asr_transcript") is pp.PathwayStatus.SHADOW
 
 
 def test_describe_lists_all_pathways():

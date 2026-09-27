@@ -46,7 +46,9 @@ class UnknownPathwayError(ValueError):
 _STATUS: dict[str, PathwayStatus] = {
     "vlm_semantic": PathwayStatus.EXPERIMENTAL,
     "relation_inference": PathwayStatus.EXPERIMENTAL,
-    "asr_transcript": PathwayStatus.EXPERIMENTAL,
+    #: ASR 已随主链计算并全量归因上报（T4），其 Brief 消费不驱动选片——
+    #: 现实角色即影子，故默认 SHADOW 而非 EXPERIMENTAL。
+    "asr_transcript": PathwayStatus.SHADOW,
 }
 
 #: 各通路的一句话职责（上报用）。

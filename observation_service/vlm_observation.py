@@ -159,10 +159,19 @@ def batch_vlm_observations(
     """
     if adapter is None:
         settings = load_settings()
-        adapter = OllamaVLMAdapter(
-            model=settings.vlm_model,
-            base_url=settings.ollama_base_url,
-        )
+        if settings.vlm_provider == "zhipu":
+            # P1-c：配置诚实化——vlm_provider 配置此前是假的（硬编码 Ollama）
+            from observation_service.zhipu_vlm_adapter import ZhipuVLMAdapter
+
+            adapter = ZhipuVLMAdapter(
+                api_key=settings.zhipu_api_key,
+                model=settings.vlm_model,
+            )
+        else:
+            adapter = OllamaVLMAdapter(
+                model=settings.vlm_model,
+                base_url=settings.ollama_base_url,
+            )
 
     model_version = _resolve_model_version(adapter)
 

@@ -48,7 +48,7 @@ def load_settings() -> Settings:
     return Settings(
         text_llm_provider=_env("TEXT_LLM_PROVIDER", "zhipu"),
         text_llm_model=_env("TEXT_LLM_MODEL", "glm-4-flash"),
-        vlm_provider=_env("VLM_PROVIDER", "zhipu"),
+        vlm_provider=_env("VLM_PROVIDER", "ollama"),
         vlm_model=_env("VLM_MODEL", "glm-4.6v-flash"),
         ollama_base_url=_env("OLLAMA_BASE_URL", "http://localhost:11434"),
         zhipu_api_key=_env("ZHIPU_API_KEY"),

@@ -150,6 +150,8 @@ def _patch_pipeline(monkeypatch, mod, *, validate_result=(True, []), repair_resu
         mod, "probe_audio_stream",
         MagicMock(return_value=AudioTrackInfo(ok=True, has_audio=False)),
     )
+    # 默认禁用账本（避免测试写真实 sqlite）；账本专项测试自行覆盖
+    monkeypatch.setattr(mod, "_open_ledger", MagicMock(return_value=None))
     monkeypatch.setattr(mod, "compile_brief", mock_brief)
     monkeypatch.setattr(mod, "build_story_graph", mock_graph)
     monkeypatch.setattr(mod, "infer_relations", mock_infer)
@@ -270,6 +272,87 @@ class TestRoughcutCLI:
         assert "通路状态（T4 shadow 协议）" in out
         assert "vlm_semantic: EXPERIMENTAL" in out
         assert "ASR 归因: 视频无音轨" in out  # 探测桩 has_audio=False
+
+    def test_render_gate_blocks_invalid_final(self, monkeypatch, tmp_path):
+        """P1-c 渲染闸门：修复后验证仍 FAIL → 拒绝渲染，返回非 0。"""
+        mod = _load_roughcut()
+        edl = _make_edl()
+        plan = _make_plan()
+
+        mock_validate = MagicMock(side_effect=[
+            (False, ["overlap"]),
+            (False, ["duration out of range"]),  # 修复后仍不合格
+        ])
+        mock_repair = MagicMock(return_value=RepairOutcome(
+            status="ok", edl=edl, plan=plan, adjustments=["truncate:shot_000"],
+        ))
+
+        mocks = _patch_pipeline(monkeypatch, mod, validate_result=None)
+        monkeypatch.setattr(mod, "validate_plan", mock_validate)
+        monkeypatch.setattr(mod, "repair_plan", mock_repair)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "out.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            dry_run=False,
+        )
+
+        assert rc == 1
+        mocks["render"].assert_not_called()
+        assert not output_file.exists()
+
+    def test_validation_status_written_back(self, monkeypatch, tmp_path):
+        """P1-c：主链验证 PASS 后 plan.validation_status 不再停留 pending。"""
+        mod = _load_roughcut()
+        plan = _make_plan()
+        assert plan.validation_status == "valid"  # 测试夹具本身是 valid
+        plan.validation_status = "pending"
+
+        mocks = _patch_pipeline(monkeypatch, mod)
+        mocks["reasoner"].generate_plan.return_value = (_make_edl(), plan)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "output.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file), output_path=str(output_file), dry_run=True,
+        )
+        assert rc == 0
+        assert plan.validation_status == "valid"
+
+    def test_ledger_entries_written_to_sqlite(self, monkeypatch, tmp_path):
+        """P1-c 账本接线：主流程把 plan_generated/plan_validated 写进 sqlite。"""
+        mod = _load_roughcut()
+        real_open_ledger = mod._open_ledger  # 桩会替换它，测试需恢复真实实现
+        mocks = _patch_pipeline(monkeypatch, mod)
+        monkeypatch.setattr(mod, "_open_ledger", real_open_ledger)
+        # 账本打开真实 sqlite（指向临时目录）
+        db_path = tmp_path / "ledger.db"
+        monkeypatch.setenv("STORAGE_BACKEND", "sqlite")
+        monkeypatch.setenv("SQLITE_PATH", str(db_path))
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "output.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file), output_path=str(output_file), dry_run=True,
+        )
+        assert rc == 0
+        assert db_path.exists()
+
+        from storage.sqlite_repository import SqliteRepository
+        repo = SqliteRepository(str(db_path))
+        from director_brain.audit_trail import get_decision_history
+        history = get_decision_history(repo, "plan_test")
+        actions = [h.action for h in history]
+        assert "plan_generated" in actions
+        assert "plan_validated" in actions
 
     def test_input_not_found_returns_error(self, tmp_path):
         """输入视频不存在时返回非 0，不抛异常。"""

@@ -19,7 +19,9 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
+from director_brain.audit_trail import log_decision
 from director_brain.brief_compiler import compile_brief
+from director_brain.config import load_settings
 from director_brain.director_reasoner import EvidenceTooPoorError, get_director_reasoner
 from director_brain.pathway_protocol import describe as describe_pathways
 from director_brain.pathway_protocol import get_pathway_status
@@ -33,6 +35,37 @@ from observation_service.asr import transcribe
 from observation_service.media_info import probe_audio_stream
 
 _DEFAULT_TARGET_DURATION = 15  # 秒
+
+
+def _open_ledger():
+    """打开决策账本（审计留痕）。fail-soft：打开失败打警告并返回 None
+    （账本故障不阻断出片，但每次都会响亮提示——审计降级也必须可见）。"""
+    try:
+        settings = load_settings()
+        if settings.storage_backend != "sqlite":
+            print(
+                f"      警告：账本未启用（storage_backend={settings.storage_backend}，"
+                f"当前仅支持 sqlite）——本次运行不留审计记录"
+            )
+            return None
+        db_path = settings.sqlite_path
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        from storage.sqlite_repository import SqliteRepository
+
+        return SqliteRepository(db_path)
+    except Exception as exc:  # noqa: BLE001
+        print(f"      警告：账本打开失败（审计留痕降级）：{type(exc).__name__}: {exc}")
+        return None
+
+
+def _safe_log(ledger, decision_id: str, action: str, detail: dict) -> None:
+    """账本写入的 fail-soft 包装：写入失败只警告不阻断主流程。"""
+    if ledger is None:
+        return
+    try:
+        log_decision(ledger, decision_id, action, detail)
+    except Exception as exc:  # noqa: BLE001
+        print(f"      警告：账本写入失败（{action}）：{type(exc).__name__}: {exc}")
 
 
 def _act_of(edit) -> str:
@@ -176,14 +209,31 @@ def run_roughcut(
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
             return 1
+        ledger = _open_ledger()
+        _safe_log(ledger, plan.plan_id, "plan_generated", {
+            "edl_id": edl.edl_id,
+            "shot_count": len(edl.ordered_edits),
+            "degraded": plan.degraded,
+            "degradation_events": plan.degradation_events,
+            "open_questions": plan.open_questions,
+            "constraints": plan.constraints,
+        })
 
         # ---- 6. 验证 + 修复 ----
         print("[7/7] 验证计划...")
         validation_result = validate_plan(edl, plan, all_obs)
         is_valid, errors = validation_result
+        repaired = False
+        _safe_log(ledger, plan.plan_id, "plan_validated",
+                  {"stage": "pre_repair", "valid": is_valid, "errors": errors})
         if not is_valid:
             print(f"      验证未通过 ({len(errors)} 个错误)，执行修复...")
             outcome = repair_plan(edl, plan, all_obs)
+            _safe_log(ledger, plan.plan_id, "plan_repaired", {
+                "status": "abstain" if outcome.requires_director else "ok",
+                "reason_code": outcome.reason_code,
+                "adjustments": outcome.adjustments,
+            })
             if outcome.requires_director:
                 # Plan=导演依据：修复器无权增删镜头，物理修复不可行时 fail-closed 上抛
                 print(f"      修复放弃（repair_requires_director）: {outcome.reason_code}")
@@ -191,16 +241,28 @@ def run_roughcut(
                 _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
                 return 1
             edl, plan = outcome.edl, outcome.plan
+            repaired = True
             if outcome.adjustments:
                 print(f"      物理调整 {len(outcome.adjustments)} 处（已留痕 plan.open_questions）")
             validation_result = validate_plan(edl, plan, all_obs)
             is_valid, errors = validation_result
+            _safe_log(ledger, plan.plan_id, "plan_validated",
+                      {"stage": "post_repair", "valid": is_valid, "errors": errors})
             print(f"      修复后验证: {'PASS' if is_valid else 'FAIL'}")
+
+        # P1-c：验证状态回写——plan.validation_status 不再停留在 pending
+        if not repaired or is_valid:
+            plan.validation_status = "valid" if is_valid else "invalid"
 
         # ---- 打印摘要 ----
         _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
 
-        # ---- 7. 渲染 ----
+        # ---- 7. 渲染闸门（P1-c：FAIL 的成片不出片）----
+        if not is_valid:
+            print("      [fail-closed] 最终验证未通过，拒绝渲染不合格成片。")
+            return 1
+
+        # ---- 8. 渲染 ----
         if dry_run:
             print("[dry-run] 跳过渲染，不创建输出文件。")
             return 0
@@ -209,6 +271,10 @@ def run_roughcut(
         result_path = render_edl(edl, input_path, output_path)
         file_size = os.path.getsize(result_path)
         print(f"渲染完成: {result_path} ({file_size / 1024:.1f} KB)")
+        _safe_log(ledger, plan.plan_id, "render_completed", {
+            "output_path": result_path,
+            "file_size_bytes": file_size,
+        })
         return 0
 
     except FileNotFoundError as exc:
