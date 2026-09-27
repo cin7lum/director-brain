@@ -1,0 +1,13 @@
+{
+  "total": 24,
+  "produced": 20,
+  "refused": 4,
+  "errored": 0,
+  "produced_with_hard_defect": 0,
+  "refusal_reasons": [
+    "全部 1 个候选镜头均违反 must_avoid 约束（['模糊']）——素材无法满足用户约束，拒绝导演（fail-closed）；请更换素材或调整意图",
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable"
+  ]
+}
