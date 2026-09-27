@@ -276,7 +276,10 @@ def repair_plan(
         current = sum(e.out_frame - e.in_frame for e in edits)
 
         if current < low:
-            gap = low - current
+            # P2-d 边界余量：延长目标取下界 +2%，避免渲染帧取整后偏差
+            # 恰好压线 ±10% 被 L1 判 FAIL（实测 10.0004% 翻车案例）
+            extend_target = low + int(0.02 * target)
+            gap = extend_target - current
 
             # 优先延长纯启发式证据的片段（确定性技术优先级；P1-b 结构化判据）
             def _ext_priority(i: int) -> tuple:
@@ -308,6 +311,34 @@ def repair_plan(
                     f"extend:{e.source_asset_id}:out {old_out}->{new_out}"
                 )
                 gap -= ext
+
+            # P2-d 第二轮：向后延长（in_frame）——居中裁剪留下的源前部余量
+            # 同属"已选镜头内 in/out 调整"白名单；先前只向前延长浪费了一半余量
+            if gap > 0:
+                for idx in sorted(range(len(edits)), key=_ext_priority):
+                    if gap <= 0:
+                        break
+                    e = edits[idx]
+                    obs = obs_by_asset.get(e.source_asset_id)
+                    if obs is None:
+                        continue
+                    dur = e.out_frame - e.in_frame
+                    prev_out = edits[idx - 1].out_frame if idx > 0 else 0
+                    max_back = min(
+                        e.in_frame - obs.start_frame,
+                        max_clip_us - dur,
+                        e.in_frame - prev_out,
+                    )
+                    if max_back <= 0:
+                        continue
+                    ext = min(max_back, gap)
+                    old_in = e.in_frame
+                    new_in = old_in - ext
+                    edits[idx] = e.model_copy(update={"in_frame": new_in})
+                    adjustments.append(
+                        f"extend:{e.source_asset_id}:in {old_in}->{new_in}"
+                    )
+                    gap -= ext
 
             if gap > 0:
                 return _abstain(

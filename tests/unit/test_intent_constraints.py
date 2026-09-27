@@ -263,3 +263,44 @@ def test_repair_honors_constraint_bounds():
         400_000, 3_000_000,
     )
     assert _parse_clip_bounds([]) == (800_000, 6_000_000)  # 回退默认
+
+
+def test_repair_backward_extension_and_margin():
+    """P2-d：向后延长（in_frame）+ 2% 边界余量——居中裁剪的前部余量不再浪费。
+
+    构造：单镜头源 0-10s，选中片段 8.0-10.0s（贴源尾、向前无余量），目标 3s。
+    旧实现只向前延长 → 不可达 ABSTAIN；新实现向后延长到低界+2%。
+    """
+    from director_brain.plan_repair import repair_plan
+
+    obs = [_obs("shot_a", 0, 10_000_000, 200.0)]
+    edits = [EditItem(
+        source_asset_id="shot_a", source_media_hash="hash_shot_a",
+        in_frame=8_000_000, out_frame=10_000_000, timebase=1_000_000,
+    )]
+    edl = EditorialDecisionList(
+        schema_version="1.0", project_id="p1a", created_at=int(time.time()),
+        producer="test", source_ref="t", edl_id="edl_t", version="0.1",
+        brief_version="0.1", context_id="c", timebase=1_000_000,
+        ordered_edits=edits, expected_duration=2_000_000, approval_state="draft",
+    )
+    ids = [e.source_asset_id for e in edl.ordered_edits]
+    plan = DirectorDecisionPlan(
+        schema_version="1.0", project_id="p1a", created_at=int(time.time()),
+        producer="test", source_ref="t", plan_id="plan_t", version="0.1",
+        brief_version="0.1", film_state_version="0.1", sequence=ids,
+        decisions=[Decision(decision_id="dec_0", purpose="select_shot", shot_refs=ids)],
+        constraints=["target_duration_us=3000000"],
+        open_questions=[], validation_status="pending", approval_state="draft",
+    )
+    outcome = repair_plan(edl, plan, obs)
+    assert outcome.status == "ok", outcome.reason
+    e = outcome.edl.ordered_edits[0]
+    total = e.out_frame - e.in_frame
+    # 目标延长线 = low(2.7M) + 2%×3M = 2.76M
+    assert total >= 2_760_000, f"total={total}"
+    assert total <= 3_000_000
+    # 任一调整走的是 in_frame（向后）路径
+    assert any(":in " in a for a in outcome.adjustments), outcome.adjustments
+    ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
+    assert ok, f"errors={errors}"

@@ -1,0 +1,149 @@
+{
+  "comment": "L2 正式矩阵第一批：100CANON 真实素材 12 段（seed=42 确定性抽样，时长跨度覆盖）× 2 意图 = 24 任务。目标时长自适应=源时长60%。",
+  "tasks": [
+    {
+      "tag": "MVI_4301-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4301-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4380-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4380.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4380-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4380.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4307-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4307.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4307-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4307.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4315-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4315.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4315-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4315.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4211-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4211.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4211-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4211.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4417-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4417.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4417-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4417.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4340-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4340.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4340-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4340.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4246-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4246-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4384-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4384.MP4",
+      "target_seconds": 4,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4384-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4384.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4320-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_seconds": 4,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4320-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4213-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4213.MP4",
+      "target_seconds": 4,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4213-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4213.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头"
+    },
+    {
+      "tag": "MVI_4467-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_seconds": 6,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4467-fast6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_seconds": 6,
+      "intent": "快剪风格，避免模糊镜头"
+    }
+  ]
+}
