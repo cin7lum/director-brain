@@ -9,6 +9,30 @@ from schema import DirectorDecision
 
 POC_DIR = Path(__file__).parent
 
+# EVALUATOR VERSION
+# v1.0 (frozen Ark round, commit 14125c6): negative-constraint recall matched
+#   gold tags as substrings inside desired_relation_or_change + must_avoid +
+#   must_preserve ONLY.
+# v1.1 (2026-09-28, expert-panel ruling): the semantic bar is UNCHANGED —
+#   "did the model express this negative constraint?". Two additional
+#   strongly-typed evidence channels are recognized, both defined by the
+#   FROZEN prompt schema itself (no new vocabulary, no case-ID special-casing):
+#   (a) status channel: the gold tag equals the model's status enum value
+#       (e.g. "conflicting_constraints" <-> status=CONFLICTING_CONSTRAINTS).
+#       Pre-freeze KNOWN_ISSUES.md (item 4) documented this representation
+#       gap before any candidate round ran.
+#   (b) guarded target channel: the gold tag (after avoid_/preserve_ strip)
+#       appears in the model's target list AND the model made the matching
+#       commitment (preserve_* -> must_preserve non-empty; avoid_* ->
+#       must_avoid non-empty). A bare target mention with no commitment
+#       earns no credit.
+# Thresholds, gold answers, prompt and cases are untouched. Previously
+# REJECTED models must stay rejected under v1.1 (falsification check) and
+# both versions' scores are archived side by side. One-shot fix: if a fresh
+# confirmation run fails under v1.1, the result stands — no v1.2 iteration.
+# Ruling and hard conditions: evidence/PHASE7_EVALUATOR_V1_1/
+EVALUATOR_VERSION_DEFAULT = "1.1"
+
 def load_jsonl(path):
     items = []
     with open(path, encoding='utf-8') as f:
@@ -23,7 +47,11 @@ references = {r["id"]: r for r in load_jsonl(POC_DIR / "human_reference.jsonl")}
 _ap = argparse.ArgumentParser()
 _ap.add_argument("--outputs", default="model_outputs.jsonl",
                  help="模型输出 jsonl（默认沿用历史文件）")
+_ap.add_argument("--evaluator-version", default=EVALUATOR_VERSION_DEFAULT,
+                 choices=["1.0", "1.1"],
+                 help="评测器版本：1.0=冻结轮原版匹配面；1.1=专家组裁定的构念修正")
 _args, _ = _ap.parse_known_args()
+EVALUATOR_VERSION = _args.evaluator_version
 outputs_raw = load_jsonl(POC_DIR / _args.outputs)
 
 # ── Schema validation ──
@@ -102,6 +130,7 @@ positive_recall = positive_correct / positive_total if positive_total else 0
 negative_correct = 0
 negative_total = 0
 negative_miss = []
+negative_channels = {}  # audit: "case:neg" -> channel that satisfied it
 for oid, d in validated_outputs.items():
     ref = references.get(oid)
     if not ref:
@@ -112,10 +141,29 @@ for oid, d in validated_outputs.items():
         model_all = ([r.lower() for r in d.desired_relation_or_change] +
                      [m.lower() for m in d.must_avoid] +
                      [p.lower() for p in d.must_preserve])
+        if EVALUATOR_VERSION == "1.1":
+            model_targets = [t.lower() for t in (d.target or [])]
+            model_status = str(d.status.value).lower() if d.status is not None else ""
+        else:
+            model_targets, model_status = [], ""
         for neg in ref_negs:
             neg_key = neg.lower().replace("avoid_", "").replace("preserve_", "")
+            hit_channel = None
             if any(neg_key in m for m in model_all):
+                hit_channel = "field_array"
+            elif model_status and neg_key == model_status:
+                hit_channel = "status_enum"
+            elif any(neg_key in t for t in model_targets):
+                # guarded target channel: a bare target mention proves the
+                # model noticed the object, not that it promised to keep it —
+                # require the matching commitment array to be non-empty.
+                if neg.lower().startswith("preserve_") and d.must_preserve:
+                    hit_channel = "target_guarded"
+                elif neg.lower().startswith("avoid_") and d.must_avoid:
+                    hit_channel = "target_guarded"
+            if hit_channel:
                 negative_correct += 1
+                negative_channels[f"{oid}:{neg}"] = hit_channel
             else:
                 negative_miss.append((oid, neg))
 
@@ -219,10 +267,13 @@ print(f"  {positive_correct}/{positive_total} ({positive_recall:.1%})")
 for oid, expected, actual in positive_miss:
     print(f"  MISS {oid}: expected={expected}, actual={actual}")
 
-print(f"\n--- Negative Constraint Recall ---")
+print(f"\n--- Negative Constraint Recall (evaluator v{EVALUATOR_VERSION}) ---")
 print(f"  {negative_correct}/{negative_total} ({negative_recall:.1%})")
 for oid, neg in negative_miss:
     print(f"  MISS {oid}: {neg}")
+for key, ch in sorted(negative_channels.items()):
+    if ch != "field_array":
+        print(f"  HIT[{ch}] {key}")
 
 print(f"\n--- Relation Direction (J-cut vs L-cut) ---")
 print(f"  {direction_correct}/{direction_total} ({direction_accuracy:.1%})")
@@ -272,6 +323,7 @@ print(f"  vertical_slice_case:        {'PASS' if vs_pass else 'FAIL'}")
 
 # Save results
 results = {
+    "evaluator_version": EVALUATOR_VERSION,
     "total_samples": len(benchmark),
     "schema_valid_rate": schema_valid_rate,
     "positive_intent_recall": positive_recall,
@@ -285,6 +337,7 @@ results = {
     "vertical_slice_details": vs_details,
     "positive_misses": positive_miss,
     "negative_misses": negative_miss,
+    "negative_hit_channels": negative_channels,
     "direction_misses": direction_miss,
 }
 with open(POC_DIR / "eval_results.json", "w", encoding="utf-8") as f:

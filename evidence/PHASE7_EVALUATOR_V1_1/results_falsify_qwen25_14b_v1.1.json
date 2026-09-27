@@ -2,11 +2,11 @@
   "evaluator_version": "1.1",
   "total_samples": 32,
   "schema_valid_rate": 1.0,
-  "positive_intent_recall": 0.9523809523809523,
-  "negative_constraint_recall": 1.0,
+  "positive_intent_recall": 0.8095238095238095,
+  "negative_constraint_recall": 0.625,
   "relation_direction_accuracy": 1.0,
   "ambiguity_abstention_accuracy": 1.0,
-  "status_match_accuracy": 1.0,
+  "status_match_accuracy": 0.65625,
   "exact_parameter_hallucination_count": 0,
   "tool_leakage_count": 0,
   "vertical_slice_case_pass": true,
@@ -20,29 +20,63 @@
   },
   "positive_misses": [
     [
+      "SD-17",
+      "avoid_transition",
+      []
+    ],
+    [
+      "SD-18",
+      "avoid_transition",
+      []
+    ],
+    [
+      "SD-20",
+      "adjust_pacing",
+      []
+    ],
+    [
       "SD-21",
       "preserve_picture_cut",
       []
     ]
   ],
-  "negative_misses": [],
+  "negative_misses": [
+    [
+      "SD-04",
+      "avoid_audio_lead"
+    ],
+    [
+      "SD-08",
+      "avoid_audio_lead"
+    ],
+    [
+      "SD-22",
+      "preserve_reaction_shot"
+    ],
+    [
+      "SD-28",
+      "conflicting_constraints"
+    ],
+    [
+      "SD-30",
+      "avoid_duration_extension"
+    ],
+    [
+      "SD-31",
+      "preserve_shot_order"
+    ]
+  ],
   "negative_hit_channels": {
     "SD-01:preserve_picture_cut": "field_array",
     "SD-01:avoid_transition": "field_array",
-    "SD-04:avoid_audio_lead": "field_array",
-    "SD-08:avoid_audio_lead": "field_array",
     "SD-12:preserve_shot_identity": "field_array",
     "SD-16:preserve_shot_order": "field_array",
     "SD-17:avoid_transition": "field_array",
     "SD-18:avoid_transition": "field_array",
     "SD-20:preserve_shot_identity": "field_array",
     "SD-21:preserve_picture_cut": "field_array",
-    "SD-22:preserve_reaction_shot": "field_array",
-    "SD-28:conflicting_constraints": "status_enum",
     "SD-29:preserve_picture_cut": "field_array",
-    "SD-30:avoid_duration_extension": "field_array",
-    "SD-31:avoid_transition": "field_array",
-    "SD-31:preserve_shot_order": "field_array"
+    "SD-31:avoid_transition": "field_array"
   },
   "direction_misses": []
 }

@@ -1,0 +1,36 @@
+模型: qwen2.5:14b ｜ 用例: 32 例
+  [1/32] SD-01 OK 18440ms
+  [2/32] SD-02 OK 4394ms
+  [3/32] SD-03 OK 4491ms
+  [4/32] SD-04 OK 4422ms
+  [5/32] SD-05 OK 4438ms
+  [6/32] SD-06 OK 4267ms
+  [7/32] SD-07 OK 4980ms
+  [8/32] SD-08 OK 4273ms
+  [9/32] SD-09 OK 4919ms
+  [10/32] SD-10 OK 4680ms
+  [11/32] SD-11 OK 4983ms
+  [12/32] SD-12 OK 5427ms
+  [13/32] SD-13 OK 4757ms
+  [14/32] SD-14 OK 4582ms
+  [15/32] SD-15 OK 4370ms
+  [16/32] SD-16 OK 4442ms
+  [17/32] SD-17 OK 4537ms
+  [18/32] SD-18 OK 4628ms
+  [19/32] SD-19 OK 4605ms
+  [20/32] SD-20 OK 4704ms
+  [21/32] SD-21 OK 4508ms
+  [22/32] SD-22 OK 4296ms
+  [23/32] SD-23 OK 4456ms
+  [24/32] SD-24 OK 4512ms
+  [25/32] SD-25 OK 4521ms
+  [26/32] SD-26 OK 4412ms
+  [27/32] SD-27 OK 4605ms
+  [28/32] SD-28 OK 5330ms
+  [29/32] SD-29 OK 5740ms
+  [30/32] SD-30 OK 4154ms
+  [31/32] SD-31 OK 5197ms
+  [32/32] SD-32 OK 4351ms
+
+完成：成功 32 / 失败 0；延迟中位 4537ms；总耗时 162s
+输出: experiments/director_semantic_poc/model_outputs_qwen25_14b_v11_check.jsonl

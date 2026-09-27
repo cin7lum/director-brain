@@ -1,0 +1,61 @@
+============================================================
+DIRECTOR BRAIN SEMANTIC DECISION POC — EVALUATION
+============================================================
+
+Total benchmark samples: 32
+Model outputs: 32
+
+--- Schema Validity ---
+  Valid: 32/32 (100.0%)
+
+--- Positive Intent Recall ---
+  20/21 (95.2%)
+  MISS SD-11: expected=extend_visible_duration, actual=['adjust_pacing']
+
+--- Negative Constraint Recall (evaluator v1.0) ---
+  14/16 (87.5%)
+  MISS SD-22: preserve_reaction_shot
+  MISS SD-28: conflicting_constraints
+
+--- Relation Direction (J-cut vs L-cut) ---
+  8/8 (100.0%)
+
+--- Ambiguity Abstention ---
+  4/4 (100.0%)
+
+--- Status Match ---
+  31/32 (96.9%)
+  MISS SD-14: expected=READY, actual=NEEDS_CONTEXT
+
+--- Negative Examples (no false positive) ---
+  3/3
+
+--- Exact Parameter Hallucination ---
+  Count: 0
+
+--- Tool/API Leakage ---
+  Count: 0
+
+--- Vertical Slice Hard Case (SD-01) ---
+  PASS: True
+    positive_audio_before_picture: True
+    picture_cut_preserved: True
+    no_transition: True
+    creative_purpose_retained: True
+    exact_offset_not_fabricated: True
+    needs_context_explicit: True
+
+============================================================
+SUMMARY
+============================================================
+  schema_valid_rate:          100.0%
+  positive_intent_recall:     95.2%
+  negative_constraint_recall: 87.5%
+  relation_direction_accuracy:100.0%
+  ambiguity_abstention:       100.0%
+  status_match:               96.9%
+  exact_param_hallucination:  0
+  tool_leakage:               0
+  vertical_slice_case:        PASS
+
+Results saved to eval_results.json

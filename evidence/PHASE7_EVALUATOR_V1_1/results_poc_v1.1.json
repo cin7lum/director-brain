@@ -2,7 +2,7 @@
   "evaluator_version": "1.1",
   "total_samples": 32,
   "schema_valid_rate": 1.0,
-  "positive_intent_recall": 0.9523809523809523,
+  "positive_intent_recall": 1.0,
   "negative_constraint_recall": 1.0,
   "relation_direction_accuracy": 1.0,
   "ambiguity_abstention_accuracy": 1.0,
@@ -18,13 +18,7 @@
     "exact_offset_not_fabricated": true,
     "needs_context_explicit": true
   },
-  "positive_misses": [
-    [
-      "SD-21",
-      "preserve_picture_cut",
-      []
-    ]
-  ],
+  "positive_misses": [],
   "negative_misses": [],
   "negative_hit_channels": {
     "SD-01:preserve_picture_cut": "field_array",

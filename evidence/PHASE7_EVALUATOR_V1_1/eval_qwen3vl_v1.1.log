@@ -1,0 +1,81 @@
+============================================================
+DIRECTOR BRAIN SEMANTIC DECISION POC — EVALUATION
+============================================================
+
+Total benchmark samples: 32
+Model outputs: 18
+
+--- Schema Validity ---
+  Valid: 14/18 (77.8%)
+  INVALID SD-01: 2 validation errors for DirectorDecision
+creative_intent
+  Field required [type=
+  INVALID SD-03: 2 validation errors for DirectorDecision
+creative_intent
+  Field required [type=
+  INVALID SD-08: 2 validation errors for DirectorDecision
+creative_intent
+  Field required [type=
+  INVALID SD-14: 2 validation errors for DirectorDecision
+creative_intent
+  Field required [type=
+
+--- Positive Intent Recall ---
+  5/12 (41.7%)
+  MISS SD-05: expected=outgoing_audio_continues_after_cut, actual=[]
+  MISS SD-07: expected=audio_precedes_picture, actual=[]
+  MISS SD-10: expected=shorten_visible_duration, actual=[]
+  MISS SD-11: expected=extend_visible_duration, actual=[]
+  MISS SD-13: expected=extend_visible_duration, actual=[]
+  MISS SD-17: expected=avoid_transition, actual=[]
+  MISS SD-18: expected=avoid_transition, actual=[]
+
+--- Negative Constraint Recall (evaluator v1.1) ---
+  2/5 (40.0%)
+  MISS SD-04: avoid_audio_lead
+  MISS SD-12: preserve_shot_identity
+  MISS SD-17: avoid_transition
+
+--- Relation Direction (J-cut vs L-cut) ---
+  2/4 (50.0%)
+  MISS SD-07: expected=audio_precedes_picture, actual=[]
+  MISS SD-05: expected=outgoing_audio_continues_after_cut, actual=[]
+
+--- Ambiguity Abstention ---
+  0/4 (0.0%)
+  MISS SD-23: status=missing
+  MISS SD-24: status=missing
+  MISS SD-25: status=missing
+  MISS SD-26: status=missing
+
+--- Status Match ---
+  12/14 (85.7%)
+  MISS SD-06: expected=NEEDS_CONTEXT, actual=READY
+  MISS SD-15: expected=NEEDS_CONTEXT, actual=READY
+
+--- Negative Examples (no false positive) ---
+  1/3
+
+--- Exact Parameter Hallucination ---
+  Count: 0
+
+--- Tool/API Leakage ---
+  Count: 0
+
+--- Vertical Slice Hard Case (SD-01) ---
+  PASS: False
+
+============================================================
+SUMMARY
+============================================================
+  schema_valid_rate:          77.8%
+  positive_intent_recall:     41.7%
+  negative_constraint_recall: 40.0%
+  relation_direction_accuracy:50.0%
+  ambiguity_abstention:       0.0%
+  status_match:               85.7%
+  exact_param_hallucination:  0
+  tool_leakage:               0
+  vertical_slice_case:        FAIL
+
+Results saved to eval_results.json

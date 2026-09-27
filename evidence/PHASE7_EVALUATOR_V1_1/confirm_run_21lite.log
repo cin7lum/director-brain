@@ -1,0 +1,36 @@
+模型: doubao-seed-2-1-lite-260915 ｜ 用例: 32 例
+  [1/32] SD-01 OK 4370ms
+  [2/32] SD-02 OK 3226ms
+  [3/32] SD-03 OK 4149ms
+  [4/32] SD-04 OK 3397ms
+  [5/32] SD-05 OK 4434ms
+  [6/32] SD-06 OK 3666ms
+  [7/32] SD-07 OK 3819ms
+  [8/32] SD-08 OK 3396ms
+  [9/32] SD-09 OK 3085ms
+  [10/32] SD-10 OK 3121ms
+  [11/32] SD-11 OK 3447ms
+  [12/32] SD-12 OK 4474ms
+  [13/32] SD-13 OK 3211ms
+  [14/32] SD-14 OK 3365ms
+  [15/32] SD-15 OK 3239ms
+  [16/32] SD-16 OK 2549ms
+  [17/32] SD-17 OK 3106ms
+  [18/32] SD-18 OK 2653ms
+  [19/32] SD-19 OK 3415ms
+  [20/32] SD-20 OK 3124ms
+  [21/32] SD-21 OK 3403ms
+  [22/32] SD-22 OK 2757ms
+  [23/32] SD-23 OK 4234ms
+  [24/32] SD-24 OK 3112ms
+  [25/32] SD-25 OK 2523ms
+  [26/32] SD-26 OK 4670ms
+  [27/32] SD-27 OK 2736ms
+  [28/32] SD-28 OK 3304ms
+  [29/32] SD-29 OK 3683ms
+  [30/32] SD-30 OK 2683ms
+  [31/32] SD-31 OK 3106ms
+  [32/32] SD-32 OK 4155ms
+
+完成：成功 32 / 失败 0；延迟中位 3365ms；总耗时 142s
+输出: experiments/director_semantic_poc/model_outputs_confirm_2_1_lite.jsonl
