@@ -35,22 +35,29 @@ from observation_service.media_info import probe_audio_stream
 _DEFAULT_TARGET_DURATION = 15  # 秒
 
 
+def _act_of(edit) -> str:
+    """读片段所属幕：优先结构化字段 act（P1-b），旧数据回退 rationale 文本。"""
+    act = getattr(edit, "act", None)
+    if act:
+        return act
+    if edit.rationale:
+        for token in edit.rationale.split(","):
+            token = token.strip()
+            if token.startswith("act="):
+                return token[4:]
+    return "unknown"
+
+
 def _print_edl_summary(edl, plan, validation_result, relations, pathway_report):
     """打印 EDL 摘要：镜头数、总时长、四幕分配、验证状态、通路状态。"""
     edits = edl.ordered_edits
     total_us = sum(e.out_frame - e.in_frame for e in edits)
     total_s = total_us / 1_000_000
 
-    # 四幕分配：从 rationale 中提取 act=xxx
+    # 四幕分配：结构化字段（P1-b），旧数据回退 rationale 解析
     act_counts: dict[str, int] = {}
     for e in edits:
-        act = "unknown"
-        if e.rationale:
-            for token in e.rationale.split(","):
-                token = token.strip()
-                if token.startswith("act="):
-                    act = token[4:]
-                    break
+        act = _act_of(e)
         act_counts[act] = act_counts.get(act, 0) + 1
 
     is_valid, errors = validation_result

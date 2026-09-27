@@ -181,3 +181,85 @@ def test_constraint_encoding_roundtrip():
     from director_brain.plan_validator import _parse_must_avoid_constraints
     parsed = _parse_must_avoid_constraints([rule.encode()])
     assert parsed == [rule]
+
+
+# ---------------------------------------------------------------------------
+# P1-b：editing_language → 片段时长界 + 结构化字段
+# ---------------------------------------------------------------------------
+
+def test_editing_language_bounds_mapping():
+    from director_brain.intent_constraints import (
+        editing_language_bounds,
+        encode_bounds,
+    )
+    b = compile_brief("p1b", "t.mp4", [], intent_text="快剪风格")
+    assert b.editing_language == "fast_cut"
+    assert editing_language_bounds(b, (800_000, 6_000_000)) == (400_000, 3_000_000)
+    b2 = compile_brief("p1b", "t.mp4", [])  # 未声明 → 回退默认
+    assert editing_language_bounds(b2, (800_000, 6_000_000)) == (800_000, 6_000_000)
+    assert encode_bounds((400_000, 3_000_000)) == [
+        "min_clip_us=400000", "max_clip_us=3000000",
+    ]
+
+
+def test_reasoner_applies_fast_cut_bounds():
+    """“快剪”意图 → 单镜头不超过 3s（默认上限 6s），且界编码进 plan.constraints。"""
+    obs = [
+        _obs("shot_a", 0, 8_000_000, blur=200.0),
+        _obs("shot_b", 20_000_000, 28_000_000, blur=180.0),
+    ]
+    brief = compile_brief("p1b", "t.mp4", obs, target_duration_us=8_000_000,
+                          intent_text="快剪风格")
+    graph = build_story_graph(brief, obs)
+    edl, plan = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    assert "max_clip_us=3000000" in plan.constraints
+    for e in edl.ordered_edits:
+        assert (e.out_frame - e.in_frame) <= 3_000_000, f"{e.source_asset_id} 超快剪上界"
+
+
+def test_reasoner_sets_structured_act_and_evidence_type():
+    """EditItem.act / evidence_type 结构化字段由生成端写入（去字符串协议）。"""
+    obs = [
+        _obs("shot_a", 0, 2_000_000, blur=200.0),
+        _obs("shot_b", 20_000_000, 22_000_000, blur=180.0),
+    ]
+    brief = compile_brief("p1b", "t.mp4", obs, target_duration_us=8_000_000)
+    graph = build_story_graph(brief, obs)
+    edl, _ = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    for e in edl.ordered_edits:
+        assert e.act in ("hook", "develop", "peak", "resolve"), e.act
+        assert e.evidence_type == "heuristic"  # 无 VLM 观测
+
+
+def test_no_data_observation_never_selected():
+    """读帧失败（claim 带 error）的镜头：放宽阶梯不得将其注水入选。"""
+    error_obs = FilmObservation(
+        observation_id="obs_bad", media_asset_id="shot_bad",
+        media_hash="h_bad", start_frame=0, end_frame=2_000_000,
+        timebase=1_000_000, observation_type="deterministic_technical",
+        claim=json.dumps({"error": "no_frame"}),
+        provider="test", model_version="test", prompt_version="test",
+        confidence=1.0, review_state="auto_verified", claim_kind=ClaimKind.MEASURED,
+        schema_version="1.0", project_id="p1b", created_at=int(time.time()),
+        producer="test", source_ref="t.mp4",
+    )
+    obs = [
+        error_obs,
+        _obs("shot_ok", 20_000_000, 22_000_000, blur=5.0),  # 低 blur → 触发放宽
+    ]
+    brief = compile_brief("p1b", "t.mp4", obs, target_duration_us=8_000_000)
+    graph = build_story_graph(brief, obs)
+    edl, _ = HeuristicDirectorReasoner().generate_plan(brief, graph, obs)
+    selected = [e.source_asset_id for e in edl.ordered_edits]
+    assert "shot_bad" not in selected
+    assert "shot_ok" in selected
+
+
+def test_repair_honors_constraint_bounds():
+    """修复器使用 plan.constraints 里的时长界（与生成端同界）。"""
+    from director_brain.plan_repair import _parse_clip_bounds
+    assert _parse_clip_bounds(["target_duration_us=8000000",
+                               "min_clip_us=400000", "max_clip_us=3000000"]) == (
+        400_000, 3_000_000,
+    )
+    assert _parse_clip_bounds([]) == (800_000, 6_000_000)  # 回退默认

@@ -23,6 +23,11 @@ class EditItem(BaseModel):
     effect_refs: list[str] = Field(default_factory=list)
     shot_function: str | None = None
     rationale: str | None = None
+    #: P1-b 结构化字段（替代 rationale 字符串协议）：所属幕
+    act: str | None = None
+    #: P1-b 结构化字段：证据类型 "heuristic" | "vlm"（修复器优先级判据，
+    #: 旧数据为 None 时回退 rationale 字符串嗅探）
+    evidence_type: str | None = None
 
 
 class EditorialDecisionList(BaseRecord):

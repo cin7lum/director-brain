@@ -101,3 +101,33 @@ def candidate_violated_rules(candidate: dict, rules: list[TechnicalAvoidRule]) -
     """
     metrics = candidate.get("_claim_metrics") or {}
     return [r for r in rules if r.violated(metrics)]
+
+
+# ---------------------------------------------------------------------------
+# P1-b：editing_language → 片段时长上下界
+# ---------------------------------------------------------------------------
+
+#: 剪辑语言意图 → (min_clip_us, max_clip_us)。阈值初值为启发式标定
+#: （fast_cut 对齐短视频 ASL≈0.4-3s 的行业节奏带），由 L1 矩阵数据修订。
+#: 未声明（not_determined）时回退模块默认界（0.8s/6s）。
+_EDITING_LANGUAGE_BOUNDS: dict[str, tuple[int, int]] = {
+    "fast_cut": (400_000, 3_000_000),
+    "slow_paced": (1_500_000, 8_000_000),
+    "montage": (300_000, 1_000_000),
+    "jump_cut": (300_000, 4_000_000),
+}
+
+#: 默认界占位（与 providers.heuristic 模块常量一致；避免循环 import，
+#: 由调用方传入默认值）。
+
+
+def editing_language_bounds(
+    brief: DirectorBrief, default: tuple[int, int]
+) -> tuple[int, int]:
+    """按 Brief.editing_language 返回片段时长上下界；未声明时用 default。"""
+    return _EDITING_LANGUAGE_BOUNDS.get(brief.editing_language, default)
+
+
+def encode_bounds(bounds: tuple[int, int]) -> list[str]:
+    """编码为 plan.constraints 条目（repair/validator 据此对齐同一组界）。"""
+    return [f"min_clip_us={bounds[0]}", f"max_clip_us={bounds[1]}"]

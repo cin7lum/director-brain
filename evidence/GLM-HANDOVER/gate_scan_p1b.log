@@ -1,0 +1,1796 @@
+# 授权声明: D:\项目\软件设计\fcw-build\主控\GLM-02\02-DB-交接包\gate\AUTHORIZATION.json
+# module=L-02  sha256=e761f129a29f6a53f2be138525c53f24ac74b68beae07c56571dd90a98e289d2  strict=False
+# 授权工具: ['ffmpeg', 'ffprobe'] | 授权路径(子进程): ['execution/', 'observation_service/', 'arsenal/', 'scripts/', 'tests/', 'director_brain/context_gateway.py']
+# 联网: authorized=True 路径=['observation_service/', 'tests/']
+
+## .venv_phase1_fresh/Lib/site-packages/_pytest/_argcomplete.py
+  - L115: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def try_argcomplete(parser: argparse.ArgumentParser) -> None
+## .venv_phase1_fresh/Lib/site-packages/_pytest/_code/code.py
+  ~ L190: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L1570: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  - L332: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1266: E_NOT_IMPLEMENTED: `TerminalRepr.toterminal` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/_code/source.py
+  ~ L141: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L218: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/_pytest/_io/terminalwriter.py
+  ~ L82: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/_py/path.py
+  ~ L84: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L666: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L1214: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L1236: [已限定] 窄例外吞异常 `except error.EACCES:`（显式列出异常类型）
+  ~ L1296: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L1327: [已限定] 窄例外吞异常 `except error.Error:`（显式列出异常类型）
+  ~ L1366: [已限定] 窄例外吞异常 `except error.Error:`（显式列出异常类型）
+  ~ L1428: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L1432: [已限定] 窄例外吞异常 `except (OSError, AttributeError, NotImplementedError):`（显式列出异常类型）
+  - L135: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NeverRaised(Exception): class NeverRaised(Exception):
+  - L222: E_UNIMPLEMENTED_UNDECLARED: `Stat.owner` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← XXX win32
+  - L232: E_UNIMPLEMENTED_UNDECLARED: `Stat.group` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← XXX win32
+  - L1405: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1412: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/_pytest/assertion/__init__.py
+  - L117: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def mark_rewrite(self, *names: str) -> None: def mark_rewrit
+## .venv_phase1_fresh/Lib/site-packages/_pytest/assertion/rewrite.py
+  - L62: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Sentinel: class Sentinel:
+  - L858: 空壳标记 TODO: # TODO: This assert should not be needed.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/cacheprovider.py
+  - L580: 空壳标记 TODO: # TODO: evaluate generating upward relative paths
+## .venv_phase1_fresh/Lib/site-packages/_pytest/capture.py
+  ~ L80: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L97: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L256: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+  - L291: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __exit__( ) -> None:
+  - L307: E_NOT_IMPLEMENTED: `CaptureBase.__init__` 裸 raise NotImplementedError（无原因、无登记）
+  - L311: E_NOT_IMPLEMENTED: `CaptureBase.start` 裸 raise NotImplementedError（无原因、无登记）
+  - L315: E_NOT_IMPLEMENTED: `CaptureBase.done` 裸 raise NotImplementedError（无原因、无登记）
+  - L319: E_NOT_IMPLEMENTED: `CaptureBase.suspend` 裸 raise NotImplementedError（无原因、无登记）
+  - L323: E_NOT_IMPLEMENTED: `CaptureBase.resume` 裸 raise NotImplementedError（无原因、无登记）
+  - L327: E_NOT_IMPLEMENTED: `CaptureBase.writeorg` 裸 raise NotImplementedError（无原因、无登记）
+  - L331: E_NOT_IMPLEMENTED: `CaptureBase.snap` 裸 raise NotImplementedError（无原因、无登记）
+  - L341: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self, fd: int) -> None: def __init__(self, fd: 
+  - L344: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def start(self) -> None: def start(self) -> None:
+  - L347: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def done(self) -> None: def done(self) -> None:
+  - L350: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def suspend(self) -> None: def suspend(self) -> None:
+  - L353: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def resume(self) -> None: def resume(self) -> None:
+  - L359: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def writeorg(self, data: str) -> None: def writeorg(self, da
+  - L708: 空壳标记 TODO: # TODO: This type error is real, need to fix.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/compat.py
+  ~ L83: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L127: 空壳标记 TODO: # TODO(RonnyPfannschmidt): This function should be refactored when we
+## .venv_phase1_fresh/Lib/site-packages/_pytest/config/__init__.py
+  ~ L755: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L1710: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L512: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1169: E_NOT_IMPLEMENTED: `Config.inicfg` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/config/argparsing.py
+  - L404: 空壳标记 TODO: # TODO(py313): Replace with `exit_on_error=False`. Note that while it
+## .venv_phase1_fresh/Lib/site-packages/_pytest/doctest.py
+  - L316: 空壳标记 TODO: # TODO: Type ignored -- breaks Liskov Substitution.
+  - L346: 空壳标记 TODO: # TODO: ReprFileLocation doesn't expect a None lineno.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/fixtures.py
+  ~ L1016: [已限定] 窄例外吞异常 `except StopIteration:`（显式列出异常类型）
+  - L188: 空壳标记 TODO: # TODO: Try to use FixtureFunctionDefinition instead of the marker
+  - L484: E_NOT_IMPLEMENTED: `FixtureRequest._scope` 裸 raise NotImplementedError（无原因、无登记）
+  - L497: E_NOT_IMPLEMENTED: `FixtureRequest._check_scope` 裸 raise NotImplementedError（无原因、无登记）
+  - L510: E_NOT_IMPLEMENTED: `FixtureRequest.node` 裸 raise NotImplementedError（无原因、无登记）
+  - L573: E_NOT_IMPLEMENTED: `FixtureRequest.addfinalizer` 裸 raise NotImplementedError（无原因、无登记）
+  - L716: 空壳标记 TODO: # TODO(pytest10.1): Remove the `warn` and `if` and call
+  - L793: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _check_scope( ) -> None:
+  - L1268: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def addfinalizer(self, finalizer: Callable[[], object]) -> N
+  - L1385: 空壳标记 TODO: # TODO: paramspec/return type annotation tracking and storing
+  - L1719: 空壳标记 TODO: # TODO: The order of the FixtureDefs list of each arg is significant,
+  - L1937: 空壳标记 TODO: # TODO: Handle the case where the super-fixture is transitively
+  - L2032: E_NOT_IMPLEMENTED: `FixtureManager.parsefactories` 裸 raise NotImplementedError（无原因、无登记）
+  - L2043: E_NOT_IMPLEMENTED: `FixtureManager.parsefactories` 裸 raise NotImplementedError（无原因、无登记）
+  - L2054: E_NOT_IMPLEMENTED: `FixtureManager.parsefactories` 裸 raise NotImplementedError（无原因、无登记）
+  - L2259: 空壳标记 TODO: # TODO: Fix this type ignore.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/junitxml.py
+  - L314: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def add_attr_noop(name: str, value: object) -> None: def add
+  - L510: 空壳标记 TODO: # TODO: breaks for --dist=each
+## .venv_phase1_fresh/Lib/site-packages/_pytest/legacypath.py
+  ~ L454: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L389: 空壳标记 TODO: # TODO: This assert is probably not valid in all cases.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/logging.py
+  ~ L194: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L902: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def handleError(self, record: logging.LogRecord) -> None: de
+  - L961: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def handleError(self, record: logging.LogRecord) -> None: de
+  - L968: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def reset(self) -> None: def reset(self) -> None:
+  - L971: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def set_when(self, when: str) -> None: def set_when(self, wh
+  - L975: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def handleError(self, record: logging.LogRecord) -> None: de
+## .venv_phase1_fresh/Lib/site-packages/_pytest/main.py
+  - L1005: 空壳标记 TODO: # TODO: Remove the hacky split once the collection structure
+## .venv_phase1_fresh/Lib/site-packages/_pytest/mark/expression.py
+  - L304: E_NOT_IMPLEMENTED: `MatcherAdapter.__iter__` 裸 raise NotImplementedError（无原因、无登记）
+  - L307: E_NOT_IMPLEMENTED: `MatcherAdapter.__len__` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/mark/structures.py
+  - L158: 空壳标记 TODO: # TODO: Refactor to fix this type-ignore. Currently the following
+  - L398: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, arg: Markable) -> Markable: def __call__(
+  - L402: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, *args: object, **kwargs: object) -> MarkD
+  - L543: 空壳标记 TODO: # TODO(pytest10): Change to below after PARAMETRIZE_NON_COLLECTION_ITERABLE depr
+## .venv_phase1_fresh/Lib/site-packages/_pytest/monkeypatch.py
+  ~ L76: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L419: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/nodes.py
+  ~ L581: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L281: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def setup(self) -> None: def setup(self) -> None:
+  - L284: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def teardown(self) -> None: def teardown(self) -> None:
+  - L504: E_UNIMPLEMENTED_UNDECLARED: `Collector.collect` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← abstract
+  - L506: 空壳标记 TODO: # TODO: This omits the style= parameter which breaks Liskov Substitution.
+  - L721: E_UNIMPLEMENTED_UNDECLARED: `Item.runtest` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← runtest must be implemented by Item subclass
+## .venv_phase1_fresh/Lib/site-packages/_pytest/pathlib.py
+  ~ L217: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L274: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L304: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L556: [已限定] 窄例外吞异常 `except CouldNotResolvePathError:`（显式列出异常类型）
+  - L221: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L234: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/_pytest/pytester.py
+  ~ L1187: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L129: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: out = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L162: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.run((      ,     ), check=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L272: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def after(outcome, hook_name: str, hook_impls, kwargs) -> No
+  - L667: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TimeoutExpired(Exception): class TimeoutExpired(Except
+  - L1152: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class reprec: class reprec:
+  - L1377: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: popen = subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/python.py
+  - L306: 空壳标记 TODO: # TODO: Improve the type of `parent` such that assert/ignore aren't needed.
+  - L1568: 空壳标记 TODO: # TODO: If escaping is turned off and the user passes bytes,
+  - L1741: 空壳标记 TODO: # TODO: Type ignored -- breaks Liskov Substitution.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/python_api.py
+  ~ L283: [已限定] 窄例外吞异常 `except ZeroDivisionError:`（显式列出异常类型）
+  ~ L354: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L70: E_NOT_IMPLEMENTED: `ApproxBase.__repr__` 裸 raise NotImplementedError（无原因、无登记）
+  - L108: E_NOT_IMPLEMENTED: `ApproxBase._yield_comparisons` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/raises.py
+  - L477: 空壳标记 TODO: # TODO: harmonize with ExceptionInfo.match
+  - L687: 空壳标记 TODO: # TODO: move common code into superclass
+## .venv_phase1_fresh/Lib/site-packages/_pytest/reports.py
+  - L523: 空壳标记 TODO: # TODO: Check if this is actually reachable.
+  - L575: 空壳标记 TODO: # TODO: Investigate whether the duck typing is really necessary here.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/runner.py
+  ~ L182: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/_pytest/skipping.py
+  - L59: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def nop(*args, **kwargs): def nop(*args, **kwargs):
+## .venv_phase1_fresh/Lib/site-packages/_pytest/terminal.py
+  ~ L1563: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L1593: 空壳标记 TODO: # TODO: Revisit after marks scope would be fixed.
+## .venv_phase1_fresh/Lib/site-packages/_pytest/unittest.py
+  ~ L306: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L516: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L263: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def startTest(self, testcase: unittest.TestCase) -> None: de
+  - L373: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def addSuccess(self, testcase: unittest.TestCase) -> None: d
+  - L376: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def stopTest(self, testcase: unittest.TestCase) -> None: def
+  - L379: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def addDuration(self, testcase: unittest.TestCase, elapsed: 
+## .venv_phase1_fresh/Lib/site-packages/annotated_types/__init__.py
+  - L192: E_NOT_IMPLEMENTED: `GroupedMetadata.__iter__` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/arsenal/media_import.py
+  ~ L29: [已授权] 子进程 `ffmpeg`（路径 .venv_phase1_fresh/Lib/site-packages/arsenal/media_import.py，依据 AUTHORIZATION.json）
+  ~ L118: [已限定] 窄例外吞异常 `except (json.JSONDecodeError, OSError):`（显式列出异常类型）
+  ~ L131: [已授权] 子进程 `ffmpeg`（路径 .venv_phase1_fresh/Lib/site-packages/arsenal/media_import.py，依据 AUTHORIZATION.json）
+## .venv_phase1_fresh/Lib/site-packages/colorama/initialise.py
+  ~ L29: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/cv2/__init__.py
+  - L19: 空壳标记 TODO: # TODO
+  - L130: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except:: pass`
+  - L142: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception as e:: pass`
+## .venv_phase1_fresh/Lib/site-packages/cv2/config-3.py
+  - L12: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except:: pass`
+## .venv_phase1_fresh/Lib/site-packages/director_brain/context_gateway.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 .venv_phase1_fresh/Lib/site-packages/director_brain/context_gateway.py，依据 AUTHORIZATION.json）
+## .venv_phase1_fresh/Lib/site-packages/director_brain/director_reasoner.py
+  ~ L157: [已授权] ABC 抽象方法 `DirectorReasoner.generate_plan` 的 NotImplementedError
+  ~ L438: [已登记未实现] `LLMDirectorReasoner.generate_plan`：LLM director reasoner requires ollama endpoint;
+## .venv_phase1_fresh/Lib/site-packages/director_brain/llm_adapter.py
+  - L191: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L197: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L206: E_PERIMETER_NETWORK: req2 = urllib.request.Request( ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L212: E_PERIMETER_NETWORK: with urllib.request.urlopen(req2, timeout=self.timeout) as resp2: ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+## .venv_phase1_fresh/Lib/site-packages/director_brain/zhipu_adapter.py
+  - L90: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L99: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `.venv_phase1_fresh/Lib/site-packages/director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L106: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/iniconfig/__init__.py
+  - L64: 空壳标记 TODO: # TODO: investigate possible mypy bug wrt matching the passed over data
+## .venv_phase1_fresh/Lib/site-packages/numpy/__init__.py
+  ~ L464: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L836: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L925: 空壳标记 TODO: # TODO: Remove the environment variable entirely now that it is "weak"
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_add_newdocs_scalars.py
+  ~ L25: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L131: 空壳标记 TODO: # TODO: These docs probably need an if to highlight the default rather than
+  - L319: 空壳标记 TODO: # TODO: work out how to put this on the base class, np.floating
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_dtype.py
+  - L174: 空壳标记 TODO: # TODO: this path can never be reached
+  - L183: 空壳标记 TODO: # TODO: this duplicates the C metastr_to_unicode functionality
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_dtype_ctypes.py
+  - L119: E_NOT_IMPLEMENTED: `dtype_from_ctypes_type` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_internal.py
+  - L702: E_NOT_IMPLEMENTED: `__dtype_from_pep3118` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_methods.py
+  - L86: 空壳标记 TODO: # TODO: Optimize case when `where` is broadcast along a non-reduction
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/_ufunc_config.py
+  - L380: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _unspecified: class _unspecified:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/arrayprint.py
+  - L1391: E_NOT_IMPLEMENTED: `_TimelikeFormat._format_non_nat` 裸 raise NotImplementedError（无原因、无登记）
+  - L1580: 空壳标记 TODO: # TODO: Custom repr for user DTypes, logic should likely move.
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/fromnumeric.py
+  ~ L74: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L95: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L3858: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L4062: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L4266: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L41: 空壳标记 TODO: # but this follows what was done before. TODO: revisit this.
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/function_base.py
+  - L487: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/getlimits.py
+  ~ L178: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/memmap.py
+  ~ L258: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/numeric.py
+  ~ L1474: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L540: 空壳标记 TODO: # TODO: this can be removed if the legacy fixed-width string dtypes are ever rem
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/numerictypes.py
+  - L306: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _PreprocessDTypeError(Exception): class _PreprocessDTy
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/records.py
+  ~ L221: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L422: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/_locales.py
+  ~ L40: [已限定] 窄例外吞异常 `except locale.Error:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_api.py
+  - L249: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_array_coercion.py
+  - L31: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArr(np.ndarray): class MyArr(np.ndarray):
+  - L351: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyScalar(type(pyscalar)): class MyScalar(type(pyscalar
+  - L462: 空壳标记 TODO: # TODO: This discrepancy _should_ be resolved, either by relaxing the
+  - L647: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __getitem__(self, _, /): def __getitem__(self, _, /):
+  - L715: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __array_interface__(self): def __array_interface__(self)
+  - L719: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __array_struct__(self): def __array_struct__(self):
+  - L722: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __array__(self, dtype=None, copy=None): def __array__(se
+  - L916: 空壳标记 TODO: # TODO: This is arguably weird/wrong, but seems old:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_array_interface.py
+  ~ L126: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_arrayobject.py
+  - L45: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArrNoWrap(np.ndarray): class MyArrNoWrap(np.ndarray)
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_arrayprint.py
+  ~ L1211: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L32: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class sub(np.ndarray): class sub(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_casting_unittests.py
+  - L806: 空壳标记 TODO: # TODO: While this test is fairly thorough, right now, it does not
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_cpu_features.py
+  - L31: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: auxv = subprocess.check_output([           ], env={              :    }) ← 工具 `/bin/true` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L75: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def load_flags(self): def load_flags(self):
+  - L113: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: auxv = subprocess.check_output([           ], env={              :    }) ← 工具 `/bin/true` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L169: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: return subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L455: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: auxv = subprocess.check_output([           ], env={              :    }) ← 工具 `/bin/true` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L462: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_cython.py
+  - L66: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_call([       ,            ]) ← 工具 `meson` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_datetime.py
+  - L1973: 空壳标记 TODO: # TODO: Allowing unsafe casting by
+  - L2977: 空壳标记 TODO: # TODO: add absolute (gold standard) time span limit strings
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_deprecations.py
+  ~ L179: [已限定] 窄例外吞异常 `except OverflowError:`（显式列出异常类型）
+  ~ L185: [已限定] 窄例外吞异常 `except OverflowError:`（显式列出异常类型）
+  - L297: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SideBranch: class SideBranch:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_dtype.py
+  - L1151: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class user_def_subcls(np.void): class user_def_subcls(np.voi
+  - L1565: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class dt: class dt:
+  - L1591: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class vdt(np.void): class vdt(np.void):
+  - L1963: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class mytype: class mytype:
+  - L1987: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class mytype: class mytype:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_einsum.py
+  - L178: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class CustomException(Exception): class CustomException(Exce
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_half.py
+  - L582: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Dummy: class Dummy:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_indexing.py
+  - L533: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TupleSubclass(tuple): class TupleSubclass(tuple):
+  - L702: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SubClass(np.ndarray): class SubClass(np.ndarray):
+  - L729: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SubClass(np.ndarray): class SubClass(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_limited_api.py
+  - L66: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_call([       ,            ]) ← 工具 `meson` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_mem_policy.py
+  ~ L222: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L292: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArr(np.ndarray): class MyArr(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_memmap.py
+  - L192: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MemmapSubClass(memmap): class MemmapSubClass(memmap):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_multiarray.py
+  ~ L6739: [已限定] 窄例外吞异常 `except IndexError:`（显式列出异常类型）
+  ~ L9543: [已限定] 窄例外吞异常 `except NotImplementedError:`（显式列出异常类型）
+  ~ L9809: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L131: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class subclass(np.ndarray): class subclass(np.ndarray):
+  - L675: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C: class C:
+  - L995: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __array__(self, dtype=None, copy=None): def __array__(se
+  - L1202: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self): def __init__(self):
+  - L3308: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class A(np.ndarray): class A(np.ndarray):
+  - L3918: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Sub(np.ndarray): class Sub(np.ndarray):
+  - L3931: E_NOT_IMPLEMENTED: `A.__array__` 裸 raise NotImplementedError（无原因、无登记）
+  - L4032: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArray(np.ndarray): class MyArray(np.ndarray):
+  - L4180: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L4419: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Coerced(Exception): class Coerced(Exception):
+  - L6789: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_output([sys.executable,     , code], ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L7147: 空壳标记 FIXME: # FIXME:
+  - L8494: 空壳标记 TODO: # TODO: test for multidimensional
+  - L9534: E_NOT_IMPLEMENTED: `NotAnArray.__array__` 裸 raise NotImplementedError（无原因、无登记）
+  - L9888: E_NOT_IMPLEMENTED: `NotConvertible.__bool__` 裸 raise NotImplementedError（无原因、无登记）
+  - L9926: E_NOT_IMPLEMENTED: `NotConvertible.__int__` 裸 raise NotImplementedError（无原因、无登记）
+  - L10768: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Dummy: class Dummy:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_nditer.py
+  ~ L3195: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L2237: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: res = subprocess.check_output([sys.executable,     , code], ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L3378: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_numeric.py
+  - L1526: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NIterError(Exception): class NIterError(Exception):
+  - L1738: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C(np.ndarray): class C(np.ndarray):
+  - L3561: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L4136: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L4144: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_overrides.py
+  - L61: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NoOverrideSub(np.ndarray): class NoOverrideSub(np.ndar
+  - L157: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NoOverrideSub(np.ndarray): class NoOverrideSub(np.ndar
+  - L291: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def f(y): def f(y):
+  - L296: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def f(y): def f(y):
+  - L392: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def func(): def func():
+  - L450: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def func(*, like=None): def func(*, like=None):
+  - L473: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def func(*args): def func(*args):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_records.py
+  - L232: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C(np.recarray): class C(np.recarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_regression.py
+  ~ L761: [已限定] 窄例外吞异常 `except IndexError:`（显式列出异常类型）
+  ~ L1115: [已限定] 窄例外吞异常 `except DeprecationWarning:`（显式列出异常类型）
+  ~ L1583: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L1884: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L1568: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Subclass(np.ndarray): class Subclass(np.ndarray):
+  - L2222: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def passer(*args): def passer(*args):
+  - L2555: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Y(np.flexible): class Y(np.flexible):
+  - L2559: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class X(np.flexible, np.ma.core.MaskedArray): class X(np.fle
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_scalarinherit.py
+  - L11: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class A: class A:
+  - L13: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class B(A, np.float64): class B(A, np.float64):
+  - L16: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C(B): class C(B):
+  - L18: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class D(C, B): class D(C, B):
+  - L21: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class B0(np.float64, A): class B0(np.float64, A):
+  - L23: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C0(B0): class C0(B0):
+  - L30: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class B1(np.float64, HasNew): class B1(np.float64, HasNew):
+  - L60: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class my_int16(np.int16): class my_int16(np.int16):
+  - L85: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyStr(str, np.generic): class MyStr(str, np.generic):
+  - L93: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyBytes(bytes, np.generic): class MyBytes(bytes, np.ge
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_scalarmath.py
+  ~ L880: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L892: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L902: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L924: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L928: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L102: 空壳标记 TODO: # TODO: It would be nice to resolve this issue.
+  - L1043: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class myf_simple1(sctype): class myf_simple1(sctype):
+  - L1046: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class myf_simple2(sctype): class myf_simple2(sctype):
+  - L1134: 空壳标记 TODO: # TODO: Power is a bit special, but here mostly bools seem to behave oddly
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_shape_base.py
+  - L895: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArrayLike: class ArrayLike:
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_stringdtype.py
+  ~ L1531: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L117: 自证断言 assert(X == X): assert dtype == dtype
+  - L2097: 空壳标记 TODO: # TODO: generalize to more ufuncs
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_ufunc.py
+  ~ L2807: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L2816: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L2825: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L197: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _pickleable_module_global(): def _pickleable_module_glob
+  - L314: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_all_ufunc(self): def test_all_ufunc(self):
+  - L913: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MySubclass(np.ndarray): class MySubclass(np.ndarray):
+  - L1699: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArray(np.ndarray): class MyArray(np.ndarray):
+  - L2782: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArr(np.ndarray): class MyArr(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_umath.py
+  - L284: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArrSubclass(np.ndarray): class ArrSubclass(np.ndarray)
+  - L1195: 空壳标记 FIXME: # FIXME cinf not tested.
+  - L1934: 空壳标记 FIXME: # FIXME: NAN raises FP invalid exception:
+  - L3085: 空壳标记 FIXME: # FIXME: a not used
+  - L5096: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class foo(np.ndarray): class foo(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_core/tests/test_umath_complex.py
+  - L18: 空壳标记 TODO: # TODO: branch cuts (use Pauli code)
+  - L19: 空壳标记 TODO: # TODO: conj 'symmetry'
+  - L20: 空壳标记 TODO: # TODO: FPU exceptions
+  - L25: 空壳标记 FIXME: # FIXME: this will probably change when we require full C99 compatibility
+  - L29: 空壳标记 TODO: # TODO: replace with a check on whether platform-provided C99 funcs are used
+  - L32: 空壳标记 TODO: # TODO This can be xfail when the generator functions are got rid of.
+  - L127: 空壳标记 TODO: # TODO This can be xfail when the generator functions are got rid of.
+  - L342: 空壳标记 FIXME: # FIXME: ugly workaround for isinf bug.
+  - L484: 空壳标记 TODO: # TODO This can be xfail when the generator functions are got rid of.
+## .venv_phase1_fresh/Lib/site-packages/numpy/_distributor_init.py
+  ~ L15: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_pyinstaller/tests/test_pyinstaller.py
+  - L34: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.run([str(exe)], check=True, stdout=subprocess.PIPE) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_typing/_char_codes.py
+  - L154: 空壳标记 TODO: # TODO: add `_StringCodes` once it has a scalar type
+## .venv_phase1_fresh/Lib/site-packages/numpy/_typing/_dtype_like.py
+  - L21: 空壳标记 TODO: type _DTypeLikeNested = Any
+## .venv_phase1_fresh/Lib/site-packages/numpy/_typing/_nbit_base.py
+  - L68: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _128Bit(NBitBase): class _128Bit(NBitBase):
+  - L73: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _96Bit(_128Bit): class _96Bit(_128Bit):
+  - L78: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _64Bit(_96Bit): class _64Bit(_96Bit):
+  - L83: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _32Bit(_64Bit): class _32Bit(_64Bit):
+  - L88: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _16Bit(_32Bit): class _16Bit(_32Bit):
+  - L93: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _8Bit(_16Bit): class _8Bit(_16Bit):
+## .venv_phase1_fresh/Lib/site-packages/numpy/_typing/_nested_sequence.py
+  - L61: E_NOT_IMPLEMENTED: `_NestedSequence.__len__` 裸 raise NotImplementedError（无原因、无登记）
+  - L65: E_NOT_IMPLEMENTED: `_NestedSequence.__getitem__` 裸 raise NotImplementedError（无原因、无登记）
+  - L69: E_NOT_IMPLEMENTED: `_NestedSequence.__contains__` 裸 raise NotImplementedError（无原因、无登记）
+  - L73: E_NOT_IMPLEMENTED: `_NestedSequence.__iter__` 裸 raise NotImplementedError（无原因、无登记）
+  - L77: E_NOT_IMPLEMENTED: `_NestedSequence.__reversed__` 裸 raise NotImplementedError（无原因、无登记）
+  - L81: E_NOT_IMPLEMENTED: `_NestedSequence.count` 裸 raise NotImplementedError（无原因、无登记）
+  - L85: E_NOT_IMPLEMENTED: `_NestedSequence.index` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/_utils/__init__.py
+  ~ L34: [已限定] 窄例外吞异常 `except (AttributeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/conftest.py
+  - L117: 空壳标记 FIXME: # FIXME when yield tests are gone.
+## .venv_phase1_fresh/Lib/site-packages/numpy/ctypeslib/_ctypeslib.py
+  ~ L326: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L387: E_NOT_IMPLEMENTED: `_ctype_from_dtype_scalar` 裸 raise NotImplementedError（无原因、无登记）
+  - L437: E_UNIMPLEMENTED_UNDECLARED: `_ctype_from_dtype_structured` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Overlapping fields
+## .venv_phase1_fresh/Lib/site-packages/numpy/exceptions.py
+  - L55: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ComplexWarning(RuntimeWarning): class ComplexWarning(R
+  - L72: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ModuleDeprecationWarning(DeprecationWarning): class Mo
+  - L83: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class VisibleDeprecationWarning(UserWarning): class VisibleD
+  - L92: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class RankWarning(RuntimeWarning): class RankWarning(Runtime
+  - L105: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TooHardError(RuntimeError): class TooHardError(Runtime
+  - L246: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class DTypePromotionError(TypeError): class DTypePromotionEr
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/_backends/_backend.py
+  - L44: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def compile(self) -> None: def compile(self) -> None:
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/_backends/_meson.py
+  - L185: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.run(command, cwd=cwd, check=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/_isocbind.py
+  - L55: 空壳标记 TODO: # TODO: See gh-25229
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/auxfuncs.py
+  ~ L140: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L614: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class F2PYError(Exception): class F2PYError(Exception):
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/capi_maps.py
+  - L252: 空壳标记 TODO: # TODO: support Fortran `len` function with optional kind parameter
+  - L301: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L500: 空壳标记 TODO: # TODO: Evaluate intent_flags here.
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/cfuncs.py
+  - L866: 空壳标记 TODO: # TODO: These should be dynamically generated, too many mapped to int things,
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/crackfortran.py
+  ~ L2599: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L3349: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L1151: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1165: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1175: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1963: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2308: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2346: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2472: 空壳标记 TODO: # TODO: test .eq., .neq., etc replacements.
+  - L2518: 空壳标记 TODO: outmess(f
+  - L2561: 空壳标记 TODO: # TODO: use symbolic from PR #19805
+  - L2641: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2650: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2912: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2919: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L3473: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/f2py2e.py
+  - L458: 空壳标记 TODO: # TODO: Remove all this when scaninputline is replaced
+  - L650: 空壳标记 TODO: # TODO: Once distutils is dropped completely, i.e. min_ver >= 3.12, unify into -
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/symbolic.py
+  - L23: 空壳标记 TODO: # TODO: support logical constants (Op.BOOLEAN)
+  - L24: 空壳标记 TODO: # TODO: support logical operators (.AND., ...)
+  - L25: 空壳标记 TODO: # TODO: support defined operators (.MYOP., ...)
+  - L110: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class OpError(Exception): class OpError(Exception):
+  - L150: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ExprWarning(UserWarning): class ExprWarning(UserWarnin
+  - L229: E_NOT_IMPLEMENTED: `Expr.__init__` 裸 raise NotImplementedError（无原因、无登记）
+  - L396: E_NOT_IMPLEMENTED: `Expr.tostring` 裸 raise NotImplementedError（无原因、无登记）
+  - L414: E_NOT_IMPLEMENTED: `Expr.tostring` 裸 raise NotImplementedError（无原因、无登记）
+  - L519: 空壳标记 TODO: # TODO: other kind not used
+  - L569: 空壳标记 TODO: # TODO: implement a method for deciding when __call__ should
+  - L657: E_NOT_IMPLEMENTED: `Expr.substitute` 裸 raise NotImplementedError（无原因、无登记）
+  - L713: E_NOT_IMPLEMENTED: `Expr.traverse` 裸 raise NotImplementedError（无原因、无登记）
+  - L810: 空壳标记 TODO: # TODO: determine correct kind
+  - L845: 空壳标记 TODO: # TODO: determine correct kind
+  - L895: 空壳标记 TODO: # TODO: denom kind not used
+  - L1107: 空壳标记 TODO: # TODO: find common divisor of coefficients
+  - L1352: E_NOT_IMPLEMENTED: `_FromStringWorker.process` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_docs.py
+  - L66: 空壳标记 TODO: # TODO: implement test methods for other example Fortran codes
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_f2py2e.py
+  - L417: 空壳标记 TODO: # TODO: Clean up to prevent passing --overwrite-signature
+  - L528: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_call(cmd, cwd=tmp_path) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L617: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: rout = subprocess.run(cmd_run, capture_output=True, encoding=       ) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L722: 空壳标记 TODO: # TODO: populate
+  - L723: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_inclpath(): def test_inclpath():
+  - L731: 空壳标记 TODO: # TODO: populate
+  - L732: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_hlink(): def test_hlink():
+  - L787: 空壳标记 TODO: # TODO: f2py2e should not call sys.exit() after printing the version
+  - L806: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: rout = subprocess.run(cmd_run, capture_output=True, encoding=       ) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L829: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: rout = subprocess.run(cmd_run, capture_output=True, encoding=       ) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L854: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: rout = subprocess.run(cmd_run, capture_output=True, encoding=       ) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L863: 空壳标记 TODO: # TODO: These should be tested separately
+  - L869: 空壳标记 TODO: # TODO: populate
+  - L870: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_fcompiler(): def test_npd_fcompiler():
+  - L877: 空壳标记 TODO: # TODO: populate
+  - L878: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_compiler(): def test_npd_compiler():
+  - L885: 空壳标记 TODO: # TODO: populate
+  - L886: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_help_fcompiler(): def test_npd_help_fcompiler()
+  - L893: 空壳标记 TODO: # TODO: populate
+  - L894: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_f77exec(): def test_npd_f77exec():
+  - L901: 空壳标记 TODO: # TODO: populate
+  - L902: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_f90exec(): def test_npd_f90exec():
+  - L909: 空壳标记 TODO: # TODO: populate
+  - L910: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_f77flags(): def test_npd_f77flags():
+  - L917: 空壳标记 TODO: # TODO: populate
+  - L918: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_f90flags(): def test_npd_f90flags():
+  - L925: 空壳标记 TODO: # TODO: populate
+  - L926: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_opt(): def test_npd_opt():
+  - L933: 空壳标记 TODO: # TODO: populate
+  - L934: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_arch(): def test_npd_arch():
+  - L941: 空壳标记 TODO: # TODO: populate
+  - L942: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_noopt(): def test_npd_noopt():
+  - L949: 空壳标记 TODO: # TODO: populate
+  - L950: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_noarch(): def test_npd_noarch():
+  - L957: 空壳标记 TODO: # TODO: populate
+  - L958: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_debug(): def test_npd_debug():
+  - L965: 空壳标记 TODO: # TODO: populate
+  - L966: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_link_auto(): def test_npd_link_auto():
+  - L973: 空壳标记 TODO: # TODO: populate
+  - L974: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_lib(): def test_npd_lib():
+  - L981: 空壳标记 TODO: # TODO: populate
+  - L982: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_define(): def test_npd_define():
+  - L989: 空壳标记 TODO: # TODO: populate
+  - L990: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_undefine(): def test_npd_undefine():
+  - L997: 空壳标记 TODO: # TODO: populate
+  - L998: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_incl(): def test_npd_incl():
+  - L1005: 空壳标记 TODO: # TODO: populate
+  - L1006: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_npd_linker(): def test_npd_linker():
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_modules.py
+  - L21: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_gh26920(self): def test_gh26920(self):
+  - L36: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def test_gh26920(self): def test_gh26920(self):
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_return_character.py
+  - L31: E_NOT_IMPLEMENTED: `TestReturnCharacter.check_function` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_return_complex.py
+  ~ L51: [已限定] 窄例外吞异常 `except OverflowError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_return_real.py
+  ~ L49: [已限定] 窄例外吞异常 `except OverflowError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/test_symbolic.py
+  - L59: 自证断言 assert(X == X): assert x == x
+  - L67: 自证断言 assert(X == X): assert n == n
+  - L75: 自证断言 assert(X == X): assert fn == fn
+  - L84: 自证断言 assert(X == X): assert c == c
+  - L92: 自证断言 assert(X == X): assert s == s
+  - L100: 自证断言 assert(X == X): assert a == a
+  - L107: 自证断言 assert(X == X): assert t == t
+  - L115: 自证断言 assert(X == X): assert v == v
+  - L122: 自证断言 assert(X == X): assert t == t
+  - L129: 自证断言 assert(X == X): assert e == e
+## .venv_phase1_fresh/Lib/site-packages/numpy/f2py/tests/util.py
+  ~ L142: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L146: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  - L50: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: runmeson = subprocess.run( ← 工具 `meson` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L246: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.Popen(cmd, ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L267: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_call( ← 工具 `/usr/bin/rebase` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_datasource.py
+  ~ L109: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L115: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L124: [已限定] 窄例外吞异常 `except (ImportError, AttributeError):`（显式列出异常类型）
+  - L71: 空壳标记 TODO: # TODO: .zip support, .tar support?
+  - L331: 空壳标记 TODO: # TODO: Doesn't handle compressed files!
+  - L397: 空壳标记 TODO: # TODO:  This should be more robust.  Handles case where path includes
+  - L511: 空壳标记 TODO: # TODO: There is no support for opening a file for writing which
+  - L514: 空壳标记 TODO: # TODO: Add a ``subdir`` parameter for specifying the subdirectory
+  - L697: E_UNIMPLEMENTED_UNDECLARED: `Repository.listdir` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Directory listing of URLs, not supported yet.
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_format_impl.py
+  ~ L428: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L433: [已限定] 窄例外吞异常 `except UnicodeEncodeError:`（显式列出异常类型）
+  ~ L1020: [已限定] 窄例外吞异常 `except BlockingIOError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_function_base_impl.py
+  - L885: 空壳标记 TODO: # TODO: This preserves the Python int, float, complex manually to get the
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_iotools.py
+  - L428: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ConverterError(Exception): class ConverterError(Except
+  - L436: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ConverterLockError(ConverterError): class ConverterLoc
+  - L449: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ConversionWarning(UserWarning): class ConversionWarnin
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_nanfunctions_impl.py
+  - L1670: 空壳标记 TODO: # TODO: What to do when arr1d = [1, np.nan] and weights = [0, 1]?
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_npyio_impl.py
+  ~ L2106: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L2158: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L2373: [已限定] 窄例外吞异常 `except UnicodeEncodeError:`（显式列出异常类型）
+  - L249: 空壳标记 FIXME: # FIXME: This seems like it will copy strings around
+  - L2418: E_UNIMPLEMENTED_UNDECLARED: `genfromtxt` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Nested fields involving objects are not supported.
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/_utils_impl.py
+  ~ L346: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/mixins.py
+  - L166: 空壳标记 TODO: # TODO: handle the optional third argument for __pow__?
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/recfunctions.py
+  - L1008: E_UNIMPLEMENTED_UNDECLARED: `structured_to_unstructured` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← arr with no fields is not supported
+  - L1136: E_UNIMPLEMENTED_UNDECLARED: `unstructured_to_structured` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← last axis with size 0 is not supported
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test__iotools.py
+  ~ L203: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_arraysetops.py
+  - L836: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Subclass(np.ndarray): class Subclass(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_function_base.py
+  - L502: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class subclass(np.ndarray): class subclass(np.ndarray):
+  - L669: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SubClass(np.ndarray): class SubClass(np.ndarray):
+  - L1048: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SubClass(np.ndarray): class SubClass(np.ndarray):
+  - L2015: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class subclass(np.ndarray): class subclass(np.ndarray):
+  - L2219: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class A(np.ndarray): class A(np.ndarray):
+  - L2976: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class subclass(np.ndarray): class subclass(np.ndarray):
+  - L3910: 空壳标记 TODO: # TODO: Note that times have dubious rounding as of fixing NaTs!
+  - L4573: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MySubclass(np.ndarray): class MySubclass(np.ndarray):
+  - L4746: 空壳标记 TODO: # TODO: Median does not support Datetime, due to `mean`.
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_histograms.py
+  - L23: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def setup_method(self): def setup_method(self):
+  - L26: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def teardown_method(self): def teardown_method(self):
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_io.py
+  - L333: 空壳标记 TODO: # TODO: specify exact message
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_nanfunctions.py
+  - L175: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L231: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L250: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L327: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L548: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_polynomial.py
+  ~ L272: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_regression.py
+  - L223: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C: class C:
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_shape_base.py
+  ~ L580: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L613: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L643: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L157: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+  - L242: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MinimalSubclass(np.ndarray): class MinimalSubclass(np.
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_stride_tricks.py
+  - L506: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArray(np.ndarray): class MyArray(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_type_check.py
+  - L213: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class PdComplex(np.complex128): class PdComplex(np.complex12
+## .venv_phase1_fresh/Lib/site-packages/numpy/lib/tests/test_utils.py
+  - L19: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NoPublicMethods: class NoPublicMethods:
+  - L23: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def first_method(): def first_method():
+## .venv_phase1_fresh/Lib/site-packages/numpy/linalg/_linalg.py
+  - L748: E_UNIMPLEMENTED_UNDECLARED: `matrix_power` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← matrix_power not supported for stacks of object ar
+## .venv_phase1_fresh/Lib/site-packages/numpy/linalg/tests/test_linalg.py
+  ~ L54: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L2046: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L514: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L531: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L565: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L599: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L632: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L675: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L916: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestPinv(PinvCases): class TestPinv(PinvCases):
+  - L931: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestPinvHermitian(PinvHermitianCases): class TestPinvH
+  - L1100: 空壳标记 FIXME: # FIXME the 'e' dtype might work in future
+  - L1229: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L1307: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+  - L1621: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _TestNorm(_TestNorm2D, _TestNormGeneral): class _TestN
+  - L1668: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormDouble(_TestNorm, _TestNormDoubleBase): class 
+  - L1672: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormSingle(_TestNorm, _TestNormSingleBase): class 
+  - L1676: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormInt64(_TestNorm, _TestNormInt64Base): class Te
+  - L1934: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ArraySubclass(np.ndarray): class ArraySubclass(np.ndar
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/core.py
+  ~ L1021: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L3140: [已限定] 窄例外吞异常 `except (TypeError, AttributeError):`（显式列出异常类型）
+  ~ L3488: [已限定] 窄例外吞异常 `except (AttributeError, TypeError):`（显式列出异常类型）
+  - L91: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MaskedArrayFutureWarning(FutureWarning): class MaskedA
+  - L147: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MAError(Exception): class MAError(Exception):
+  - L155: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MaskError(MAError): class MaskError(MAError):
+  - L481: 空壳标记 TODO: # TODO: It seems better to always store a valid fill_value, the oddity
+  - L1098: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L1238: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L2914: 空壳标记 FIXME: # FIXME: should we set `_data._sharedmask = True`?
+  - L3470: E_NOT_IMPLEMENTED: `MaskedArray.__setitem__` 裸 raise NotImplementedError（无原因、无登记）
+  - L3624: E_UNIMPLEMENTED_UNDECLARED: `MaskedArray.recordmask` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Coming soon: setting the mask per records!
+  - L4746: 空壳标记 TODO: # TODO: We don't actually support K, so use A instead.  We could
+  - L6425: E_UNIMPLEMENTED_UNDECLARED: `MaskedArray.tofile` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← MaskedArray.tofile() not implemented yet.
+  - L7094: 空壳标记 TODO: # TODO: For methods with a docstring "Parameters" section, that do not already
+  - L8751: E_UNIMPLEMENTED_UNDECLARED: `fromfile` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← fromfile() not yet implemented for a MaskedArray.
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/extras.py
+  - L951: E_UNIMPLEMENTED_UNDECLARED: `compress_rowcols` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← compress_rowcols works for 2D arrays only.
+  - L990: E_UNIMPLEMENTED_UNDECLARED: `compress_rows` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← compress_rows works for 2D arrays only.
+  - L1031: E_UNIMPLEMENTED_UNDECLARED: `compress_cols` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← compress_cols works for 2D arrays only.
+  - L1110: E_UNIMPLEMENTED_UNDECLARED: `mask_rowcols` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← mask_rowcols works for 2D arrays only.
+  - L2094: E_UNIMPLEMENTED_UNDECLARED: `notmasked_contiguous` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Currently limited to at most 2D array.
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/mrecords.py
+  ~ L185: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L208: [已限定] 窄例外吞异常 `except IndexError:`（显式列出异常类型）
+  - L197: E_UNIMPLEMENTED_UNDECLARED: `MaskedRecords.__getattribute__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← MaskedRecords is currently limited to
+  - L633: E_UNIMPLEMENTED_UNDECLARED: `openfile` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Wow, binary file
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/tests/test_core.py
+  ~ L1397: [已限定] 窄例外吞异常 `except MaskError:`（显式列出异常类型）
+  ~ L5123: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L5199: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class A(np.ndarray): class A(np.ndarray):
+  - L5213: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class M(MaskedArray): class M(MaskedArray):
+  - L5737: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Sub(type(np.ma.masked)): class Sub(type(np.ma.masked))
+  - L5751: 空壳标记 TODO: # TODO: Test masked_object, masked_equal, ...
+  - L6014: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def method(self): def method(self):
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/tests/test_extras.py
+  ~ L994: [已限定] 窄例外吞异常 `except np.exceptions.AxisError:`（显式列出异常类型）
+  ~ L1370: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L1434: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/tests/test_mrecords.py
+  ~ L255: [已限定] 窄例外吞异常 `except NotImplementedError:`（显式列出异常类型）
+  ~ L264: [已限定] 窄例外吞异常 `except (NotImplementedError, TypeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/ma/tests/test_old_ma.py
+  - L716: 空壳标记 TODO: # TODO FIXME: Find out what the following raises a warning in r8247
+  - L716: 空壳标记 FIXME: # TODO FIXME: Find out what the following raises a warning in r8247
+## .venv_phase1_fresh/Lib/site-packages/numpy/matrixlib/tests/test_matrix_linalg.py
+  - L55: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestSolveMatrix(SolveCases, MatrixTestCase): class Tes
+  - L59: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestInvMatrix(InvCases, MatrixTestCase): class TestInv
+  - L63: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestEigvalsMatrix(EigvalsCases, MatrixTestCase): class
+  - L67: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestEigMatrix(EigCases, MatrixTestCase): class TestEig
+  - L71: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestSVDMatrix(SVDCases, MatrixTestCase): class TestSVD
+  - L75: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestCondMatrix(CondCases, MatrixTestCase): class TestC
+  - L79: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestPinvMatrix(PinvCases, MatrixTestCase): class TestP
+  - L83: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestDetMatrix(DetCases, MatrixTestCase): class TestDet
+  - L90: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestLstsqMatrix(LstsqCases, MatrixTestCase): class Tes
+  - L98: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormDoubleMatrix(_TestNorm2DMatrix, _TestNormDoubl
+  - L102: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormSingleMatrix(_TestNorm2DMatrix, _TestNormSingl
+  - L106: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class TestNormInt64Matrix(_TestNorm2DMatrix, _TestNormInt64B
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/_polybase.py
+  - L117: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def domain(self): def domain(self):
+  - L122: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def window(self): def window(self):
+  - L127: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def basis_name(self): def basis_name(self):
+  - L132: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _add(c1, c2): def _add(c1, c2):
+  - L137: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _sub(c1, c2): def _sub(c1, c2):
+  - L142: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _mul(c1, c2): def _mul(c1, c2):
+  - L147: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _div(c1, c2): def _div(c1, c2):
+  - L152: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _pow(c, pow, maxpower=None): def _pow(c, pow, maxpower=N
+  - L157: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _val(x, c): def _val(x, c):
+  - L162: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _int(c, m, k, lbnd, scl): def _int(c, m, k, lbnd, scl):
+  - L167: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _der(c, m, scl): def _der(c, m, scl):
+  - L172: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _fit(x, y, deg, rcond, full): def _fit(x, y, deg, rcond,
+  - L177: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _line(off, scl): def _line(off, scl):
+  - L182: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _roots(c): def _roots(c):
+  - L187: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _fromroots(r): def _fromroots(r):
+  - L401: E_UNIMPLEMENTED_UNDECLARED: `ABCPolyBase._str_term_unicode` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclasses must define either a basis_name, or ove
+  - L415: E_UNIMPLEMENTED_UNDECLARED: `ABCPolyBase._str_term_ascii` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclasses must define either a basis_name, or ove
+  - L424: E_UNIMPLEMENTED_UNDECLARED: `ABCPolyBase._repr_latex_term` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclasses must define either a basis name, or ove
+  - L432: 空壳标记 TODO: # TODO: we're stuck with disabling math formatting until we handle
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/chebyshev.py
+  - L797: 空壳标记 FIXME: raise ZeroDivisionError
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/polynomial.py
+  - L405: 空壳标记 FIXME: raise ZeroDivisionError
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/polyutils.py
+  - L536: 空壳标记 FIXME: raise ZeroDivisionError
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/tests/test_polynomial.py
+  - L195: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class C(np.ndarray): class C(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/polynomial/tests/test_polyutils.py
+  - L102: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyNDArray(np.ndarray): class MyNDArray(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/random/tests/test_direct.py
+  - L91: E_NOT_IMPLEMENTED: `uniform32_from_uint` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/numpy/random/tests/test_generator_mt19937_regressions.py
+  - L166: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class N(np.ndarray): class N(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/random/tests/test_random.py
+  - L542: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class MyArr(np.ndarray): class MyArr(np.ndarray):
+  - L1064: 空壳标记 TODO: # TODO: Include test for randint once it can broadcast
+## .venv_phase1_fresh/Lib/site-packages/numpy/random/tests/test_randomstate_regression.py
+  - L134: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class N(np.ndarray): class N(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/random/tests/test_regression.py
+  - L133: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class N(np.ndarray): class N(np.ndarray):
+## .venv_phase1_fresh/Lib/site-packages/numpy/testing/_private/utils.py
+  ~ L429: [已限定] 窄例外吞异常 `except (TypeError, ValueError, NotImplementedError):`（显式列出异常类型）
+  ~ L456: [已限定] 窄例外吞异常 `except (TypeError, ValueError, NotImplementedError):`（显式列出异常类型）
+  ~ L634: [已限定] 窄例外吞异常 `except (NotImplementedError, TypeError):`（显式列出异常类型）
+  ~ L733: [已限定] 窄例外吞异常 `except (TypeError, NotImplementedError):`（显式列出异常类型）
+  ~ L2759: [已限定] 窄例外吞异常 `except (ImportError, AttributeError):`（显式列出异常类型）
+  - L52: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class KnownFailureException(Exception): class KnownFailureEx
+  - L190: E_NOT_IMPLEMENTED: `memusage` 裸 raise NotImplementedError（无原因、无登记）
+  - L448: E_UNIMPLEMENTED_UNDECLARED: `assert_equal` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← cannot compare to a scalar
+  - L1486: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: output = subprocess.run(cmd, capture_output=True, text=True) ← 工具 `lscpu` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L1502: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def nop(self): def nop(self):
+  - L1941: E_UNIMPLEMENTED_UNDECLARED: `nulp_diff` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← _nulp not implemented for complex array
+  - L2185: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class IgnoreException(Exception): class IgnoreException(Exce
+  - L2889: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, ← 工具 `lscpu` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/numpy/testing/tests/test_utils.py
+  ~ L1221: [已限定] 窄例外吞异常 `except DeprecationWarning:`（显式列出异常类型）
+  ~ L1769: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L40: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _assert_func(self, *args, **kwargs): def _assert_func(se
+  - L703: E_NOT_IMPLEMENTED: `MyArray.all` 裸 raise NotImplementedError（无原因、无登记）
+  - L873: E_NOT_IMPLEMENTED: `MyArray.all` 裸 raise NotImplementedError（无原因、无登记）
+  - L1742: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class mod: class mod:
+## .venv_phase1_fresh/Lib/site-packages/numpy/tests/test_configtool.py
+  - L23: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.run([              , arg], capture_output=True, text=True) ← 工具 `numpy-config` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/numpy/tests/test_ctypeslib.py
+  ~ L25: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L31: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/numpy/tests/test_scripts.py
+  - L38: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: stdout = subprocess.check_output([f2py_cmd,     ]) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L44: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: stdout = subprocess.check_output([sys.executable,               ,     ]) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/numpy/typing/tests/data/pass/array_constructors.py
+  - L12: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SubClass(np.ndarray[tuple[Any, ...], np.dtype[np.float
+## .venv_phase1_fresh/Lib/site-packages/observation_service/keyframe.py
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/keyframe.py，依据 AUTHORIZATION.json）
+## .venv_phase1_fresh/Lib/site-packages/observation_service/ollama_vlm_adapter.py
+  ~ L120: [已授权] 联网调用（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/ollama_vlm_adapter.py 在授权层内）
+  ~ L125: [已授权] 联网调用（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/ollama_vlm_adapter.py 在授权层内）
+## .venv_phase1_fresh/Lib/site-packages/observation_service/shot_discovery.py
+  ~ L33: [已授权] 子进程 `ffmpeg`（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+## .venv_phase1_fresh/Lib/site-packages/observation_service/zhipu_vlm_adapter.py
+  ~ L131: [已授权] 联网调用（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/zhipu_vlm_adapter.py 在授权层内）
+  ~ L140: [已授权] 联网调用（路径 .venv_phase1_fresh/Lib/site-packages/observation_service/zhipu_vlm_adapter.py 在授权层内）
+## .venv_phase1_fresh/Lib/site-packages/packaging/_elffile.py
+  - L19: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ELFInvalid(ValueError): class ELFInvalid(ValueError):
+## .venv_phase1_fresh/Lib/site-packages/packaging/_musllinux.py
+  - L55: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.run([ld], check=False, stderr=subprocess.PIPE, text=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/packaging/_parser.py
+  - L29: E_NOT_IMPLEMENTED: `Node.serialize` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/packaging/dependency_groups.py
+  - L205: E_NOT_IMPLEMENTED: `DependencyGroupResolver._resolve` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/packaging/markers.py
+  ~ L250: [已限定] 窄例外吞异常 `except InvalidSpecifier:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/packaging/metadata.py
+  ~ L603: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L611: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L220: 空壳标记 TODO: # TODO: The spec doesn't say anything about if the keys should be
+  - L945: 空壳标记 TODO: description: _Validator[str | None] = _Validator()
+## .venv_phase1_fresh/Lib/site-packages/packaging/pylock.py
+  - L943: E_NOT_IMPLEMENTED: `Pylock.select` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/packaging/requirements.py
+  - L75: 空壳标记 TODO: # TODO: Can we test whether something is contained within a requirement?
+  - L78: 空壳标记 TODO: # TODO: Can we normalize the name and extra name?
+## .venv_phase1_fresh/Lib/site-packages/packaging/tags.py
+  ~ L449: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L664: 空壳标记 TODO: # TODO: Need to care about 32-bit PPC for ppc64 through 10.2?
+  - L716: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: version_str = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/packaging/version.py
+  - L434: 空壳标记 TODO: # TODO: remove "no cover" when Python 3.9 is dropped.
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/build_env/base.py
+  - L26: 空壳标记 TODO: # TODO: simplify this data model when the legacy subprocess installer is removed
+  - L92: 空壳标记 FIXME: # FIXME: Consider direct URL?
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/build_env/installer.py
+  - L169: 空壳标记 TODO: # TODO: this plays poorly with venv-based build environments, but cannot be
+  - L205: 空壳标记 TODO: # TODO: hash-checking should be extended to build deps, but that is
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/build_env/noop.py
+  - L21: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __enter__(self) -> None: def __enter__(self) -> None:
+  - L29: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __exit__( ) -> None:
+  - L32: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def cleanup(self) -> None: def cleanup(self) -> None:
+  - L42: E_NOT_IMPLEMENTED: `NoOpBuildEnvironment.install_requirements` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/build_env/venv.py
+  - L142: 空壳标记 TODO: # TODO: when better support for installing to arbitrary Python environments
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/cache.py
+  - L89: E_NOT_IMPLEMENTED: `Cache.get_path_for_link` 裸 raise NotImplementedError（无原因、无登记）
+  - L100: E_NOT_IMPLEMENTED: `Cache.get` 裸 raise NotImplementedError（无原因、无登记）
+  - L283: 空壳标记 TODO: # TODO: use DirectUrl.equivalent when
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/cli/base_command.py
+  ~ L148: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  - L83: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def add_options(self) -> None: def add_options(self) -> None
+  - L97: E_NOT_IMPLEMENTED: `Command.run` 裸 raise NotImplementedError（无原因、无登记）
+  - L226: 空壳标记 TODO: # TODO: Try to get these passing down from the command?
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/cli/main.py
+  - L78: 空壳标记 TODO: # TODO: Re-evaluate whether this is still needed once pip drops Python 3.10.
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/cli/main_parser.py
+  - L102: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.run(pip_cmd) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/cli/spinners.py
+  - L32: E_NOT_IMPLEMENTED: `SpinnerInterface.spin` 裸 raise NotImplementedError（无原因、无登记）
+  - L35: E_NOT_IMPLEMENTED: `SpinnerInterface.finish` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/commands/cache.py
+  ~ L207: [已限定] 窄例外吞异常 `except FileNotFoundError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/commands/configuration.py
+  - L248: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_call(f                    , shell=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/commands/inspect.py
+  - L60: 空壳标记 TODO: # TODO tags? scheme?
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/commands/search.py
+  ~ L174: [已限定] 窄例外吞异常 `except UnicodeEncodeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/distributions/base.py
+  - L43: E_NOT_IMPLEMENTED: `AbstractDistribution.build_tracker_id` 裸 raise NotImplementedError（无原因、无登记）
+  - L47: E_NOT_IMPLEMENTED: `AbstractDistribution.get_metadata_distribution` 裸 raise NotImplementedError（无原因、无登记）
+  - L57: E_NOT_IMPLEMENTED: `AbstractDistribution.prepare_distribution_metadata` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/distributions/installed.py
+  - L34: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def prepare_distribution_metadata( ) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/distributions/wheel.py
+  - L45: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def prepare_distribution_metadata( ) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/exceptions.py
+  ~ L367: [已限定] 窄例外吞异常 `except IndexError:`（显式列出异常类型）
+  ~ L886: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/index/collector.py
+  - L93: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _NotHTTP(Exception): class _NotHTTP(Exception):
+  - L345: 空壳标记 TODO: # TODO: In the future, it would be nice if pip supported PEP 691
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/index/sources.py
+  - L34: E_NOT_IMPLEMENTED: `LinkSource.link` 裸 raise NotImplementedError（无原因、无登记）
+  - L38: E_NOT_IMPLEMENTED: `LinkSource.page_candidates` 裸 raise NotImplementedError（无原因、无登记）
+  - L42: E_NOT_IMPLEMENTED: `LinkSource.file_links` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/locations/_distutils.py
+  ~ L17: [已限定] 窄例外吞异常 `except (ImportError, AttributeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/locations/base.py
+  - L16: 空壳标记 FIXME: # FIXME doesn't account for venv linked to global site-packages
+  - L60: 空壳标记 FIXME: # FIXME: keep src in cwd for now (it is not a temporary folder)
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/metadata/base.py
+  - L53: E_NOT_IMPLEMENTED: `BaseEntryPoint.name` 裸 raise NotImplementedError（无原因、无登记）
+  - L57: E_NOT_IMPLEMENTED: `BaseEntryPoint.value` 裸 raise NotImplementedError（无原因、无登记）
+  - L61: E_NOT_IMPLEMENTED: `BaseEntryPoint.group` 裸 raise NotImplementedError（无原因、无登记）
+  - L107: E_NOT_IMPLEMENTED: `BaseDistribution.from_directory` 裸 raise NotImplementedError（无原因、无登记）
+  - L125: E_NOT_IMPLEMENTED: `BaseDistribution.from_metadata_file_contents` 裸 raise NotImplementedError（无原因、无登记）
+  - L139: E_NOT_IMPLEMENTED: `BaseDistribution.from_wheel` 裸 raise NotImplementedError（无原因、无登记）
+  - L159: E_NOT_IMPLEMENTED: `BaseDistribution.location` 裸 raise NotImplementedError（无原因、无登记）
+  - L177: 空壳标记 TODO: # TODO: get project location from second line of egg_link file
+  - L193: E_NOT_IMPLEMENTED: `BaseDistribution.installed_location` 裸 raise NotImplementedError（无原因、无登记）
+  - L209: E_NOT_IMPLEMENTED: `BaseDistribution.info_location` 裸 raise NotImplementedError（无原因、无登记）
+  - L274: E_NOT_IMPLEMENTED: `BaseDistribution.canonical_name` 裸 raise NotImplementedError（无原因、无登记）
+  - L278: E_NOT_IMPLEMENTED: `BaseDistribution.version` 裸 raise NotImplementedError（无原因、无登记）
+  - L282: E_NOT_IMPLEMENTED: `BaseDistribution.raw_version` 裸 raise NotImplementedError（无原因、无登记）
+  - L362: E_NOT_IMPLEMENTED: `BaseDistribution.is_file` 裸 raise NotImplementedError（无原因、无登记）
+  - L370: E_NOT_IMPLEMENTED: `BaseDistribution.iter_distutils_script_names` 裸 raise NotImplementedError（无原因、无登记）
+  - L379: E_NOT_IMPLEMENTED: `BaseDistribution.read_text` 裸 raise NotImplementedError（无原因、无登记）
+  - L382: E_NOT_IMPLEMENTED: `BaseDistribution.iter_entry_points` 裸 raise NotImplementedError（无原因、无登记）
+  - L385: E_NOT_IMPLEMENTED: `BaseDistribution._metadata_impl` 裸 raise NotImplementedError（无原因、无登记）
+  - L448: E_NOT_IMPLEMENTED: `BaseDistribution.iter_dependencies` 裸 raise NotImplementedError（无原因、无登记）
+  - L464: E_NOT_IMPLEMENTED: `BaseDistribution.iter_provided_extras` 裸 raise NotImplementedError（无原因、无登记）
+  - L589: E_NOT_IMPLEMENTED: `BaseEnvironment.default` 裸 raise NotImplementedError（无原因、无登记）
+  - L593: E_NOT_IMPLEMENTED: `BaseEnvironment.from_paths` 裸 raise NotImplementedError（无原因、无登记）
+  - L601: E_NOT_IMPLEMENTED: `BaseEnvironment.get_distribution` 裸 raise NotImplementedError（无原因、无登记）
+  - L610: E_NOT_IMPLEMENTED: `BaseEnvironment._iter_distributions` 裸 raise NotImplementedError（无原因、无登记）
+  - L673: E_NOT_IMPLEMENTED: `Wheel.as_zipfile` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/metadata/importlib/_compat.py
+  - L32: E_NOT_IMPLEMENTED: `BasePath.name` 裸 raise NotImplementedError（无原因、无登记）
+  - L36: E_NOT_IMPLEMENTED: `BasePath.parent` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/metadata/importlib/_dists.py
+  - L99: E_NOT_IMPLEMENTED: `WheelDistribution.locate_file` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/metadata/pkg_resources.py
+  - L77: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def run_script(self, script_name: str, namespace: str) -> No
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/models/installation_report.py
+  - L51: 空壳标记 TODO: # TODO: currently, the resolver uses the default environment to evaluate
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/models/link.py
+  - L178: E_PERIMETER_NETWORK: ret = urllib.request.pathname2url(urllib.request.url2pathname(part)) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_internal/models/link.py` 不在联网授权层 ['observation_service/', 'tests/']
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/network/auth.py
+  ~ L193: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L228: [已限定] 窄例外吞异常 `except FileNotFoundError:`（显式列出异常类型）
+  - L138: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: res = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L171: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/network/cache.py
+  ~ L36: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/network/lazy_wheel.py
+  ~ L169: [已限定] 窄例外吞异常 `except BadZipFile:`（显式列出异常类型）
+  - L23: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class HTTPRangeRequestUnsupported(Exception): class HTTPRang
+  - L179: 空壳标记 TODO: # TODO: Get range requests to be correctly cached
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/network/session.py
+  - L157: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: rustc_output = subprocess.check_output( ← 工具 `rustc` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L161: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L227: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+  - L277: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class HTTPAdapter(_SSLContextAdapterMixin, _BaseHTTPAdapter)
+  - L281: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class CacheControlAdapter(_SSLContextAdapterMixin, _BaseCach
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/operations/build/build_tracker.py
+  ~ L101: [已限定] 窄例外吞异常 `except FileNotFoundError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/operations/install/wheel.py
+  - L62: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def save(self) -> None: def save(self) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/operations/prepare.py
+  ~ L106: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  - L689: 空壳标记 TODO: # TODO: separate this part out from RequirementPreparer when the v1
+  - L763: 空壳标记 FIXME: # FIXME: https://github.com/pypa/pip/issues/11943
+  - L801: 空壳标记 TODO: # TODO: this is a hack for checking whether a distribution is metadata-
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/req/constructors.py
+  ~ L104: [已限定] 窄例外吞异常 `except InvalidRequirement:`（显式列出异常类型）
+  - L313: 空壳标记 TODO: # TODO: The is_installable_dir test here might not be necessary
+  - L594: 空壳标记 TODO: # TODO: validate file size
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/req/req_file.py
+  - L248: 空壳标记 FIXME: # FIXME: it would be nice to keep track of the source
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/req/req_install.py
+  - L349: 空壳标记 FIXME: # FIXME: Is there a better place to create the build_dir? (hg and bzr
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/req/req_uninstall.py
+  ~ L238: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L570: [已限定] 窄例外吞异常 `except (FileNotFoundError, NotADirectoryError):`（显式列出异常类型）
+  ~ L633: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L488: 空壳标记 FIXME: # FIXME: need a test for this elif block
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/base.py
+  - L15: E_NOT_IMPLEMENTED: `BaseResolver.resolve` 裸 raise NotImplementedError（无原因、无登记）
+  - L20: E_NOT_IMPLEMENTED: `BaseResolver.get_installation_order` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/legacy/resolver.py
+  ~ L376: [已限定] 窄例外吞异常 `except DistributionNotFound:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/resolvelib/base.py
+  - L94: E_UNIMPLEMENTED_UNDECLARED: `Requirement.project_name` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclass should override
+  - L103: E_UNIMPLEMENTED_UNDECLARED: `Requirement.name` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclass should override
+  - L109: E_UNIMPLEMENTED_UNDECLARED: `Requirement.get_candidate_lookup` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclass should override
+  - L112: E_UNIMPLEMENTED_UNDECLARED: `Requirement.format_for_error` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclass should override
+  - L130: E_UNIMPLEMENTED_UNDECLARED: `Candidate.project_name` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L139: E_UNIMPLEMENTED_UNDECLARED: `Candidate.name` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L143: E_UNIMPLEMENTED_UNDECLARED: `Candidate.version` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L147: E_UNIMPLEMENTED_UNDECLARED: `Candidate.is_installed` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L151: E_UNIMPLEMENTED_UNDECLARED: `Candidate.is_editable` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L155: E_UNIMPLEMENTED_UNDECLARED: `Candidate.source_link` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L158: E_UNIMPLEMENTED_UNDECLARED: `Candidate.iter_dependencies` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L161: E_UNIMPLEMENTED_UNDECLARED: `Candidate.get_install_requirement` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L164: E_UNIMPLEMENTED_UNDECLARED: `Candidate.format_for_error` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Subclass should override
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/resolvelib/candidates.py
+  - L217: E_UNIMPLEMENTED_UNDECLARED: `_InstallRequirementBackedCandidate._prepare_distribution` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Override in subclass
+  - L236: 空壳标记 TODO: # TODO performance: this means we iterate the dependencies at least twice,
+  - L381: 空壳标记 TODO: # TODO: Supply reason based on force_reinstall and upgrade_strategy.
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/resolvelib/factory.py
+  - L195: 空壳标记 TODO: # TODO: Check already installed candidate, and use it if the link and
+  - L638: 空壳标记 TODO: # TODO: Are there more cases this needs to return True? Editable?
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/resolution/resolvelib/found_candidates.py
+  - L139: E_UNIMPLEMENTED_UNDECLARED: `FoundCandidates.__getitem__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← don't do this
+  - L155: E_UNIMPLEMENTED_UNDECLARED: `FoundCandidates.__len__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← don't do this
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/self_outdated_check.py
+  ~ L69: [已限定] 窄例外吞异常 `except (OSError, ValueError, KeyError):`（显式列出异常类型）
+  ~ L129: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/compat.py
+  ~ L23: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L37: 空壳标记 TODO: # TODO: Remove the 3.10 fallback once pip drops Python 3.10 support.
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/filesystem.py
+  ~ L105: [已限定] 窄例外吞异常 `except FileExistsError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/misc.py
+  ~ L148: [已限定] 窄例外吞异常 `except (AttributeError, TypeError, IndexError):`（显式列出异常类型）
+  ~ L202: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L209: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L385: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  - L168: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _onerror_ignore(*_args: Any) -> None: def _onerror_ignor
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/pylock.py
+  - L72: E_NOT_IMPLEMENTED: `_pylock_package_from_install_requirement` 裸 raise NotImplementedError（无原因、无登记）
+  - L81: E_NOT_IMPLEMENTED: `_pylock_package_from_install_requirement` 裸 raise NotImplementedError（无原因、无登记）
+  - L86: E_NOT_IMPLEMENTED: `_pylock_package_from_install_requirement` 裸 raise NotImplementedError（无原因、无登记）
+  - L104: E_NOT_IMPLEMENTED: `_pylock_package_from_install_requirement` 裸 raise NotImplementedError（无原因、无登记）
+  - L252: 空壳标记 TODO: # TODO: refactor - this is similar to req_file.get_file_content
+  - L293: 空壳标记 TODO: # TODO: for completeness, pylock.select should support preferring sdist
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/subprocess.py
+  - L129: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.Popen( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/temp_dir.py
+  - L84: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _Default: class _Default:
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/urls.py
+  - L16: E_PERIMETER_NETWORK: url = urllib.parse.urljoin(         , urllib.request.pathname2url(path)) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/urls.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L43: E_PERIMETER_NETWORK: path = urllib.request.url2pathname(netloc + path) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_internal/utils/urls.py` 不在联网授权层 ['observation_service/', 'tests/']
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/vcs/git.py
+  - L511: E_PERIMETER_NETWORK: newpath = initial_slashes + urllib.request.url2pathname(path).replace( ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_internal/vcs/git.py` 不在联网授权层 ['observation_service/', 'tests/']
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/vcs/subversion.py
+  - L60: 空壳标记 FIXME: # FIXME: should we warn?
+## .venv_phase1_fresh/Lib/site-packages/pip/_internal/vcs/versioncontrol.py
+  - L103: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class RemoteNotFoundError(Exception): class RemoteNotFoundEr
+  - L315: E_NOT_IMPLEMENTED: `VersionControl.get_base_rev_args` 裸 raise NotImplementedError（无原因、无登记）
+  - L453: E_NOT_IMPLEMENTED: `VersionControl.fetch_new` 裸 raise NotImplementedError（无原因、无登记）
+  - L468: E_NOT_IMPLEMENTED: `VersionControl.switch` 裸 raise NotImplementedError（无原因、无登记）
+  - L483: E_NOT_IMPLEMENTED: `VersionControl.update` 裸 raise NotImplementedError（无原因、无登记）
+  - L494: E_NOT_IMPLEMENTED: `VersionControl.is_commit_id_equal` 裸 raise NotImplementedError（无原因、无登记）
+  - L605: E_NOT_IMPLEMENTED: `VersionControl.get_remote_url` 裸 raise NotImplementedError（无原因、无登记）
+  - L612: E_NOT_IMPLEMENTED: `VersionControl.get_revision` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/__init__.py
+  ~ L43: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/_cmd.py
+  - L32: E_PERIMETER_NETWORK: sess = requests.Session() ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/_cmd.py` 不在联网授权层 ['observation_service/', 'tests/']
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/cache.py
+  - L21: E_NOT_IMPLEMENTED: `BaseCache.get` 裸 raise NotImplementedError（无原因、无登记）
+  - L26: E_NOT_IMPLEMENTED: `BaseCache.set` 裸 raise NotImplementedError（无原因、无登记）
+  - L29: E_NOT_IMPLEMENTED: `BaseCache.delete` 裸 raise NotImplementedError（无原因、无登记）
+  - L32: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+  - L69: E_NOT_IMPLEMENTED: `SeparateBodyBaseCache.set_body` 裸 raise NotImplementedError（无原因、无登记）
+  - L75: E_NOT_IMPLEMENTED: `SeparateBodyBaseCache.get_body` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/caches/file_cache.py
+  ~ L104: [已限定] 窄例外吞异常 `except FileNotFoundError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/caches/redis_cache.py
+  - L48: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/controller.py
+  - L227: 空壳标记 TODO: # TODO: There is an assumption that the result will be a
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/cachecontrol/filewrapper.py
+  ~ L58: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L65: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L68: 空壳标记 TODO: # TODO: Add some logging here...
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/__init__.py
+  - L13: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class DistlibException(Exception): class DistlibException(Ex
+  - L23: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def handle(self, record): def handle(self, record):
+  - L26: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def emit(self, record): def emit(self, record):
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/compat.py
+  ~ L540: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L639: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L714: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L90: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class CertificateError(ValueError): class CertificateError(V
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/resources.py
+  ~ L317: [已限定] 窄例外吞异常 `except (ImportError, AttributeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/scripts.py
+  - L306: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/util.py
+  - L401: 空壳标记 TODO: # TODO check k, v for valid values
+  - L1487: E_PERIMETER_NETWORK: sock = socket.create_connection((self.host, self.port), self.timeout) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/distlib/util.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L1785: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwar ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/distro/distro.py
+  - L1165: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: stdout = subprocess.check_output(cmd, stderr=subprocess.DEVNULL) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L1202: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: stdout = subprocess.check_output(cmd, stderr=subprocess.DEVNULL) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L1213: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: stdout = subprocess.check_output(         , stderr=subprocess.DEVNULL) ← 工具 `oslevel` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/idna/codec.py
+  - L128: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class StreamWriter(Codec, codecs.StreamWriter): class Stream
+  - L132: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class StreamReader(Codec, codecs.StreamReader): class Stream
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/idna/compat.py
+  - L41: E_UNIMPLEMENTED_UNDECLARED: `nameprep` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← IDNA 2008 does not utilise nameprep protocol
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/idna/core.py
+  ~ L395: [已限定] 窄例外吞异常 `except UnicodeEncodeError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/msgpack/exceptions.py
+  - L11: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class BufferFull(UnpackException): class BufferFull(UnpackEx
+  - L15: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class OutOfData(UnpackException): class OutOfData(UnpackExce
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/msgpack/fallback.py
+  - L499: 空壳标记 TODO: # TODO should we eliminate the recursion?
+  - L503: 空壳标记 TODO: # TODO check whether we need to call `list_hook`
+  - L511: 空壳标记 TODO: # TODO is the interaction between `list_hook` and `use_list` ok?
+  - L516: 空壳标记 TODO: # TODO check whether we need to call hooks
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/_elffile.py
+  - L19: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ELFInvalid(ValueError): class ELFInvalid(ValueError):
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/_musllinux.py
+  - L52: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.run([ld], check=False, stderr=subprocess.PIPE, text=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/_parser.py
+  - L28: E_NOT_IMPLEMENTED: `Node.serialize` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/dependency_groups.py
+  - L187: E_NOT_IMPLEMENTED: `DependencyGroupResolver._resolve` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/markers.py
+  ~ L222: [已限定] 窄例外吞异常 `except InvalidSpecifier:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/metadata.py
+  ~ L560: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L568: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L205: 空壳标记 TODO: # TODO: The spec doesn't say anything about if the keys should be
+  - L869: 空壳标记 TODO: description: _Validator[str | None] = _Validator()
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/pylock.py
+  - L905: E_NOT_IMPLEMENTED: `Pylock.select` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/requirements.py
+  - L48: 空壳标记 TODO: # TODO: Can we test whether something is contained within a requirement?
+  - L51: 空壳标记 TODO: # TODO: Can we normalize the name and extra name?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/tags.py
+  ~ L372: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L559: 空壳标记 TODO: # TODO: Need to care about 32-bit PPC for ppc64 through 10.2?
+  - L608: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: version_str = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/packaging/version.py
+  - L423: 空壳标记 TODO: # TODO: remove "no cover" when Python 3.9 is dropped.
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pkg_resources/__init__.py
+  ~ L219: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L472: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L2353: [已限定] 窄例外吞异常 `except (PermissionError, NotADirectoryError):`（显式列出异常类型）
+  ~ L3414: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L3517: [已限定] 窄例外吞异常 `except FileExistsError:`（显式列出异常类型）
+  - L1: 空壳标记 TODO: # TODO: Add Generic type annotations to initialized collections.
+  - L122: 空壳标记 TODO: _ResourceStream = Any
+  - L1728: E_UNIMPLEMENTED_UNDECLARED: `NullProvider._has` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Can't perform this operation for unregistered load
+  - L1733: E_UNIMPLEMENTED_UNDECLARED: `NullProvider._isdir` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Can't perform this operation for unregistered load
+  - L1738: E_UNIMPLEMENTED_UNDECLARED: `NullProvider._listdir` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Can't perform this operation for unregistered load
+  - L1831: E_UNIMPLEMENTED_UNDECLARED: `NullProvider._get` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Can't perform this operation for loaders without '
+  - L1918: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self): def __init__(self):
+  - L2011: E_UNIMPLEMENTED_UNDECLARED: `ZipProvider.get_resource_filename` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← resource_filename() only supported for .egg, not .
+  - L2031: 空壳标记 FIXME: # FIXME: 'ZipProvider._extract_resource' is too complex (12)
+  - L3201: 空壳标记 FIXME: # FIXME: 'Distribution.insert_on' is too complex (13)
+  - L3308: 空壳标记 TODO: # TODO: remove this except clause when python/cpython#103632 is fixed.
+  - L3598: 空壳标记 TODO: # TODO: Add a deadline?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/platformdirs/api.py
+  - L135: E_NOT_IMPLEMENTED: `PlatformDirsABC._site_data_dirs` 裸 raise NotImplementedError（无原因、无登记）
+  - L149: E_NOT_IMPLEMENTED: `PlatformDirsABC._site_config_dirs` 裸 raise NotImplementedError（无原因、无登记）
+  - L258: E_NOT_IMPLEMENTED: `PlatformDirsABC._site_applications_dirs` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/platformdirs/windows.py
+  ~ L367: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L279: E_NOT_IMPLEMENTED: `get_win_folder_from_registry` 裸 raise NotImplementedError（无原因、无登记）
+  - L312: E_NOT_IMPLEMENTED: `get_win_folder_via_ctypes` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/filter.py
+  - L51: E_NOT_IMPLEMENTED: `Filter.filter` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/filters/__init__.py
+  - L81: 空壳标记 TODO: [     ,       ,        ,      ,       ])
+  - L81: 空壳标记 FIXME: [     ,       ,        ,      ,       ])
+  - L760: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ErrorToken(Exception): class ErrorToken(Exception):
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/lexer.py
+  ~ L649: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L288: E_NOT_IMPLEMENTED: `Lexer.get_tokens_unprocessed` 裸 raise NotImplementedError（无原因、无登记）
+  - L334: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class include(str): class include(str):
+  - L357: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self, *args): def __init__(self, *args):
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/lexers/__init__.py
+  ~ L329: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/lexers/python.py
+  - L717: 空壳标记 TODO: # different tokens.  TODO: DelegatingLexer should support this
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/pygments/util.py
+  ~ L307: [已限定] 窄例外吞异常 `except UnicodeDecodeError:`（显式列出异常类型）
+  - L272: E_NOT_IMPLEMENTED: `Future.get` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/__init__.py
+  ~ L142: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/_types.py
+  - L55: 空壳标记 TODO: Buffer,
+  - L56: 空壳标记 TODO: TypeIs,
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/adapters.py
+  - L151: E_NOT_IMPLEMENTED: `BaseAdapter.send` 裸 raise NotImplementedError（无原因、无登记）
+  - L155: E_NOT_IMPLEMENTED: `BaseAdapter.close` 裸 raise NotImplementedError（无原因、无登记）
+  - L611: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def add_headers(self, request: PreparedRequest, **kwargs: An
+  - L715: 空壳标记 TODO: # TODO: Remove this in 3.0.0: see #2811
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/auth.py
+  - L82: E_UNIMPLEMENTED_UNDECLARED: `AuthBase.__call__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Auth hooks must be callable.
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/cookies.py
+  - L91: E_UNIMPLEMENTED_UNDECLARED: `MockRequest.add_header` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Cookie headers should be added with add_unredirect
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/hooks.py
+  - L29: 空壳标记 TODO: # TODO: response is the only one
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/models.py
+  ~ L1111: [已限定] 窄例外吞异常 `except UnicodeDecodeError:`（显式列出异常类型）
+  - L621: E_UNIMPLEMENTED_UNDECLARED: `PreparedRequest.prepare_body` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Streamed bodies and files are mutually exclusive.
+  - L685: 空壳标记 TODO: # TODO: can be fixed by flipping the conditionals
+  - L1012: 空壳标记 TODO: # TODO: remove cast after iter_lines rewrite
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/sessions.py
+  ~ L824: [已限定] 窄例外吞异常 `except StopIteration:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/requests/utils.py
+  ~ L182: [已限定] 窄例外吞异常 `except (io.UnsupportedOperation, AttributeError):`（显式列出异常类型）
+  ~ L280: [已限定] 窄例外吞异常 `except (ImportError, AttributeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/resolvelib/providers.py
+  - L31: E_NOT_IMPLEMENTED: `identify` 裸 raise NotImplementedError（无原因、无登记）
+  - L90: E_NOT_IMPLEMENTED: `get_preference` 裸 raise NotImplementedError（无原因、无登记）
+  - L125: E_NOT_IMPLEMENTED: `find_matches` 裸 raise NotImplementedError（无原因、无登记）
+  - L136: E_NOT_IMPLEMENTED: `is_satisfied_by` 裸 raise NotImplementedError（无原因、无登记）
+  - L144: E_NOT_IMPLEMENTED: `get_dependencies` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/resolvelib/resolvers/abstract.py
+  - L47: E_NOT_IMPLEMENTED: `AbstractResolver.resolve` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/resolvelib/resolvers/exceptions.py
+  - L44: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ResolutionError(ResolverException): class ResolutionEr
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/_inspect.py
+  ~ L96: [已限定] 窄例外吞异常 `except (OSError, TypeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/_null_file.py
+  - L7: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+  - L40: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def writelines(self, __lines: Iterable[str]) -> None: def wr
+  - L57: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __exit__( ) -> None:
+  - L63: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def flush(self) -> None: def flush(self) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/_win32_console.py
+  - L30: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class LegacyWindowsError(Exception): class LegacyWindowsErro
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/abc.py
+  - L29: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Foo: class Foo:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/console.py
+  ~ L1032: [已限定] 窄例外吞异常 `except (AttributeError, ValueError, OSError):`（显式列出异常类型）
+  - L80: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class NoChange: class NoChange:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/jupyter.py
+  ~ L95: [已限定] 窄例外吞异常 `except ModuleNotFoundError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/pretty.py
+  ~ L108: [已限定] 窄例外吞异常 `except (OSError, TypeError):`（显式列出异常类型）
+  - L662: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/progress.py
+  ~ L535: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L393: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def open( ) -> ContextManager[TextIO]:
+  - L418: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def open( ) -> ContextManager[BinaryIO]:
+  - L1292: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def open( ) -> BinaryIO:
+  - L1308: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def open( ) -> TextIO:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/syntax.py
+  ~ L130: [已授权] ABC 抽象方法 `SyntaxTheme.get_style_for_token` 的 NotImplementedError
+  ~ L135: [已授权] ABC 抽象方法 `SyntaxTheme.get_background_style` 的 NotImplementedError
+  ~ L402: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  ~ L411: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/rich/text.py
+  - L562: 空壳标记 TODO: # TODO: This is a little inefficient, it is only used by full justify
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/tomli/_parser.py
+  ~ L330: [已限定] 窄例外吞异常 `except IndexError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/truststore/_api.py
+  ~ L46: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L63: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L74: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L336: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L195: E_NOT_IMPLEMENTED: `SSLContext.cert_store_stats` 裸 raise NotImplementedError（无原因、无登记）
+  - L212: E_NOT_IMPLEMENTED: `SSLContext.get_ca_certs` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/truststore/_macos.py
+  - L419: E_UNIMPLEMENTED_UNDECLARED: `_verify_peercerts_impl` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← VERIFY_CRL_CHECK_LEAF not implemented for macOS
+  - L558: 空壳标记 TODO: # TODO: Not sure if we need the SecTrustResultType for anything?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/truststore/_openssl.py
+  - L68: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _verify_peercerts_impl( ) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/__init__.py
+  ~ L32: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/_base_connection.py
+  - L22: 空壳标记 TODO: # TODO: Remove this in favor of a better
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/_collections.py
+  ~ L304: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L137: E_UNIMPLEMENTED_UNDECLARED: `RecentlyUsedContainer.__iter__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Iteration over this class is unlikely to be thread
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/_request_methods.py
+  - L64: E_UNIMPLEMENTED_UNDECLARED: `RequestMethods.urlopen` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Classes extending RequestMethods must implement
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/connection.py
+  - L38: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class BaseSSLError(BaseException): class BaseSSLError(BaseEx
+  - L254: E_PERIMETER_NETWORK: _MAXLINE = http.client._MAXLINE ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/connection.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L281: E_PERIMETER_NETWORK: raise http.client.LineTooLong(             ) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/connection.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L315: E_PERIMETER_NETWORK: self._raw_proxy_headers = http.client._read_headers(response.fp) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/connection.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L336: 空壳标记 TODO: # TODO: Fix tunnel so it doesn't depend on self.sock state.
+  - L442: 空壳标记 TODO: # object later. TODO: Remove this in favor of a real
+  - L567: 空壳标记 TODO: # TODO should we implement it everywhere?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/connectionpool.py
+  ~ L314: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L508: [已限定] 窄例外吞异常 `except BrokenPipeError:`（显式列出异常类型）
+  ~ L1191: [已限定] 窄例外吞异常 `except queue.Empty:`（显式列出异常类型）
+  - L344: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _prepare_proxy(self, conn: BaseHTTPConnection) -> None: 
+  - L578: 空壳标记 TODO: # TODO: Add optional support for socket.gethostbyname checking.
+  - L1108: 空壳标记 TODO: # TODO revise this, see https://github.com/urllib3/urllib3/issues/2791
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/contrib/emscripten/connection.py
+  - L80: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def set_tunnel( ) -> None:
+  - L83: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def connect(self) -> None: def connect(self) -> None:
+  - L254: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def set_cert( ) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/contrib/emscripten/fetch.py
+  - L86: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _StreamingError(_RequestError): class _StreamingError(
+  - L90: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _TimeoutError(_RequestError): class _TimeoutError(_Req
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/contrib/pyopenssl.py
+  - L51: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class UnsupportedExtension(Exception): class UnsupportedExte
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/contrib/socks.py
+  - L162: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SOCKSHTTPSConnection(SOCKSConnection, HTTPSConnection)
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/exceptions.py
+  - L306: 空壳标记 TODO: # TODO(t-8ch): Stop inheriting from AssertionError in v2.0.
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/fields.py
+  ~ L69: [已限定] 窄例外吞异常 `except (UnicodeEncodeError, UnicodeDecodeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/http2/__init__.py
+  - L38: 空壳标记 TODO: # TODO: Offer 'http/1.1' as well, but for testing purposes this is handy.
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/http2/connection.py
+  - L94: E_UNIMPLEMENTED_UNDECLARED: `HTTP2Connection.__init__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Proxies aren't supported with HTTP/2
+  - L99: E_UNIMPLEMENTED_UNDECLARED: `HTTP2Connection.__init__` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Tunneling isn't supported with HTTP/2
+  - L123: E_UNIMPLEMENTED_UNDECLARED: `HTTP2Connection.putrequest` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← `skip_host` isn't supported
+  - L125: E_UNIMPLEMENTED_UNDECLARED: `HTTP2Connection.putrequest` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← `skip_accept_encoding` isn't supported
+  - L144: 空壳标记 TODO: # TODO SKIPPABLE_HEADERS from urllib3 are ignored.
+  - L222: E_UNIMPLEMENTED_UNDECLARED: `HTTP2Connection.set_tunnel` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← HTTP/2 does not support setting up a tunnel throug
+  - L234: 空壳标记 TODO: # TODO: Arbitrary read value.
+  - L282: 空壳标记 TODO: # TODO this is often present from upstream.
+  - L314: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+  - L325: 空壳标记 TODO: # TODO: This is a woefully incomplete response object, but works for non-streami
+  - L332: 空壳标记 TODO: decode_content: bool = False,
+  - L356: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def close(self) -> None: def close(self) -> None:
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/poolmanager.py
+  ~ L405: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/response.py
+  ~ L797: [已限定] 窄例外吞异常 `except (HTTPError, OSError, BaseSSLError, HTTPException):`（显式列出异常类型）
+  - L50: E_NOT_IMPLEMENTED: `ContentDecoder.decompress` 裸 raise NotImplementedError（无原因、无登记）
+  - L54: E_NOT_IMPLEMENTED: `ContentDecoder.has_unconsumed_tail` 裸 raise NotImplementedError（无原因、无登记）
+  - L57: E_NOT_IMPLEMENTED: `ContentDecoder.flush` 裸 raise NotImplementedError（无原因、无登记）
+  - L204: E_NOT_IMPLEMENTED: `BrotliDecoder._decompress` 裸 raise NotImplementedError（无原因、无登记）
+  - L509: E_NOT_IMPLEMENTED: `BaseHTTPResponse.data` 裸 raise NotImplementedError（无原因、无登记）
+  - L534: E_NOT_IMPLEMENTED: `BaseHTTPResponse.url` 裸 raise NotImplementedError（无原因、无登记）
+  - L538: E_NOT_IMPLEMENTED: `BaseHTTPResponse.url` 裸 raise NotImplementedError（无原因、无登记）
+  - L542: E_NOT_IMPLEMENTED: `BaseHTTPResponse.connection` 裸 raise NotImplementedError（无原因、无登记）
+  - L558: E_NOT_IMPLEMENTED: `BaseHTTPResponse.stream` 裸 raise NotImplementedError（无原因、无登记）
+  - L566: E_NOT_IMPLEMENTED: `BaseHTTPResponse.read` 裸 raise NotImplementedError（无原因、无登记）
+  - L573: E_NOT_IMPLEMENTED: `BaseHTTPResponse.read1` 裸 raise NotImplementedError（无原因、无登记）
+  - L580: E_NOT_IMPLEMENTED: `BaseHTTPResponse.read_chunked` 裸 raise NotImplementedError（无原因、无登记）
+  - L583: E_NOT_IMPLEMENTED: `BaseHTTPResponse.release_conn` 裸 raise NotImplementedError（无原因、无登记）
+  - L586: E_NOT_IMPLEMENTED: `BaseHTTPResponse.drain_conn` 裸 raise NotImplementedError（无原因、无登记）
+  - L589: E_NOT_IMPLEMENTED: `BaseHTTPResponse.shutdown` 裸 raise NotImplementedError（无原因、无登记）
+  - L592: E_NOT_IMPLEMENTED: `BaseHTTPResponse.close` 裸 raise NotImplementedError（无原因、无登记）
+  - L902: 空壳标记 FIXME: # FIXME: Ideally we'd like to include the url in the ReadTimeoutError but
+  - L1146: 空壳标记 TODO: # TODO make sure to initially read enough data to get past the headers
+  - L1211: 空壳标记 FIXME: # FIXME, this method's type doesn't say returning None is possible
+  - L1389: 空壳标记 FIXME: # FIXME: Rewrite this method and make it a class with a better structured logic.
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/connection.py
+  - L64: E_PERIMETER_NETWORK: sock = socket.socket(af, socktype, proto) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/connection.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L126: E_PERIMETER_NETWORK: sock = socket.socket(socket.AF_INET6) ← 路径 `.venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/connection.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L130: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/request.py
+  ~ L30: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L218: 空壳标记 TODO: # File-like object, TODO: use seek() and tell() for length?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/response.py
+  ~ L22: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L28: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L35: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L99: 空壳标记 FIXME: # FIXME: Can we do this somehow without accessing private httplib _method?
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/ssl_match_hostname.py
+  - L21: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class CertificateError(ValueError): class CertificateError(V
+## .venv_phase1_fresh/Lib/site-packages/pip/_vendor/urllib3/util/url.py
+  - L454: 空壳标记 TODO: # TODO: Remove this when we break backwards compatibility.
+## .venv_phase1_fresh/Lib/site-packages/pluggy/_callers.py
+  ~ L45: [已限定] 窄例外吞异常 `except StopIteration:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pluggy/_hooks.py
+  - L411: 空壳标记 TODO: # TODO: Document, or make private.
+  - L417: 空壳标记 TODO: # TODO: Document, or make private.
+  - L421: 空壳标记 TODO: # TODO: Document, or make private.
+## .venv_phase1_fresh/Lib/site-packages/pluggy/_tracing.py
+  ~ L48: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_decorators.py
+  ~ L322: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L263: 空壳标记 TODO: # TODO most likely this branch can be removed when we drop support for Python 3.
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_docs_extraction.py
+  ~ L63: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L70: [已限定] 窄例外吞异常 `except SyntaxError:`（显式列出异常类型）
+  - L103: 空壳标记 TODO: # TODO remove this implementation when we drop support for Python 3.12:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_fields.py
+  ~ L406: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L45: 空壳标记 TODO: @dataclasses.dataclass(**slots_true)
+  - L47: 空壳标记 TODO: # TODO: make use of PEP 747:
+  - L579: 空壳标记 TODO: # TODO: We should probably do something with this so that validate_assignment be
+  - L591: 空壳标记 TODO: # TODO: same note as above re validate_assignment
+  - L619: 空壳标记 TODO: # was already evaluated. TODO: is this method relevant?
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_generate_schema.py
+  ~ L2130: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L330: 空壳标记 TODO: # TODO: in theory we should check that the schema accepts a serialization key
+  - L434: 空壳标记 TODO: # TODO this is an ugly hack, how do we trigger an Any schema for serialization?
+  - L648: 空壳标记 TODO: # TODO: note, this is a fairly common pattern, re lax / strict for attempted typ
+  - L994: 空壳标记 TODO: # TODO: this shouldn't be necessary (probably even this `_get_args_resolving_for
+  - L1676: 空壳标记 TODO: # TODO: do we really need to resolve type vars here?
+  - L1695: 空壳标记 TODO: # TODO: something like https://github.com/pydantic/pydantic/issues/5952
+  - L2186: 空壳标记 TODO: # TODO: Should we support exclude_if from annotations?
+  - L2559: 空壳标记 TODO: # TODO V3: this function is only used for deprecated decorators. It should
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_generics.py
+  - L234: 空壳标记 TODO: # TODO: This could be unified with `get_standard_typevars_map` if we stored the 
+  - L275: 空壳标记 TODO: # TODO remove parentheses when we drop support for Python 3.10:
+  - L314: 空壳标记 TODO: # TODO remove type ignore comment when we drop support for Python 3.9 (https://g
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_git.py
+  - L17: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: subprocess.check_output([     ,         ]) ← 工具 `git` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L27: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: return subprocess.check_output([     ,            ,          ,       ], cwd=dir) ← 工具 `git` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_known_annotated_metadata.py
+  - L84: 空壳标记 TODO: # TODO: this is a bit redundant, we could probably avoid some of these
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_model_construction.py
+  ~ L524: [已限定] 窄例外吞异常 `except (NameError, TypeError):`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_namespace_utils.py
+  - L236: 空壳标记 TODO: # TODO: should we merge the parent namespace here?
+  - L263: 空壳标记 TODO: # TODO `typ.__type_params__` when we drop support for Python 3.11:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_repr.py
+  - L17: 空壳标记 TODO: # TODO remove type error comments when we drop support for Python 3.9
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_schema_gather.py
+  - L97: 空壳标记 TODO: # TODO When we drop 3.9, use a match statement to get better type checking and r
+  - L173: 空壳标记 TODO: # TODO duplicate schema types for serializers and validators, needs to be dedupl
+  - L179: 空壳标记 TODO: # TODO duplicate schema types for serializers and validators, needs to be dedupl
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_serializers.py
+  ~ L46: [已限定] 窄例外吞异常 `except PydanticOmit:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_typing_extra.py
+  - L144: 空壳标记 TODO: # TODO implement `is_finalvar_annotation` as Final can be wrapped with other spe
+  - L191: 空壳标记 TODO: # TODO In 2.12, delete this export. It is currently defined only to not break
+  - L200: 空壳标记 TODO: # TODO: Ideally, we should avoid relying on the private `typing` constructs:
+  - L307: 空壳标记 TODO: # TODO just do getattr(obj, '__annotations__', {}) when dropping support for Pyt
+  - L490: 空壳标记 TODO: # TODO ideally recursion errors should be checked in `eval_type` above, but `eva
+  - L626: 空壳标记 TODO: # TODO use typing.ForwardRef directly when we stop supporting 3.9:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_utils.py
+  ~ L352: [已限定] 窄例外吞异常 `except (TypeError, ValueError, RuntimeError):`（显式列出异常类型）
+  - L32: 空壳标记 TODO: # TODO remove type error comments when we drop support for Python 3.9
+## .venv_phase1_fresh/Lib/site-packages/pydantic/_internal/_validators.py
+  ~ L119: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L45: 空壳标记 TODO: # TODO: refactor sequence validation to validate with either a list or a tuple
+## .venv_phase1_fresh/Lib/site-packages/pydantic/alias_generators.py
+  - L7: 空壳标记 TODO: # TODO: in V3, change the argument names to be more descriptive
+## .venv_phase1_fresh/Lib/site-packages/pydantic/annotated_handlers.py
+  - L47: E_NOT_IMPLEMENTED: `GetJsonSchemaHandler.__call__` 裸 raise NotImplementedError（无原因、无登记）
+  - L63: E_NOT_IMPLEMENTED: `GetJsonSchemaHandler.resolve_ref_schema` 裸 raise NotImplementedError（无原因、无登记）
+  - L82: E_NOT_IMPLEMENTED: `GetCoreSchemaHandler.__call__` 裸 raise NotImplementedError（无原因、无登记）
+  - L97: E_NOT_IMPLEMENTED: `GetCoreSchemaHandler.generate_schema` 裸 raise NotImplementedError（无原因、无登记）
+  - L113: E_NOT_IMPLEMENTED: `GetCoreSchemaHandler.resolve_ref_schema` 裸 raise NotImplementedError（无原因、无登记）
+  - L118: E_NOT_IMPLEMENTED: `GetCoreSchemaHandler.field_name` 裸 raise NotImplementedError（无原因、无登记）
+  - L122: E_NOT_IMPLEMENTED: `GetCoreSchemaHandler._get_types_namespace` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/color.py
+  ~ L304: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/dataclasses.py
+  - L307: 空壳标记 TODO: # TODO `parent_namespace` is currently None, but we could do the same thing as P
+## .venv_phase1_fresh/Lib/site-packages/pydantic/deprecated/copy_internals.py
+  ~ L73: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/deprecated/json.py
+  - L112: 空壳标记 TODO: # TODO: Add a suggested migration path once there is a way to use custom encoder
+## .venv_phase1_fresh/Lib/site-packages/pydantic/experimental/pipeline.py
+  - L123: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _FieldTypeMarker: class _FieldTypeMarker:
+  - L126: 空壳标记 TODO: # TODO: ultimately, make this public, see https://github.com/pydantic/pydantic/p
+  - L153: 空壳标记 TODO: tp: ellipsis,
+  - L158: 空壳标记 TODO: # TODO PEP 747: use TypeForm to properly type Annotated aliases (e.g. NewPath, F
+  - L362: E_NOT_IMPLEMENTED: `_Pipeline.__supports_type__` 裸 raise NotImplementedError（无原因、无登记）
+  - L574: E_UNIMPLEMENTED_UNDECLARED: `_apply_constraint` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Constraining to a specific timezone is not yet sup
+  - L646: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class _SupportsRange(annotated_types.SupportsLe, annotated_t
+## .venv_phase1_fresh/Lib/site-packages/pydantic/fields.py
+  ~ L628: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L53: 空壳标记 TODO: # TODO PEP 747: use TypeForm:
+  - L99: 空壳标记 TODO: # TODO PEP 747: use TypeForm:
+  - L151: 空壳标记 TODO: # TODO PEP 747: use TypeForm:
+  - L361: 空壳标记 TODO: # TODO check for classvar and error?
+  - L422: 空壳标记 TODO: # TODO check for classvar and error?
+  - L424: 空壳标记 TODO: # TODO infer from the default, this can be done in v3 once we treat final fields
+  - L840: 空壳标记 TODO: # TODO: properly make use of the protocol (https://rich.readthedocs.io/en/stable
+  - L926: 空壳标记 TODO: default: ellipsis,
+## .venv_phase1_fresh/Lib/site-packages/pydantic/functional_serializers.py
+  - L237: 空壳标记 TODO: # TODO PEP 747 (grep for 'return_type' on the whole code base):
+## .venv_phase1_fresh/Lib/site-packages/pydantic/functional_validators.py
+  - L217: 空壳标记 TODO: # TODO if `schema['serialization']` is one of `'include-exclude-dict/sequence',
+  - L879: 空壳标记 TODO: # TODO: make use of PEP 747
+## .venv_phase1_fresh/Lib/site-packages/pydantic/json_schema.py
+  ~ L1221: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L2895: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  - L527: 空壳标记 TODO: # TODO: I dislike that we have to wrap these basic dict updates in callables, is
+  - L775: 空壳标记 TODO: # TODO: should we add regex flags to the pattern?
+  - L1190: 空壳标记 TODO: # TODO: improvements along with https://github.com/pydantic/pydantic/issues/8208
+  - L1353: 空壳标记 TODO: # This reflects the v1 behavior; TODO: we should make it possible to exclude Ope
+  - L1394: 空壳标记 TODO: # TODO: fixme - this is a workaround for the fact that we can't always resolve r
+  - L1433: 空壳标记 TODO: # TODO: Need to read the default value off of model config or whatever
+  - L1434: 空壳标记 TODO: use_strict = schema.get(        , False)
+## .venv_phase1_fresh/Lib/site-packages/pydantic/main.py
+  ~ L963: [已限定] 窄例外吞异常 `except PydanticUndefinedAnnotation:`（显式列出异常类型）
+  - L4: 空壳标记 TODO: # TODO v3 fallback to `dict` when the deprecated `dict` method gets removed.
+  - L1094: 空壳标记 TODO: # TODO - matching error
+  - L1746: 空壳标记 TODO: # TODO PEP 747: replace `Any` by the TypeForm:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/mypy.py
+  - L550: 空壳标记 TODO: # TODO: Only do this if the first argument of the decorated function is `cls`
+  - L659: 空壳标记 TODO: # TODO: We shouldn't be performing type operations during the main
+  - L822: 空壳标记 TODO: # TODO this path should be removed (see https://github.com/pydantic/pydantic/iss
+## .venv_phase1_fresh/Lib/site-packages/pydantic/networks.py
+  ~ L1158: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L1197: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L1238: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/plugin/__init__.py
+  - L72: E_UNIMPLEMENTED_UNDECLARED: `PydanticPluginProtocol.new_schema_validator` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← Pydantic plugins should implement `new_schema_vali
+## .venv_phase1_fresh/Lib/site-packages/pydantic/type_adapter.py
+  ~ L50: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  - L291: 空壳标记 TODO: # TODO: we don't go through the rebuild logic here directly because we don't wan
+## .venv_phase1_fresh/Lib/site-packages/pydantic/types.py
+  ~ L2123: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L3114: [已限定] 窄例外吞异常 `except LookupError:`（显式列出异常类型）
+  - L1567: E_NOT_IMPLEMENTED: `_SecretBase._display` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/_hypothesis_plugin.py
+  ~ L55: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L186: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _registered(typ: Type[pydantic.types.T]) -> Type[pydanti
+  - L191: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _registered(typ: pydantic.types.ConstrainedNumberMeta) -
+  - L205: E_NOT_IMPLEMENTED: `_registered` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/color.py
+  ~ L235: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/config.py
+  - L22: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, schema: Dict[str, Any]) -> None: def __ca
+  - L26: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, schema: Dict[str, Any], model_class: Type
+  - L147: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def prepare_field(cls, field:             ) -> None: def pre
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/dataclasses.py
+  ~ L44: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L81: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self, *args: object, **kwargs: object) -> None:
+  - L85: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __get_validators__(cls: Type[           ]) ->           
+  - L89: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __validate__(cls: Type[            ], v: Any) ->        
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/decorator.py
+  - L212: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class CustomConfig: class CustomConfig:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/env_settings.py
+  - L20: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class SettingsError(ValueError): class SettingsError(ValueEr
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/errors.py
+  - L134: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class PydanticTypeError(PydanticErrorMixin, TypeError): clas
+  - L138: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class PydanticValueError(PydanticErrorMixin, ValueError): cl
+  - L142: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ConfigError(RuntimeError): class ConfigError(RuntimeEr
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/networks.py
+  ~ L648: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L672: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L696: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L67: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class Parts(dict): class Parts(dict):
+  - L535: 空壳标记 TODO: # TODO: Needed to generic "Parts" for "Replica Set", "Sharded Cluster", and othe
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/types.py
+  ~ L1102: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L138: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _registered(typ: Type[T]) -> Type[T]: def _registered(ty
+  - L143: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _registered(typ:                        ) ->            
+  - L826: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class JsonWrapper: class JsonWrapper:
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/typing.py
+  ~ L185: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L255: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L409: [已限定] 窄例外吞异常 `except KeyError:`（显式列出异常类型）
+  ~ L427: [已限定] 窄例外吞异常 `except NameError:`（显式列出异常类型）
+  ~ L580: [已限定] 窄例外吞异常 `except exc_to_suppress:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pydantic/v1/utils.py
+  ~ L692: [已限定] 窄例外吞异常 `except (TypeError, ValueError, RuntimeError):`（显式列出异常类型）
+  - L270: 空壳标记 TODO: # TODO: replace annotation with actual expected types once #1055 solved
+## .venv_phase1_fresh/Lib/site-packages/pydantic/warnings.py
+  - L99: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class GenericBeforeBaseModelWarning(Warning): class GenericB
+## .venv_phase1_fresh/Lib/site-packages/pygments/cmdline.py
+  ~ L474: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  - L523: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## .venv_phase1_fresh/Lib/site-packages/pygments/filter.py
+  - L51: E_NOT_IMPLEMENTED: `Filter.filter` 裸 raise NotImplementedError（无原因、无登记）
+## .venv_phase1_fresh/Lib/site-packages/pygments/filters/__init__.py
+  - L81: 空壳标记 TODO: [     ,       ,        ,      ,       ])
+  - L81: 空壳标记 FIXME: [     ,       ,        ,      ,       ])
+  - L760: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class ErrorToken(Exception): class ErrorToken(Exception):
+## .venv_phase1_fresh/Lib/site-packages/pygments/formatters/html.py
+  ~ L451: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/formatters/img.py
+  ~ L199: [已限定] 窄例外吞异常 `except OSError:`（显式列出异常类型）
+  ~ L263: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  ~ L441: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L93: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.Popen([         , f                      ,       ], ← 工具 `fc-list` 不在授权清单 ['ffmpeg', 'ffprobe']
+  - L447: E_UNIMPLEMENTED_UNDECLARED: `ImageFormatter.get_style_defs` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← The -S option is meaningless for the image
+  - L548: 空壳标记 TODO: # TODO: make sure tab expansion happens earlier in the chain.  It
+## .venv_phase1_fresh/Lib/site-packages/pygments/formatters/latex.py
+  - L334: 空壳标记 TODO: # TODO: add support for background colors
+## .venv_phase1_fresh/Lib/site-packages/pygments/formatters/rtf.py
+  ~ L140: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/formatters/terminal256.py
+  - L17: 空壳标记 TODO: # TODO:
+  - L312: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def _build_color_table(self): def _build_color_table(self):
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexer.py
+  ~ L647: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L286: E_NOT_IMPLEMENTED: `Lexer.get_tokens_unprocessed` 裸 raise NotImplementedError（无原因、无登记）
+  - L332: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class include(str): class include(str):
+  - L355: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __init__(self, *args): def __init__(self, *args):
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/__init__.py
+  ~ L329: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/_scilab_builtins.py
+  - L3061: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: s = subprocess.Popen([        ,        ], stdin=subprocess.PIPE, ← 工具 `scilab` 不在授权清单 ['ffmpeg', 'ffprobe']
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/ada.py
+  - L115: 空壳标记 TODO: # TODO: use Name.Namespace if appropriate.  This needs
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/arturo.py
+  ~ L64: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/c_like.py
+  - L217: 空壳标记 TODO: # TODO: "correctly" parse complex code attributes
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/css.py
+  - L556: 空壳标记 TODO: # TODO: broken, and prone to infinite loops.
+  - L594: 空壳标记 FIXME: # FIXME: It's not currently possible to simply do the following,
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/dns.py
+  - L53: 空壳标记 TODO: # TODO, $GENERATE https://bind9.readthedocs.io/en/v9.18.14/chapter3.html#soa-rr
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/dotnet.py
+  - L571: 空壳标记 TODO: # TODO support multiple languages within the same source file
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/fantom.py
+  - L49: 空壳标记 TODO: # TODO: highlight references in fandocs
+  - L85: 空壳标记 TODO: : [
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/graphics.py
+  - L41: 空壳标记 FIXME: # FIXME when e is present, no decimal point needed
+  - L172: 空壳标记 FIXME: # FIXME when e is present, no decimal point needed
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/haskell.py
+  - L446: 空壳标记 TODO: # TODO: these don't match the comments in docs, remove.
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/inferno.py
+  - L85: 空壳标记 TODO: # TODO:
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/javascript.py
+  - L133: 空壳标记 TODO: # TODO: should this include single-line comments and allow nesting strings?
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/julia.py
+  - L195: 空壳标记 FIXME: # FIXME: This escape pattern is not perfect.
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/jvm.py
+  - L891: 空壳标记 TODO: # TODO / should divide keywords/symbols into namespace/rest
+  - L1351: 空壳标记 TODO: (r        , Text)
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/markup.py
+  ~ L162: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  ~ L551: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  ~ L790: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  ~ L819: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  ~ L999: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  - L674: 空壳标记 TODO: (r                   ,
+  - L676: 空壳标记 TODO: (r                      ,
+  - L682: 空壳标记 TODO: # Unordered lists items, including TODO items and description items
+  - L698: 空壳标记 TODO: # TODO: language-dependent syntax highlighting (see Markdown lexer)
+  - L724: 空壳标记 TODO: (_inline(r   , r   ), String),
+  - L1033: 空壳标记 FIXME: # FIXME: Use ABC lexer in the future
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/meson.py
+  - L27: 空壳标记 TODO: # TODO String interpolation @VARNAME@ inner matches
+  - L28: 空壳标记 TODO: # TODO keyword_arg: value inner matches
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/mips.py
+  - L28: 空壳标记 TODO: # TODO: add '*.s' and '*.asm', which will require designing an analyse_text
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/modula2.py
+  - L474: 空壳标记 TODO: ,      ,       ,           ,        ,
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/mojo.py
+  - L123: 空壳标记 TODO: ,
+  - L273: 空壳标记 TODO: ,
+  - L274: 空壳标记 TODO: ,
+  - L702: 空壳标记 TODO: # TODO supported?
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/nix.py
+  - L123: 空壳标记 TODO: # TODO: we should probably escape also here ''${ \${
+  - L135: 空壳标记 TODO: # TODO: let/in
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/oberon.py
+  - L50: 空壳标记 TODO: # TODO: nested comments (* (* ... *) ... (* ... *) *) not supported!
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/objective.py
+  - L130: 空壳标记 TODO: # TODO unsure if ellipses are allowed elsewhere, see
+  - L458: 空壳标记 TODO: (r                                                    ,
+  - L458: 空壳标记 FIXME: (r                                                    ,
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/openscad.py
+  - L81: 空壳标记 TODO: (r                                                    ,
+  - L81: 空壳标记 FIXME: (r                                                    ,
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/parsers.py
+  - L396: 空壳标记 TODO: # TODO finish implementing other possibilities for scope
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/perl.py
+  - L35: 空壳标记 TODO: # TODO: give this to a perl guy who knows how to parse perl...
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/python.py
+  - L724: 空壳标记 TODO: # different tokens.  TODO: DelegatingLexer should support this
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/rnc.py
+  - L36: 空壳标记 TODO: # TODO single quoted strings and escape sequences outside of
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/robotframework.py
+  ~ L446: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/scripting.py
+  - L1532: 空壳标记 TODO: # TODO: JES3 statement
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/slash.py
+  - L29: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def right_angle_bracket(lexer, match, ctx): def right_angle_
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/sql.py
+  ~ L148: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  - L150: 空壳标记 TODO: # TODO: better logging
+  - L223: 空壳标记 FIXME: # FIXME: use inheritance
+  - L347: 空壳标记 TODO: # TODO: better handle multiline comments at the end with
+  - L593: 空壳标记 TODO: # TODO: Backslash escapes?
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/templates.py
+  - L755: 空壳标记 TODO: # TODO support other Python syntax like $foo['bar']
+  - L1403: 空壳标记 FIXME: # FIXME: I want to make these keywords but still parse attributes.
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/textedit.py
+  - L140: 空壳标记 TODO: # TODO: regexes can have other delims
+  - L195: 空壳标记 TODO: # TODO: builtins are only subsequent tokens on lines
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/textfmts.py
+  ~ L169: [已限定] 窄例外吞异常 `except ClassNotFound:`（显式列出异常类型）
+  - L240: 空壳标记 TODO: # TODO: Make date regex more ISO 8601 compliant
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/tnt.py
+  ~ L268: [已限定] 窄例外吞异常 `except NameError:`（显式列出异常类型）
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/typst.py
+  - L135: 空壳标记 FIXME: # FIXME: make this work
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/urbi.py
+  - L34: 空壳标记 TODO: # TODO
+## .venv_phase1_fresh/Lib/site-packages/pygments/lexers/wgsl.py
+  - L390: 空壳标记 TODO: # TODO: Treat context-depedendent names specially
+  - L396: 空壳标记 TODO: # TODO: templates start and end tokens.
+## .venv_phase1_fresh/Lib/site-packages/pygments/util.py
+  ~ L308: [已限定] 窄例外吞异常 `except UnicodeDecodeError:`（显式列出异常类型）
+  - L273: E_NOT_IMPLEMENTED: `Future.get` 裸 raise NotImplementedError（无原因、无登记）
+  - L341: 空壳标记 TODO: # TODO: Eventually, check that string is a str, and if not, print a
+## .venv_phase1_fresh/Lib/site-packages/typing_extensions.py
+  ~ L168: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L172: [已限定] 窄例外吞异常 `except (AttributeError, ValueError):`（显式列出异常类型）
+  ~ L425: [已限定] 窄例外吞异常 `except (AttributeError, TypeError):`（显式列出异常类型）
+  ~ L506: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  ~ L585: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L3009: [已限定] 窄例外吞异常 `except (AttributeError, TypeError):`（显式列出异常类型）
+  ~ L3492: [已限定] 窄例外吞异常 `except AttributeError:`（显式列出异常类型）
+  ~ L4023: [已限定] 窄例外吞异常 `except ImportError:`（显式列出异常类型）
+  ~ L4190: [已限定] 窄例外吞异常 `except ValueError:`（显式列出异常类型）
+  - L981: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __int__(self) -> int: def __int__(self) -> int:
+  - L990: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __float__(self) -> float: def __float__(self) -> float:
+  - L999: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __complex__(self) -> complex: def __complex__(self) -> c
+  - L1008: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __bytes__(self) -> bytes: def __bytes__(self) -> bytes:
+  - L1016: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __index__(self) -> int: def __index__(self) -> int:
+  - L1027: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __abs__(self) -> T_co: def __abs__(self) -> T_co:
+  - L1038: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __round__(self, ndigits: int = 0) -> T_co: def __round__
+  - L1333: E_NOT_IMPLEMENTED: `_TypedDictMeta.__annotate__` 裸 raise NotImplementedError（无原因、无登记）
+  - L2033: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, *args, **kwargs): def __call__(self, *arg
+  - L2081: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def __call__(self, *args, **kwargs): def __call__(self, *arg
+  - L3457: 空壳标记 TODO: # TODO: Use inspect.VALUE here, and make the annotations lazily evaluated
+## .venv_phase1_fresh/Lib/site-packages/typing_inspection/introspection.py
+  ~ L566: [已限定] 窄例外吞异常 `except TypeError:`（显式列出异常类型）
+  - L221: 空壳标记 TODO: # TODO at some point, we could switch to an enum flag, so that multiple sources
+  - L224: 空壳标记 TODO: # TODO if/when https://peps.python.org/pep-0767/ is accepted, add 'read_only'
+  - L319: 空壳标记 TODO: # TODO use a match statement when Python 3.9 support is dropped.
+## 03AO/03-项目代码/providers/base.py
+  - L144: E_NOT_IMPLEMENTED: `BaseProvider._invoke` 裸 raise NotImplementedError（无原因、无登记）
+  - L153: E_NOT_IMPLEMENTED: `BaseProvider.health_check` 裸 raise NotImplementedError（无原因、无登记）
+## 03AO/03-项目代码/providers/proposal_validator.py
+  - L24: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class InvalidProposal(Exception): class InvalidProposal(Exce
+## 03AO/03-项目代码/providers/render_concat_v0.py
+  - L28: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.run(cmd, capture_output=True, text=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L35: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: out = subprocess.run( ← 路径 `03AO/03-项目代码/providers/render_concat_v0.py` 不在授权范围 ['execution/', 'observation_service/', 'arsenal/', 'scripts/', 'tests/', 'director_brain/context_gateway.py']
+## 03AO/03-项目代码/tests/unit/test_render_concat_v0.py
+  ~ L30: [已授权] 子进程 `ffprobe`（路径 03AO/03-项目代码/tests/unit/test_render_concat_v0.py，依据 AUTHORIZATION.json）
+## 03AO/03-项目代码/tools/generate_asset_records.py
+  - L44: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: out = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## arsenal/media_import.py
+  ~ L29: [已授权] 子进程 `ffmpeg`（路径 arsenal/media_import.py，依据 AUTHORIZATION.json）
+  ~ L118: [已限定] 窄例外吞异常 `except (json.JSONDecodeError, OSError):`（显式列出异常类型）
+  ~ L131: [已授权] 子进程 `ffmpeg`（路径 arsenal/media_import.py，依据 AUTHORIZATION.json）
+## build/lib/arsenal/media_import.py
+  ~ L29: [已授权] 子进程 `ffmpeg`（路径 build/lib/arsenal/media_import.py，依据 AUTHORIZATION.json）
+  ~ L118: [已限定] 窄例外吞异常 `except (json.JSONDecodeError, OSError):`（显式列出异常类型）
+  ~ L131: [已授权] 子进程 `ffmpeg`（路径 build/lib/arsenal/media_import.py，依据 AUTHORIZATION.json）
+## build/lib/director_brain/context_gateway.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 build/lib/director_brain/context_gateway.py，依据 AUTHORIZATION.json）
+## build/lib/director_brain/director_reasoner.py
+  ~ L157: [已授权] ABC 抽象方法 `DirectorReasoner.generate_plan` 的 NotImplementedError
+  ~ L438: [已登记未实现] `LLMDirectorReasoner.generate_plan`：LLM director reasoner requires ollama endpoint;
+## build/lib/director_brain/llm_adapter.py
+  - L191: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `build/lib/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L197: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `build/lib/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L206: E_PERIMETER_NETWORK: req2 = urllib.request.Request( ← 路径 `build/lib/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L212: E_PERIMETER_NETWORK: with urllib.request.urlopen(req2, timeout=self.timeout) as resp2: ← 路径 `build/lib/director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+## build/lib/director_brain/zhipu_adapter.py
+  - L90: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `build/lib/director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L99: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `build/lib/director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L106: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## build/lib/observation_service/keyframe.py
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 build/lib/observation_service/keyframe.py，依据 AUTHORIZATION.json）
+## build/lib/observation_service/ollama_vlm_adapter.py
+  ~ L120: [已授权] 联网调用（路径 build/lib/observation_service/ollama_vlm_adapter.py 在授权层内）
+  ~ L125: [已授权] 联网调用（路径 build/lib/observation_service/ollama_vlm_adapter.py 在授权层内）
+## build/lib/observation_service/shot_discovery.py
+  ~ L33: [已授权] 子进程 `ffmpeg`（路径 build/lib/observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 build/lib/observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+## build/lib/observation_service/zhipu_vlm_adapter.py
+  ~ L131: [已授权] 联网调用（路径 build/lib/observation_service/zhipu_vlm_adapter.py 在授权层内）
+  ~ L140: [已授权] 联网调用（路径 build/lib/observation_service/zhipu_vlm_adapter.py 在授权层内）
+## director_brain/context_gateway.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 director_brain/context_gateway.py，依据 AUTHORIZATION.json）
+## director_brain/director_reasoner.py
+  ~ L182: [已授权] ABC 抽象方法 `DirectorReasoner.generate_plan` 的 NotImplementedError
+  ~ L515: [已登记未实现] `LLMDirectorReasoner.generate_plan`：LLM director reasoner requires ollama endpoint;
+## director_brain/llm_adapter.py
+  - L191: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L197: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L206: E_PERIMETER_NETWORK: req2 = urllib.request.Request( ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L212: E_PERIMETER_NETWORK: with urllib.request.urlopen(req2, timeout=self.timeout) as resp2: ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+## director_brain/zhipu_adapter.py
+  ~ L109: [已限定] 窄例外吞异常 `except (OSError, http_client.HTTPException):`（显式列出异常类型）
+  - L91: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L100: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+## execution/renderer.py
+  ~ L36: [已授权] 子进程 `ffmpeg`（路径 execution/renderer.py，依据 AUTHORIZATION.json）
+  ~ L145: [已授权] 子进程 `ffmpeg`（路径 execution/renderer.py，依据 AUTHORIZATION.json）
+## observation_service/keyframe.py
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 observation_service/keyframe.py，依据 AUTHORIZATION.json）
+## observation_service/media_info.py
+  ~ L60: [已授权] 子进程 `ffprobe`（路径 observation_service/media_info.py，依据 AUTHORIZATION.json）
+## observation_service/ollama_vlm_adapter.py
+  ~ L120: [已授权] 联网调用（路径 observation_service/ollama_vlm_adapter.py 在授权层内）
+  ~ L125: [已授权] 联网调用（路径 observation_service/ollama_vlm_adapter.py 在授权层内）
+## observation_service/shot_discovery.py
+  ~ L33: [已授权] 子进程 `ffmpeg`（路径 observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+## observation_service/zhipu_vlm_adapter.py
+  ~ L131: [已授权] 联网调用（路径 observation_service/zhipu_vlm_adapter.py 在授权层内）
+  ~ L140: [已授权] 联网调用（路径 observation_service/zhipu_vlm_adapter.py 在授权层内）
+## scripts/evaluate_roughcut.py
+  ~ L59: [已授权] 子进程 `ffprobe`（路径 scripts/evaluate_roughcut.py，依据 AUTHORIZATION.json）
+  ~ L71: [已限定] 窄例外吞异常 `except (subprocess.TimeoutExpired, FileNotFoundError, ValueE`（显式列出异常类型）
+  ~ L79: [已授权] 子进程 `ffprobe`（路径 scripts/evaluate_roughcut.py，依据 AUTHORIZATION.json）
+  ~ L90: [已限定] 窄例外吞异常 `except (subprocess.TimeoutExpired, FileNotFoundError, json.J`（显式列出异常类型）
+## tests/real_output/p2_arsenal_verify.py
+  ~ L65: [已授权] 子进程 `ffprobe`（路径 tests/real_output/p2_arsenal_verify.py，依据 AUTHORIZATION.json）
+## tests/unit/test_asr.py
+  ~ L65: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_asr.py，依据 AUTHORIZATION.json）
+## tests/unit/test_context_gateway.py
+  ~ L35: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_context_gateway.py，依据 AUTHORIZATION.json）
+## tests/unit/test_keyframe.py
+  ~ L30: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_keyframe.py，依据 AUTHORIZATION.json）
+## tests/unit/test_media_import.py
+  ~ L38: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_media_import.py，依据 AUTHORIZATION.json）
+## tests/unit/test_media_info.py
+  ~ L23: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_media_info.py，依据 AUTHORIZATION.json）
+## tests/unit/test_observation_service.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_observation_service.py，依据 AUTHORIZATION.json）
+  ~ L47: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_observation_service.py，依据 AUTHORIZATION.json）
+## tests/unit/test_phase1a_r1.py
+  ~ L251: [已授权] 联网调用（路径 tests/unit/test_phase1a_r1.py 在授权层内）
+## tests/unit/test_vlm_adapter.py
+  ~ L73: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_vlm_adapter.py，依据 AUTHORIZATION.json）
+扫描违规合计: 1016   （已授权放行 325 条，见上方 ~ 行）

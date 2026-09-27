@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 
 from director_brain.models.director_plan import DirectorDecisionPlan
@@ -44,6 +45,29 @@ from director_brain.plan_validator import validate_plan, _parse_target_duration
 from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US
 
 PRODUCER = "plan_repair_v0.2"
+
+_CLIP_MIN_RE = re.compile(r"min_clip_us=(\d+)")
+_CLIP_MAX_RE = re.compile(r"max_clip_us=(\d+)")
+
+
+def _parse_clip_bounds(constraints: list[str]) -> tuple[int, int]:
+    """从 plan.constraints 解析片段时长界（P1-b）；未声明回退模块默认。"""
+    min_us = max_us = None
+    for c in constraints:
+        m = _CLIP_MIN_RE.search(c)
+        if m:
+            min_us = int(m.group(1))
+        m = _CLIP_MAX_RE.search(c)
+        if m:
+            max_us = int(m.group(1))
+    return (min_us or MIN_CLIP_US, max_us or MAX_CLIP_US)
+
+
+def _is_heuristic_evidence(e) -> bool:
+    """片段证据是否为纯启发式（P1-b 结构化字段优先，旧数据回退字符串嗅探）。"""
+    if e.evidence_type:
+        return e.evidence_type == "heuristic"
+    return "heuristic:" in (e.rationale or "")
 
 # ---- ABSTAIN 原因码（受控枚举，禁止自由文本）----
 REASON_EMPTY_SELECTION = "empty_shot_selection"
@@ -113,6 +137,9 @@ def repair_plan(
         logging.info("repair abstain (%s): %s", code, reason)
         return RepairOutcome(status="abstain", reason_code=code, reason=reason)
 
+    # P1-b：与生成端同一组片段时长界（plan.constraints 未声明时回退默认）
+    min_clip_us, max_clip_us = _parse_clip_bounds(new_plan.constraints)
+
     # ---- 前置检查：镜头集合级缺陷（修复器无权处理，ABSTAIN）----
     if not edits:
         return _abstain(
@@ -160,28 +187,28 @@ def repair_plan(
     fixed = []
     for e in edits:
         dur = e.out_frame - e.in_frame
-        if dur >= MIN_CLIP_US:
+        if dur >= min_clip_us:
             fixed.append(e)
             continue
         obs = obs_by_asset.get(e.source_asset_id)
         src_dur = (obs.end_frame - obs.start_frame) if obs else 0
-        if src_dur < MIN_CLIP_US:
+        if src_dur < min_clip_us:
             return _abstain(
                 REASON_SHOT_TOO_SHORT,
-                f"edit {e.source_asset_id} 时长 {dur}us < MIN_CLIP_US 且源镜头"
+                f"edit {e.source_asset_id} 时长 {dur}us < min_clip_us 且源镜头"
                 f"（{src_dur}us）无法扩展，须导演层重新出 plan",
             )
         # 以中点为中心扩展到 MIN_CLIP_US，钳制到源镜头范围
         mid = (e.in_frame + e.out_frame) // 2
-        half = MIN_CLIP_US // 2
+        half = min_clip_us // 2
         new_in = mid - half
         new_out = mid + half
         if new_in < obs.start_frame:
             new_in = obs.start_frame
-            new_out = new_in + MIN_CLIP_US
+            new_out = new_in + min_clip_us
         if new_out > obs.end_frame:
             new_out = obs.end_frame
-            new_in = new_out - MIN_CLIP_US
+            new_in = new_out - min_clip_us
         fixed.append(e.model_copy(update={
             "in_frame": new_in,
             "out_frame": new_out,
@@ -195,11 +222,11 @@ def repair_plan(
     fixed = []
     for e in edits:
         dur = e.out_frame - e.in_frame
-        if dur <= MAX_CLIP_US:
+        if dur <= max_clip_us:
             fixed.append(e)
             continue
         mid = (e.in_frame + e.out_frame) // 2
-        half = MAX_CLIP_US // 2
+        half = max_clip_us // 2
         new_in = mid - half
         new_out = mid + half
         fixed.append(e.model_copy(update={
@@ -251,10 +278,10 @@ def repair_plan(
         if current < low:
             gap = low - current
 
-            # 优先延长 rationale 含 "heuristic:" 的片段（确定性技术优先级）
+            # 优先延长纯启发式证据的片段（确定性技术优先级；P1-b 结构化判据）
             def _ext_priority(i: int) -> tuple:
                 e = edits[i]
-                is_heuristic = 0 if "heuristic:" in (e.rationale or "") else 1
+                is_heuristic = 0 if _is_heuristic_evidence(e) else 1
                 return (is_heuristic, -(e.out_frame - e.in_frame))
 
             for idx in sorted(range(len(edits)), key=_ext_priority):
@@ -268,7 +295,7 @@ def repair_plan(
                 next_in = edits[idx + 1].in_frame if idx + 1 < len(edits) else 10**18
                 max_ext = min(
                     obs.end_frame - e.out_frame,
-                    MAX_CLIP_US - dur,
+                    max_clip_us - dur,
                     next_in - e.out_frame,
                 )
                 if max_ext <= 0:
@@ -293,10 +320,10 @@ def repair_plan(
         elif current > high:
             gap = current - high
 
-            # 优先缩短非 heuristic: 的最长片段（确定性技术优先级）
+            # 优先缩短非启发式证据的最长片段（确定性技术优先级；P1-b 结构化判据）
             def _trunc_priority(i: int) -> tuple:
                 e = edits[i]
-                non_heuristic = 0 if "heuristic:" not in (e.rationale or "") else 1
+                non_heuristic = 0 if not _is_heuristic_evidence(e) else 1
                 return (non_heuristic, -(e.out_frame - e.in_frame))
 
             for idx in sorted(range(len(edits)), key=_trunc_priority):
@@ -304,7 +331,7 @@ def repair_plan(
                     break
                 e = edits[idx]
                 dur = e.out_frame - e.in_frame
-                can_cut = dur - MIN_CLIP_US
+                can_cut = dur - min_clip_us
                 if can_cut <= 0:
                     continue
                 cut = min(can_cut, gap)

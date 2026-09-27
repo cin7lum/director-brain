@@ -116,6 +116,9 @@ class HeuristicBaseline:
         project_id: str,
         candidates: list[dict],
         target_duration_us: int,
+        *,
+        min_clip_us: int = MIN_CLIP_US,
+        max_clip_us: int = MAX_CLIP_US,
     ) -> dict:
         """生成 V0.1 格式的 proposal dict。
 
@@ -123,6 +126,8 @@ class HeuristicBaseline:
             project_id: 项目 ID。
             candidates: 候选镜头 list[dict]，预期字段见模块 docstring。
             target_duration_us: 目标总时长（微秒）。
+            min_clip_us/max_clip_us: 片段时长上下界（P1-b：由用户
+                ``editing_language`` 意图映射注入，默认沿用模块常量）。
 
         Returns:
             V0.1 proposal dict，含 ``proposal_id``、``rough_cut_id``、
@@ -146,14 +151,14 @@ class HeuristicBaseline:
             shot_in = c["source_in_us"]
             shot_out = c["source_out_us"]
             shot_dur = shot_out - shot_in
-            if shot_dur < MIN_CLIP_US:
+            if shot_dur < min_clip_us:
                 continue  # 跳过过短镜头
 
             remaining = target_duration_us - total
-            if remaining < MIN_CLIP_US:
+            if remaining < min_clip_us:
                 break  # 剩余时间不足最小片段，停止
 
-            clip_dur = min(shot_dur, MAX_CLIP_US, remaining)
+            clip_dur = min(shot_dur, max_clip_us, remaining)
             proposed_in, proposed_out = compute_clip_window(
                 shot_in, shot_out, clip_dur
             )
@@ -206,17 +211,24 @@ def generate_edl(
     project_id: str,
     candidates: list[dict],
     target_duration_us: int,
+    *,
+    min_clip_us: int = MIN_CLIP_US,
+    max_clip_us: int = MAX_CLIP_US,
 ) -> EditorialDecisionList:
     """生成 EDL：产出 V0.1 proposal slots 后直接构造 EDL。
 
     注意：heuristic 的 slot 不含 ``proposed_role``，因此
     :attr:`EditItem.shot_function` 为 None，由调用方（director_reasoner）
-    按幕覆盖——与旧 v01_importer 行为一致。
+    按幕覆盖——与旧 v01_importer 行为一致。``evidence_type`` 由 slot 的
+    ``confidence_type`` 映射（SELF_REPORTED→vlm，HEURISTIC→heuristic），
+    取代下游对 rationale 字符串的嗅探（P1-b）。
     """
     proposal = HeuristicBaseline.generate(
         project_id=project_id,
         candidates=candidates,
         target_duration_us=target_duration_us,
+        min_clip_us=min_clip_us,
+        max_clip_us=max_clip_us,
     )
 
     edits = [
@@ -228,6 +240,8 @@ def generate_edl(
             timebase=TIMEBASE_US,
             shot_function=None,
             rationale=slot["reason"],
+            evidence_type=("vlm" if slot["confidence_type"] == "SELF_REPORTED"
+                           else "heuristic"),
         )
         for slot in proposal["slots"]
     ]

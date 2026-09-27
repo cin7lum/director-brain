@@ -29,10 +29,12 @@ from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
 from director_brain.pathway_protocol import ensure_decision_use_allowed
-from director_brain.providers.heuristic import generate_edl, MIN_CLIP_US
+from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US, generate_edl
 from director_brain.intent_constraints import (
     TechnicalAvoidRule,
     candidate_violated_rules,
+    editing_language_bounds,
+    encode_bounds,
     interpret_constraints,
 )
 
@@ -139,8 +141,13 @@ def _build_candidates(
 
     # T2：原始（未放宽）判据结果单独留档——confidence 用它计算，
     # 防止"注水后可用率变高、置信度反而上升"的历史假象。
+    # P1-b：无数据观测（claim 带 error，如读帧失败）永不可用——
+    # "没有数据"不等于"质量最差"，放宽阶梯不得将其注水入选。
     for c in candidates:
-        c["technical_usable"] = c["exposure_ok"] and c["blur_score"] > threshold
+        c["_no_data"] = "error" in (c.get("_claim_metrics") or {})
+        c["technical_usable"] = (
+            c["exposure_ok"] and c["blur_score"] > threshold and not c["_no_data"]
+        )
         c["_primary_usable"] = c["technical_usable"]
 
     # T2：判据放宽必须可追溯。放宽级别写入每个候选的 _usability_relaxed
@@ -148,11 +155,13 @@ def _build_candidates(
     relaxation_level = 0
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
-            c["technical_usable"] = c["exposure_ok"]
+            if not c["_no_data"]:
+                c["technical_usable"] = c["exposure_ok"]
         relaxation_level = 1
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
-            c["technical_usable"] = True
+            if not c["_no_data"]:
+                c["technical_usable"] = True
         relaxation_level = 2
     for c in candidates:
         c["_usability_relaxed"] = relaxation_level
@@ -250,6 +259,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 f"（当前技术观测无法验证语义内容，待语义证据通路）"
             )
 
+        # ---- P1-b：剪辑语言意图 → 片段时长上下界（"快剪/慢剪"不再一个味）----
+        clip_bounds = editing_language_bounds(brief, (MIN_CLIP_US, MAX_CLIP_US))
+        min_clip_us, max_clip_us = clip_bounds
+
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
         act_nodes = [
             n for n in graph.nodes
@@ -278,15 +291,16 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             ]
 
             # 空幕兜底：本幕时间范围内无镜头时，从**未被选用**的全局候选借用。
-            # VLM 判为 discard 的镜头视为导演层已否决，不参与借用（宁可空幕
-            # 也不启用被否决的素材）；resolve 幕优先取时间最靠后的镜头，
-            # hook 幕取最靠前的。
+            # VLM 判为 discard 的镜头视为导演层已否决，不参与借用；无数据
+            # 观测（读帧失败）同样不得借用于兜底（宁可空幕）。resolve 幕
+            # 优先取时间最靠后的镜头，hook 幕取最靠前的。
             borrowed = False
             if not act_cands and candidates:
                 pool = [
                     c for c in candidates
                     if c["source_shot_id"] not in selected_ids
                     and c.get("vlm_role") != "discard"
+                    and not c.get("_no_data")
                 ]
                 if pool:
                     sorted_cands = sorted(pool, key=lambda c: c["source_in_us"])
@@ -303,7 +317,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         f"borrowed_shot:act={act_name}:"
                         f"shot={act_cands[0]['source_shot_id']}"
                     )
-                # pool 为空：可用镜头已全被前幕选用（或仅剩 discard），本幕保持空
+                # pool 为空：可用镜头已全被前幕选用（或仅剩 discard/无数据），本幕保持空
 
             per_act_target = max(
                 int(_ACT_RATIO[act_name] * brief.target_duration),
@@ -314,6 +328,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 project_id=brief.project_id,
                 candidates=act_cands,
                 target_duration_us=per_act_target,
+                min_clip_us=min_clip_us,
+                max_clip_us=max_clip_us,
             )
             act_edits: list[EditItem] = list(edl.ordered_edits)
             used_fallback = False
@@ -330,6 +346,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         project_id=brief.project_id,
                         candidates=relaxed,
                         target_duration_us=per_act_target,
+                        min_clip_us=min_clip_us,
+                        max_clip_us=max_clip_us,
                     )
                     relaxed_edits = list(edl_relaxed.ordered_edits)
                     if relaxed_edits:
@@ -343,21 +361,26 @@ class HeuristicDirectorReasoner(DirectorReasoner):
 
             # 兜底：本幕选不出镜头时，直接取 blur_score 最高的完整镜头
             if not act_edits and act_cands:
-                best = max(act_cands, key=lambda c: c["blur_score"])
-                act_edits = [EditItem(
-                    source_asset_id=best["source_shot_id"],
-                    source_media_hash=best["source_media_hash"],
-                    in_frame=int(best["source_in_us"]),
-                    out_frame=int(best["source_out_us"]),
-                    timebase=TIMEBASE_US,
-                    shot_function=_ACT_FUNCTION.get(act_name),
-                    rationale=f"heuristic:blur={best['blur_score']}",
-                )]
-                used_fallback = True
-                fallback_any = True
-                degradation_events.append(
-                    f"fallback_selection:act={act_name}:shot={best['source_shot_id']}"
-                )
+                # 兜底选片同样排除无数据观测（读帧失败 ≠ 质量最差）
+                usable_pool = [c for c in act_cands if not c.get("_no_data")]
+                if usable_pool:
+                    best = max(usable_pool, key=lambda c: c["blur_score"])
+                    act_edits = [EditItem(
+                        source_asset_id=best["source_shot_id"],
+                        source_media_hash=best["source_media_hash"],
+                        in_frame=int(best["source_in_us"]),
+                        out_frame=int(best["source_out_us"]),
+                        timebase=TIMEBASE_US,
+                        shot_function=_ACT_FUNCTION.get(act_name),
+                        rationale=f"heuristic:blur={best['blur_score']}",
+                        evidence_type="heuristic",
+                    )]
+                    used_fallback = True
+                    fallback_any = True
+                    degradation_events.append(
+                        f"fallback_selection:act={act_name}:shot={best['source_shot_id']}"
+                    )
+                # usable_pool 为空：本幕只剩无数据观测，保持空幕
 
             act_total = len(act_cands)
             # T2：confidence 按原始（未放宽）可用率计算——放宽入选的镜头
@@ -370,6 +393,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             max_blur = max((c["blur_score"] for c in act_cands), default=1.0) or 1.0
             for idx, edit in enumerate(act_edits):
                 edit.shot_function = _ACT_FUNCTION.get(act_name)
+                edit.act = act_name
                 reason = edit.rationale or ""
                 edit.rationale = f"act={act_name}, {reason}"
                 slot_label = "fallback" if used_fallback else f"slot_{idx + 1:02d}"
@@ -460,7 +484,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             sequence=[e.source_asset_id for e in edits],
             decisions=decisions,
             constraints=[f"target_duration_us={brief.target_duration}"]
-            + [rule.encode() for rule in applied_rules],
+            + [rule.encode() for rule in applied_rules]
+            + encode_bounds(clip_bounds),
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,
