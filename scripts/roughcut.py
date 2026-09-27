@@ -126,7 +126,16 @@ def run_roughcut(
         is_valid, errors = validation_result
         if not is_valid:
             print(f"      验证未通过 ({len(errors)} 个错误)，执行修复...")
-            edl, plan = repair_plan(edl, plan, all_obs)
+            outcome = repair_plan(edl, plan, all_obs)
+            if outcome.requires_director:
+                # Plan=导演依据：修复器无权增删镜头，物理修复不可行时 fail-closed 上抛
+                print(f"      修复放弃（repair_requires_director）: {outcome.reason_code}")
+                print(f"      原因: {outcome.reason}")
+                _print_edl_summary(edl, plan, validation_result, len(relations))
+                return 1
+            edl, plan = outcome.edl, outcome.plan
+            if outcome.adjustments:
+                print(f"      物理调整 {len(outcome.adjustments)} 处（已留痕 plan.open_questions）")
             validation_result = validate_plan(edl, plan, all_obs)
             is_valid, errors = validation_result
             print(f"      修复后验证: {'PASS' if is_valid else 'FAIL'}")

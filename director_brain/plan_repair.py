@@ -1,37 +1,41 @@
-"""M2.3 Plan Repair：对修复后的 EDL 做确定性规则修复。
+"""M2.3 Plan Repair：对校验失败的 EDL 做确定性**物理**修复（T1 收权版）。
 
-从 GEN-1 ``plan_repair.py`` 迁移 rule1-9，适配 EDL 模型。
+语义裁定（2026-09-27，"Plan = 导演依据"）：:class:`DirectorDecisionPlan` 是
+导演创作意图的真实来源（source of truth），修复器**无权改动镜头集合与顺序**
+——它只能在已选镜头内部做"不改变任何创作决策"的物理调整（in/out 裁剪）。
 
-**迁移的规则（rule1-9）：**
+**允许的物理操作（白名单，均不增删镜头、不重排顺序）：**
 
-- rule1：移除 unknown source_asset_id 的片段
-- rule2：修复 in_frame >= out_frame（交换或移除）
-- rule3：过短片段拉长到 MIN_CLIP_US（若源镜头足够长），否则移除
-- rule4：去重同一 source_asset_id（保留第一个）
-- rule5：过长片段截断到 MAX_CLIP_US（中点居中）
-- rule6：修复重叠片段（小幅重叠截断前者，大幅重叠移除后者）
-- rule7：按 in_frame 升序排序
-- rule8：重新计算 expected_duration
-- rule9：重新验证并更新 plan.validation_status
+- P1：``in_frame >= out_frame`` 且 ``out_frame > 0`` 时交换两端点（数据缺陷修正）
+- P2：过短片段（< ``MIN_CLIP_US``）在源镜头范围内扩展到 ``MIN_CLIP_US``
+- P3：过长片段（> ``MAX_CLIP_US``）中点截断到 ``MAX_CLIP_US``
+- P4：小幅重叠（重叠量 < 较短片段时长的 50%）截断时间在前片段的尾部
+- P5：总时长偏离目标 ±10% 时，在已选镜头的源范围内延长/缩短
 
-**未迁移的规则（明确不迁移，原因记录于此）：**
+**以下情况一律 ABSTAIN（fail-closed，退回导演层重新出 plan）：**
 
-- **rule10（确定性节奏后处理）**：hook 提升、长尾截断、快剪、CV 日志——
-  依赖 LLM/VLM 标记的 ``is_hook`` 和 shake 驱动阈值，当前 pipeline 无 VLM
-  信号，迁移后无数据可作用。
-- **rule11（打破同 parent 镜头连续运行）**：依赖 GEN-1 的 ``"_w"`` 窗口分割
-  命名约定（shot_id 形如 ``shot_001_w2``），当前 ``media_asset_id`` 无此
-  约定，无法识别 parent 关系。
-- **rule12（移动已选片段打破运行）**：纯重排逻辑，与 rule11 配套，
-  不单独迁移；rule7 已做基础排序。
+- 镜头引用了不存在的观测（unknown source_asset_id）
+- 同一镜头被选中多次（选片重复属导演层缺陷）
+- ``out_frame <= 0`` 无法交换修复的时间范围
+- 源镜头过短，无法扩展到 ``MIN_CLIP_US``
+- 大幅重叠（>= 较短片段时长的 50%）——"留谁删谁"是创作决策
+- 物理调整到极限后仍无法满足目标时长
+- 空 EDL（选片为空属导演层问题，修复器无权追加镜头）
 
-修复过程 fail-soft：任何单条规则出错不阻断整体，跳过该片段即可。
-不修改原 edl/plan 对象，返回新对象。
+**历史版本（<= c72f0d1）的越权行为已移除**：rule4 去重删镜头、rule6 大幅
+重叠删镜头、rule10 从未选中镜头追加（``shot_function="repair_appended"``）、
+rule7 按 ``in_frame`` 重排（顺序是导演决策，修复器不得重排）。以上行为正是
+P0-1「plan 与 EDL 分裂而校验器仍 PASS」的成因。
+
+每次 ABSTAIN 都带受控枚举原因码（``REASON_*``），由调用方（导演层/CLI）
+决定下一步；所有已执行的物理调整写入 ``plan.open_questions`` 留痕。
+不修改原 edl/plan 对象。
 """
 from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass, field
 
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
@@ -39,51 +43,120 @@ from director_brain.models.film_observation import FilmObservation
 from director_brain.plan_validator import validate_plan, _parse_target_duration
 from gen1_adapter.heuristic_baseline import MAX_CLIP_US, MIN_CLIP_US
 
-PRODUCER = "plan_repair_v0.1"
+PRODUCER = "plan_repair_v0.2"
+
+# ---- ABSTAIN 原因码（受控枚举，禁止自由文本）----
+REASON_EMPTY_SELECTION = "empty_shot_selection"
+REASON_UNKNOWN_SOURCE_ASSET = "unknown_source_asset"
+REASON_DUPLICATE_SHOT = "duplicate_shot_selection"
+REASON_INVALID_TIME_RANGE = "invalid_time_range_unfixable"
+REASON_SHOT_TOO_SHORT = "shot_too_short_unfixable"
+REASON_OVERLAP_UNRESOLVABLE = "shot_overlap_unresolvable"
+REASON_DURATION_UNREACHABLE = "target_duration_unreachable"
+
+
+@dataclass
+class RepairOutcome:
+    """repair_plan 的一等返回值：OK（已物理修复）或 ABSTAIN（需导演层重决策）。"""
+
+    status: str  # "ok" | "abstain"
+    edl: EditorialDecisionList | None = None
+    plan: DirectorDecisionPlan | None = None
+    #: abstain 时的受控枚举原因码（REASON_* 常量之一）
+    reason_code: str | None = None
+    #: 人类可读说明
+    reason: str | None = None
+    #: 已执行的物理调整留痕（ok 时非空；亦已写入 plan.open_questions）
+    adjustments: list[str] = field(default_factory=list)
+
+    @property
+    def requires_director(self) -> bool:
+        """True 表示修复器放弃（repair_requires_director），须导演层重新决策。"""
+        return self.status == "abstain"
+
+
+def _claim_of(o: FilmObservation | None) -> dict:
+    if o is None:
+        return {}
+    try:
+        data = json.loads(o.claim)
+    except (json.JSONDecodeError, TypeError):
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def repair_plan(
     edl: EditorialDecisionList,
     plan: DirectorDecisionPlan,
     observations: list[FilmObservation],
-) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
-    """对 EDL 做确定性修复，返回新的 (edl, plan)。不修改原对象。
+) -> RepairOutcome:
+    """对 EDL 做确定性物理修复；无法物理修复时 ABSTAIN。不修改原对象。
 
     Args:
         edl: 待修复的 EDL。
-        plan: 对应的导演决策计划。
+        plan: 对应的导演决策计划（只读依据，本函数绝不改写其镜头集合）。
         observations: 素材观测列表，用于查 source_asset_id 的源镜头范围。
 
     Returns:
-        ``(repaired_edl, repaired_plan)``。
+        :class:`RepairOutcome`：``status="ok"`` 携带修复后的 (edl, plan)；
+        ``status="abstain"`` 携带 ``reason_code``/``reason``，edl/plan 为 None。
     """
-    # ---- 深拷贝，不修改原对象 ----
     new_edl = edl.model_copy(deep=True)
     new_plan = plan.model_copy(deep=True)
 
     edits: list[EditItem] = list(new_edl.ordered_edits)
     obs_by_asset = {o.media_asset_id: o for o in observations}
     known_ids = set(obs_by_asset.keys())
+    adjustments: list[str] = []
 
-    # ---- rule1: 移除 unknown source_asset_id ----
-    edits = [e for e in edits if e.source_asset_id in known_ids]
+    def _abstain(code: str, reason: str) -> RepairOutcome:
+        logging.info("repair abstain (%s): %s", code, reason)
+        return RepairOutcome(status="abstain", reason_code=code, reason=reason)
 
-    # ---- rule2: 修复 in_frame >= out_frame ----
+    # ---- 前置检查：镜头集合级缺陷（修复器无权处理，ABSTAIN）----
+    if not edits:
+        return _abstain(
+            REASON_EMPTY_SELECTION,
+            "EDL 为空：选片为空属导演层决策问题，修复器无权追加镜头",
+        )
+
+    unknown = sorted({e.source_asset_id for e in edits if e.source_asset_id not in known_ids})
+    if unknown:
+        return _abstain(
+            REASON_UNKNOWN_SOURCE_ASSET,
+            f"EDL 引用了不存在的观测: {unknown}；观测与决策不一致，须导演层重新出 plan",
+        )
+
+    ids = [e.source_asset_id for e in edits]
+    dupes = sorted({a for a in ids if ids.count(a) > 1})
+    if dupes:
+        return _abstain(
+            REASON_DUPLICATE_SHOT,
+            f"同一镜头被选中多次: {dupes}；保留哪一次属创作决策，须导演层重新出 plan",
+        )
+
+    for e in edits:
+        if e.in_frame >= e.out_frame and e.out_frame <= 0:
+            return _abstain(
+                REASON_INVALID_TIME_RANGE,
+                f"edit {e.source_asset_id} in={e.in_frame} out={e.out_frame} "
+                f"无法交换修复，须导演层重新出 plan",
+            )
+
+    # ---- P1: 交换反置的 in/out（数据缺陷修正，不改动镜头集合）----
     fixed: list[EditItem] = []
     for e in edits:
         if e.in_frame >= e.out_frame:
-            if e.out_frame > 0:
-                # 交换
-                fixed.append(e.model_copy(update={
-                    "in_frame": e.out_frame,
-                    "out_frame": e.in_frame,
-                }))
-            # else: out == 0，无法交换，移除
+            fixed.append(e.model_copy(update={
+                "in_frame": e.out_frame,
+                "out_frame": e.in_frame,
+            }))
+            adjustments.append(f"swap_endpoints:{e.source_asset_id}")
         else:
             fixed.append(e)
     edits = fixed
 
-    # ---- rule3: 过短片段拉长或移除 ----
+    # ---- P2: 过短片段在源镜头范围内扩展到 MIN_CLIP_US ----
     fixed = []
     for e in edits:
         dur = e.out_frame - e.in_frame
@@ -91,11 +164,13 @@ def repair_plan(
             fixed.append(e)
             continue
         obs = obs_by_asset.get(e.source_asset_id)
-        if obs is None:
-            continue  # fail-soft: 找不到观测，移除
-        src_dur = obs.end_frame - obs.start_frame
+        src_dur = (obs.end_frame - obs.start_frame) if obs else 0
         if src_dur < MIN_CLIP_US:
-            continue  # 源镜头本身过短，移除
+            return _abstain(
+                REASON_SHOT_TOO_SHORT,
+                f"edit {e.source_asset_id} 时长 {dur}us < MIN_CLIP_US 且源镜头"
+                f"（{src_dur}us）无法扩展，须导演层重新出 plan",
+            )
         # 以中点为中心扩展到 MIN_CLIP_US，钳制到源镜头范围
         mid = (e.in_frame + e.out_frame) // 2
         half = MIN_CLIP_US // 2
@@ -111,19 +186,12 @@ def repair_plan(
             "in_frame": new_in,
             "out_frame": new_out,
         }))
+        adjustments.append(
+            f"extend_to_min:{e.source_asset_id}:{e.in_frame}-{e.out_frame}->{new_in}-{new_out}"
+        )
     edits = fixed
 
-    # ---- rule4: 去重同一 source_asset_id（保留第一个）----
-    seen_ids: set[str] = set()
-    deduped: list[EditItem] = []
-    for e in edits:
-        if e.source_asset_id in seen_ids:
-            continue
-        seen_ids.add(e.source_asset_id)
-        deduped.append(e)
-    edits = deduped
-
-    # ---- rule5: 过长片段截断到 MAX_CLIP_US（中点居中）----
+    # ---- P3: 过长片段截断到 MAX_CLIP_US（中点居中）----
     fixed = []
     for e in edits:
         dur = e.out_frame - e.in_frame
@@ -138,66 +206,52 @@ def repair_plan(
             "in_frame": new_in,
             "out_frame": new_out,
         }))
+        adjustments.append(
+            f"truncate_to_max:{e.source_asset_id}:{e.in_frame}-{e.out_frame}->{new_in}-{new_out}"
+        )
     edits = fixed
 
-    # ---- rule6: 修复重叠片段 ----
-    edits.sort(key=lambda e: e.in_frame)
-    no_overlap: list[EditItem] = []
-    for e in edits:
-        if not no_overlap:
-            no_overlap.append(e)
+    # ---- P4: 重叠修复 —— 小幅截断时间在前的片段；大幅 ABSTAIN ----
+    # 只做物理截断：列表顺序（= plan.sequence 顺序）保持不变。
+    indexed = sorted(enumerate(edits), key=lambda pair: pair[1].in_frame)
+    abstain_reason: str | None = None
+    for k in range(len(indexed) - 1):
+        i_prev, prev = indexed[k]
+        _i_curr, curr = indexed[k + 1]
+        if prev.out_frame <= curr.in_frame:
             continue
-        prev = no_overlap[-1]
-        if prev.out_frame <= e.in_frame:
-            no_overlap.append(e)
-            continue
-        # 有重叠
-        overlap = prev.out_frame - e.in_frame
+        overlap = prev.out_frame - curr.in_frame
         prev_dur = prev.out_frame - prev.in_frame
-        curr_dur = e.out_frame - e.in_frame
+        curr_dur = curr.out_frame - curr.in_frame
         smaller = min(prev_dur, curr_dur)
         ratio = (overlap / smaller) if smaller > 0 else 1.0
-        if ratio < 0.5:
-            # 小幅重叠：截断 prev
-            no_overlap[-1] = prev.model_copy(update={"out_frame": e.in_frame})
-            no_overlap.append(e)
-        else:
-            # 大幅重叠：移除 curr（保留先出现的 prev）
-            new_plan.open_questions.append(
-                f"repair: removed edit {e.source_asset_id} (overlap >50% with prev)"
+        if ratio >= 0.5:
+            abstain_reason = (
+                f"edit {prev.source_asset_id}（{prev.in_frame}-{prev.out_frame}）与 "
+                f"edit {curr.source_asset_id}（{curr.in_frame}-{curr.out_frame}）重叠 "
+                f"{overlap}us（>= 较短片段的 50%）；保留哪一个是创作决策，"
+                f"须导演层重新出 plan"
             )
-            logging.debug(
-                "rule6: removed edit %s (in=%d, out=%d) due to >50%% overlap "
-                "with prev %s (in=%d, out=%d)",
-                e.source_asset_id, e.in_frame, e.out_frame,
-                prev.source_asset_id, prev.in_frame, prev.out_frame,
-            )
-    edits = no_overlap
+            break
+        new_out = curr.in_frame
+        edits[i_prev] = edits[i_prev].model_copy(update={"out_frame": new_out})
+        adjustments.append(
+            f"trim_overlap:{prev.source_asset_id}:out->{new_out}"
+        )
+    if abstain_reason is not None:
+        return _abstain(REASON_OVERLAP_UNRESOLVABLE, abstain_reason)
 
-    # ---- rule7: 按 in_frame 升序排序 ----
-    edits.sort(key=lambda e: e.in_frame)
-
-    # ---- rule10: 时长修复（不足则延长/追加，过长则截断）----
+    # ---- P5: 时长修复（在已选镜头内延长/缩短，不增删镜头）----
     target = _parse_target_duration(new_plan.constraints)
     if target is not None:
         low = int(0.9 * target)
         high = int(1.1 * target)
         current = sum(e.out_frame - e.in_frame for e in edits)
 
-        def _claim_of(asset_id: str) -> dict:
-            o = obs_by_asset.get(asset_id)
-            if o is None:
-                return {}
-            try:
-                data = json.loads(o.claim)
-            except (json.JSONDecodeError, TypeError):
-                return {}
-            return data if isinstance(data, dict) else {}
-
         if current < low:
             gap = low - current
 
-            # 第一步：优先延长 rationale 含 "heuristic:" 的片段
+            # 优先延长 rationale 含 "heuristic:" 的片段（确定性技术优先级）
             def _ext_priority(i: int) -> tuple:
                 e = edits[i]
                 is_heuristic = 0 if "heuristic:" in (e.rationale or "") else 1
@@ -223,69 +277,23 @@ def repair_plan(
                 old_out = e.out_frame
                 new_out = old_out + ext
                 edits[idx] = e.model_copy(update={"out_frame": new_out})
-                new_plan.open_questions.append(
-                    f"repair: extended edit {e.source_asset_id} "
-                    f"from {old_out} to {new_out}us"
+                adjustments.append(
+                    f"extend:{e.source_asset_id}:out {old_out}->{new_out}"
                 )
                 gap -= ext
 
-            # 第二步：仍不足时追加未选中的 deterministic_technical 观测
             if gap > 0:
-                used_ids = {e.source_asset_id for e in edits}
-                candidates = [
-                    o for o in observations
-                    if o.observation_type == "deterministic_technical"
-                    and o.media_asset_id not in used_ids
-                ]
-
-                def _append_score(o: FilmObservation) -> tuple:
-                    d = _claim_of(o.media_asset_id)
-                    blur = d.get("blur_score", 0)
-                    blur = float(blur) if isinstance(blur, (int, float)) else 0.0
-                    exp = 0 if d.get("exposure_ok") else 1  # exposure_ok=True 优先
-                    return (exp, -blur)
-
-                candidates.sort(key=_append_score)
-                for o in candidates:
-                    if gap <= 0:
-                        break
-                    edits.append(EditItem(
-                        source_asset_id=o.media_asset_id,
-                        source_media_hash=o.media_hash,
-                        in_frame=o.start_frame,
-                        out_frame=o.end_frame,
-                        timebase=1_000_000,
-                        shot_function="repair_appended",
-                        rationale="repair: appended to meet target duration",
-                    ))
-                    new_plan.open_questions.append(
-                        f"repair: appended shot_{o.media_asset_id}"
-                    )
-                    gap -= (o.end_frame - o.start_frame)
-
-                # 追加后按 in_frame 排序，并修复可能的重叠
-                edits.sort(key=lambda e: e.in_frame)
-                no_overlap: list[EditItem] = []
-                for e in edits:
-                    if not no_overlap:
-                        no_overlap.append(e)
-                        continue
-                    prev = no_overlap[-1]
-                    if prev.out_frame > e.in_frame:
-                        if prev.out_frame - e.in_frame < (e.out_frame - e.in_frame):
-                            no_overlap[-1] = prev.model_copy(
-                                update={"out_frame": e.in_frame}
-                            )
-                            no_overlap.append(e)
-                        # else: 大幅重叠，丢弃当前
-                    else:
-                        no_overlap.append(e)
-                edits = no_overlap
+                return _abstain(
+                    REASON_DURATION_UNREACHABLE,
+                    f"已选镜头物理延长到极限后仍距目标下界差 {gap}us"
+                    f"（target={target}us, current={current}us）；"
+                    f"增删镜头属创作决策，须导演层重新出 plan",
+                )
 
         elif current > high:
             gap = current - high
 
-            # 优先缩短非 heuristic: 的最长片段
+            # 优先缩短非 heuristic: 的最长片段（确定性技术优先级）
             def _trunc_priority(i: int) -> tuple:
                 e = edits[i]
                 non_heuristic = 0 if "heuristic:" not in (e.rationale or "") else 1
@@ -303,13 +311,20 @@ def repair_plan(
                 old_out = e.out_frame
                 new_out = old_out - cut
                 edits[idx] = e.model_copy(update={"out_frame": new_out})
-                new_plan.open_questions.append(
-                    f"repair: truncated edit {e.source_asset_id} "
-                    f"from {old_out} to {new_out}us"
+                adjustments.append(
+                    f"truncate:{e.source_asset_id}:out {old_out}->{new_out}"
                 )
                 gap -= cut
 
-    # ---- rule8: 重新计算 expected_duration + source_asset_hashes ----
+            if gap > 0:
+                return _abstain(
+                    REASON_DURATION_UNREACHABLE,
+                    f"已选镜头物理缩短到极限后仍超目标上界 {gap}us"
+                    f"（target={target}us, current={current}us）；"
+                    f"删镜头属创作决策，须导演层重新出 plan",
+                )
+
+    # ---- 收尾：重算 expected_duration + source_asset_hashes ----
     expected_duration = sum(e.out_frame - e.in_frame for e in edits)
     source_hashes: list[str] = []
     seen_hashes: set[str] = set()
@@ -325,11 +340,17 @@ def repair_plan(
     if not new_edl.edl_id.endswith("_repaired"):
         new_edl.edl_id = new_edl.edl_id + "_repaired"
 
-    # ---- rule9: 重新验证并更新 plan ----
-    is_valid, errors = validate_plan(new_edl, new_plan, observations)
+    # 留痕：物理调整写入 plan.open_questions（append-only，可追溯）
+    if adjustments:
+        new_plan.open_questions = list(new_plan.open_questions) + [
+            f"repair: {a}" for a in adjustments
+        ]
     new_plan.producer = PRODUCER
     if not new_plan.plan_id.endswith("_repaired"):
         new_plan.plan_id = new_plan.plan_id + "_repaired"
+
+    # ---- 重新验证（含 plan↔EDL 交叉校验；物理修复不改集合与顺序，应保持一致）----
+    is_valid, errors = validate_plan(new_edl, new_plan, observations)
     if is_valid:
         new_plan.validation_status = "valid"
     else:
@@ -338,4 +359,9 @@ def repair_plan(
             f"repair: {err}" for err in errors
         ]
 
-    return (new_edl, new_plan)
+    return RepairOutcome(
+        status="ok",
+        edl=new_edl,
+        plan=new_plan,
+        adjustments=adjustments,
+    )

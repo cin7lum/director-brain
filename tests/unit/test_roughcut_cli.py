@@ -22,6 +22,10 @@ from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList, EditItem
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
+from director_brain.plan_repair import (
+    REASON_DURATION_UNREACHABLE,
+    RepairOutcome,
+)
 
 
 def _load_roughcut():
@@ -220,7 +224,7 @@ class TestRoughcutCLI:
         assert rc == 1
 
     def test_validation_failure_triggers_repair(self, monkeypatch, tmp_path):
-        """验证失败时调用 repair_plan，修复后验证通过。"""
+        """验证失败时调用 repair_plan，物理修复成功后验证通过。"""
         mod = _load_roughcut()
         edl = _make_edl()
         plan = _make_plan()
@@ -230,7 +234,10 @@ class TestRoughcutCLI:
             (False, ["duration out of range"]),
             (True, []),
         ])
-        mock_repair = MagicMock(return_value=(edl, plan))
+        mock_repair = MagicMock(return_value=RepairOutcome(
+            status="ok", edl=edl, plan=plan,
+            adjustments=["extend:shot_000:out 2000000->2150000"],
+        ))
 
         mocks = _patch_pipeline(monkeypatch, mod, validate_result=None)
         # 覆盖 validate 和 repair
@@ -250,6 +257,38 @@ class TestRoughcutCLI:
         assert rc == 0
         mock_repair.assert_called_once()
         assert mock_validate.call_count == 2
+
+    def test_repair_abstain_fails_closed_without_render(self, monkeypatch, tmp_path):
+        """repair ABSTAIN（repair_requires_director）→ 不渲染，返回非 0。"""
+        mod = _load_roughcut()
+        edl = _make_edl()
+        plan = _make_plan()
+
+        mock_validate = MagicMock(return_value=(False, ["duration out of range"]))
+        mock_repair = MagicMock(return_value=RepairOutcome(
+            status="abstain",
+            reason_code=REASON_DURATION_UNREACHABLE,
+            reason="已选镜头物理延长到极限后仍距目标下界差 7.5M us",
+        ))
+
+        mocks = _patch_pipeline(monkeypatch, mod, validate_result=None)
+        monkeypatch.setattr(mod, "validate_plan", mock_validate)
+        monkeypatch.setattr(mod, "repair_plan", mock_repair)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "out.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            dry_run=False,
+        )
+
+        assert rc == 1
+        mock_repair.assert_called_once()
+        mocks["render"].assert_not_called()
+        assert not output_file.exists()
 
     def test_render_failure_returns_error(self, monkeypatch, tmp_path):
         """render_edl 抛 RuntimeError 时返回非 0。"""

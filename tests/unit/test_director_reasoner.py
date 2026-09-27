@@ -270,3 +270,33 @@ def test_vlm_rationale_propagates_to_decision():
         d.rationale for d in plan.decisions if "vlm:" in (d.rationale or "")
     ]
     assert vlm_rationales, "expected at least one decision rationale to contain vlm:"
+
+
+def test_no_shot_selected_twice():
+    """T1 导演层防线：一份 plan 中同一镜头只允许出现一次。
+
+    历史缺陷：空幕借片不排除已选镜头 → 同一镜头被选入两幕 → EDL 出现
+    同 asset 嵌套区间 → validator 判 overlap → 旧 repair 越权删镜头兜底。
+    """
+    # 素材时间轴上只有 2 个镜头，但有 4 幂 → 必然触发空幕借片
+    obs = [
+        _make_tech_obs(0, 0, 2_000_000, blur_score=200.0),
+        _make_tech_obs(1, 2_000_000, 4_000_000, blur_score=180.0),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", obs)
+    graph = build_story_graph(brief, obs)
+    reasoner = HeuristicDirectorReasoner()
+    edl, plan = reasoner.generate_plan(brief, graph, obs)
+
+    edl_ids = [e.source_asset_id for e in edl.ordered_edits]
+    assert len(edl_ids) == len(set(edl_ids)), (
+        f"同一镜头被选中多次: {edl_ids}"
+    )
+    assert plan.sequence == edl_ids
+    # 每个镜头的时间区间互不嵌套/重叠（同源嵌套是历史 overlap 的根源）
+    sorted_by_in = sorted(edl.ordered_edits, key=lambda e: e.in_frame)
+    for k in range(len(sorted_by_in) - 1):
+        assert sorted_by_in[k].out_frame <= sorted_by_in[k + 1].in_frame, (
+            f"镜头 {sorted_by_in[k].source_asset_id} 与 "
+            f"{sorted_by_in[k + 1].source_asset_id} 区间重叠"
+        )

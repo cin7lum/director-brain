@@ -53,8 +53,14 @@ print(f"  ok={ok1}, errors={err1}", flush=True)
 
 print("=== Step 8: repair_plan ===", flush=True)
 from director_brain.plan_repair import repair_plan
-redl, rplan = repair_plan(edl, plan, all_obs)
-print(f"  repaired edits={len(redl.ordered_edits)}, expected_duration={redl.expected_duration}", flush=True)
+outcome = repair_plan(edl, plan, all_obs)
+if outcome.requires_director:
+    print(f"  repair ABSTAIN: {outcome.reason_code}: {outcome.reason}", flush=True)
+    redl, rplan = edl, plan  # 未修复，用原对象继续断言（Step 9 会暴露 invalid）
+else:
+    redl, rplan = outcome.edl, outcome.plan
+    print(f"  repaired edits={len(redl.ordered_edits)}, expected_duration={redl.expected_duration}", flush=True)
+    print(f"  adjustments={outcome.adjustments}", flush=True)
 
 print("=== Step 9: validate_plan (post-repair) ===", flush=True)
 ok2, err2 = validate_plan(redl, rplan, all_obs)

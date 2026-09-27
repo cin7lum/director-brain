@@ -1,0 +1,72 @@
+# 授权声明: D:\项目\软件设计\fcw-build\主控\GLM-02\02-DB-交接包\gate\AUTHORIZATION.json
+# module=L-02  sha256=e761f129a29f6a53f2be138525c53f24ac74b68beae07c56571dd90a98e289d2  strict=False
+# 授权工具: ['ffmpeg', 'ffprobe'] | 授权路径(子进程): ['execution/', 'observation_service/', 'arsenal/', 'scripts/', 'tests/', 'director_brain/context_gateway.py']
+# 联网: authorized=True 路径=['observation_service/', 'tests/']
+
+## 03AO/03-项目代码/providers/base.py
+  - L144: E_NOT_IMPLEMENTED: `BaseProvider._invoke` 裸 raise NotImplementedError（无原因、无登记）
+  - L153: E_NOT_IMPLEMENTED: `BaseProvider.health_check` 裸 raise NotImplementedError（无原因、无登记）
+## 03AO/03-项目代码/providers/proposal_validator.py
+  - L24: E_SHELL_EMPTY_BODY: `class` 空体只有 `pass`：class InvalidProposal(Exception): class InvalidProposal(Exce
+## 03AO/03-项目代码/providers/render_concat_v0.py
+  - L28: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: p = subprocess.run(cmd, capture_output=True, text=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+  - L35: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: out = subprocess.run( ← 路径 `03AO/03-项目代码/providers/render_concat_v0.py` 不在授权范围 ['execution/', 'observation_service/', 'arsenal/', 'scripts/', 'tests/', 'director_brain/context_gateway.py']
+## 03AO/03-项目代码/tests/unit/test_render_concat_v0.py
+  ~ L30: [已授权] 子进程 `ffprobe`（路径 03AO/03-项目代码/tests/unit/test_render_concat_v0.py，依据 AUTHORIZATION.json）
+## 03AO/03-项目代码/tools/generate_asset_records.py
+  - L44: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: out = subprocess.run( ← 静态无法证明授权（命令非字面量/未解析到变量）
+## arsenal/media_import.py
+  ~ L29: [已授权] 子进程 `ffmpeg`（路径 arsenal/media_import.py，依据 AUTHORIZATION.json）
+  ~ L118: [已限定] 窄例外吞异常 `except (json.JSONDecodeError, OSError):`（显式列出异常类型）
+  ~ L131: [已授权] 子进程 `ffmpeg`（路径 arsenal/media_import.py，依据 AUTHORIZATION.json）
+## director_brain/context_gateway.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 director_brain/context_gateway.py，依据 AUTHORIZATION.json）
+## director_brain/director_reasoner.py
+  ~ L128: [已授权] ABC 抽象方法 `DirectorReasoner.generate_plan` 的 NotImplementedError
+  ~ L346: [已登记未实现] `LLMDirectorReasoner.generate_plan`：LLM director reasoner requires ollama endpoint;
+## director_brain/llm_adapter.py
+  - L191: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L197: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L206: E_PERIMETER_NETWORK: req2 = urllib.request.Request( ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L212: E_PERIMETER_NETWORK: with urllib.request.urlopen(req2, timeout=self.timeout) as resp2: ← 路径 `director_brain/llm_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+## director_brain/zhipu_adapter.py
+  - L90: E_PERIMETER_NETWORK: req = urllib.request.Request( ← 路径 `director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L99: E_PERIMETER_NETWORK: with urllib.request.urlopen(req, timeout=self.timeout) as resp: ← 路径 `director_brain/zhipu_adapter.py` 不在联网授权层 ['observation_service/', 'tests/']
+  - L106: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+## execution/renderer.py
+  ~ L36: [已授权] 子进程 `ffmpeg`（路径 execution/renderer.py，依据 AUTHORIZATION.json）
+  ~ L145: [已授权] 子进程 `ffmpeg`（路径 execution/renderer.py，依据 AUTHORIZATION.json）
+## observation_service/keyframe.py
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 observation_service/keyframe.py，依据 AUTHORIZATION.json）
+## observation_service/ollama_vlm_adapter.py
+  ~ L120: [已授权] 联网调用（路径 observation_service/ollama_vlm_adapter.py 在授权层内）
+  ~ L125: [已授权] 联网调用（路径 observation_service/ollama_vlm_adapter.py 在授权层内）
+## observation_service/shot_discovery.py
+  ~ L33: [已授权] 子进程 `ffmpeg`（路径 observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+  ~ L59: [已授权] 子进程 `ffmpeg`（路径 observation_service/shot_discovery.py，依据 AUTHORIZATION.json）
+## observation_service/zhipu_vlm_adapter.py
+  ~ L131: [已授权] 联网调用（路径 observation_service/zhipu_vlm_adapter.py 在授权层内）
+  ~ L140: [已授权] 联网调用（路径 observation_service/zhipu_vlm_adapter.py 在授权层内）
+## scripts/evaluate_roughcut.py
+  ~ L59: [已授权] 子进程 `ffprobe`（路径 scripts/evaluate_roughcut.py，依据 AUTHORIZATION.json）
+  ~ L71: [已限定] 窄例外吞异常 `except (subprocess.TimeoutExpired, FileNotFoundError, ValueE`（显式列出异常类型）
+  ~ L79: [已授权] 子进程 `ffprobe`（路径 scripts/evaluate_roughcut.py，依据 AUTHORIZATION.json）
+  ~ L90: [已限定] 窄例外吞异常 `except (subprocess.TimeoutExpired, FileNotFoundError, json.J`（显式列出异常类型）
+## tests/real_output/p2_arsenal_verify.py
+  ~ L65: [已授权] 子进程 `ffprobe`（路径 tests/real_output/p2_arsenal_verify.py，依据 AUTHORIZATION.json）
+## tests/unit/test_asr.py
+  ~ L61: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_asr.py，依据 AUTHORIZATION.json）
+## tests/unit/test_context_gateway.py
+  ~ L35: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_context_gateway.py，依据 AUTHORIZATION.json）
+## tests/unit/test_keyframe.py
+  ~ L30: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_keyframe.py，依据 AUTHORIZATION.json）
+## tests/unit/test_media_import.py
+  ~ L38: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_media_import.py，依据 AUTHORIZATION.json）
+## tests/unit/test_observation_service.py
+  ~ L36: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_observation_service.py，依据 AUTHORIZATION.json）
+  ~ L47: [已授权] 子进程 `ffprobe`（路径 tests/unit/test_observation_service.py，依据 AUTHORIZATION.json）
+## tests/unit/test_phase1a_r1.py
+  ~ L251: [已授权] 联网调用（路径 tests/unit/test_phase1a_r1.py 在授权层内）
+## tests/unit/test_vlm_adapter.py
+  ~ L73: [已授权] 子进程 `ffmpeg`（路径 tests/unit/test_vlm_adapter.py，依据 AUTHORIZATION.json）
+扫描违规合计: 13   （已授权放行 29 条，见上方 ~ 行）

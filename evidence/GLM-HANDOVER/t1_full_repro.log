@@ -1,0 +1,22 @@
+素材: D:\新建豆包\AI-Director\sintel_ref_480p.mp4
+故事图: nodes=4 edges=3  relation 产出=3
+=== BEFORE REPAIR ===
+  plan.sequence       len=4
+  plan.decisions      len=4
+  edl.ordered_edits   len=4
+  sequence == EDL ids ? True
+  validate_plan -> valid=False errors=['duration 12000000us outside target range [13500000, 16500000]us']
+=== AFTER REPAIR ===
+  plan.sequence       len=4
+  plan.decisions      len=4
+  edl.ordered_edits   len=4
+  sequence == EDL ids ? True
+  validate_plan -> valid=True errors=[]
+  物理调整: ['extend:shot_1f1c6135af9b7940:out 16562500->16625000', 'extend:shot_14e84f63e820baff:out 3125000->4000000', 'extend:shot_d436405b68ace2ff:out 6625000->7187500']
+
+########## 验收判定 ##########
+  [判据2] 修复后 sequence==EDL ids 且 valid: True
+  [判据1] 历史分裂形态被新校验判红: True（errors 含 plan/edl split: True）
+  [判据3] 负样本（改坏 plan.sequence）判红: True
+
+>>> T1 三判据全部通过。

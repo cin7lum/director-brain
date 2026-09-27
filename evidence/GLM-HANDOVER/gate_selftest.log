@@ -1,0 +1,54 @@
+======================================================================================
+金门禁自检 (selftest) v1.1 —— 证明本校验器能判『不通过』
+授权声明: D:\项目\软件设计\fcw-build\主控\GLM-02\02-DB-交接包\gate\fixtures\AUTHORIZATION.selftest.json  module=SELFTEST
+======================================================================================
+[PASS] observation_good.json                      期望=判通过    实际=判通过   
+[PASS] observation_bad_missing_claim_kind.json    期望=判失败    实际=判失败   
+          └─ 命中: observation: 缺 `claim_kind` → 不合格（D-BL-04 推断冒充事实）
+[PASS] observation_bad_float_seconds.json         期望=判失败    实际=判失败   
+          └─ 命中: observation: `start_frame`=4.8 是浮点秒 → 不合格（时间必须整数帧，D-BL）
+[PASS] observation_bad_model_obs_no_provider.json 期望=判失败    实际=判失败   
+          └─ 命中: observation: MODEL_OBSERVATION 缺 `provider`（D-BL-04）
+[PASS] observation_bad_empty_evidence.json        期望=判失败    实际=判失败   
+          └─ 命中: observation: `evidence_refs` 为空 → 不合格（D-BL-01 无源不作数）
+[PASS] context_good.json                          期望=判通过    实际=判通过   
+[PASS] context_bad_cache_state.json               期望=判失败    实际=判失败   
+          └─ 命中: context: cache_state=`CACHED` 非法，仅接受 ['HIT', 'INVALIDATED', 'MISS', 'STALE']
+[PASS] context_bad_scene_layer.json               期望=判失败    实际=判失败   
+          └─ 命中: context: layer=`SCENE` 属 P2 未实现范围 → 必须判失败，不得静默通过
+[PASS] context_bad_fingerprint_incomplete.json    期望=判失败    实际=判失败   
+          └─ 命中: context: analysis_fingerprint 缺 `model_version`
+[PASS] shell_good.py                              期望=判通过    实际=判通过   
+[PASS] shell_bad.py                               期望=判失败    实际=判失败   
+          └─ 命中: L6: 空壳标记 TODO: # TODO: 这里的校验逻辑还没写，先返回通过
+[PASS] subprocess_ok_authorized.py                期望=判通过    实际=判通过   
+          └─ 放行依据: L13: [已授权] 子进程 `ffprobe`（路径 execution/renderer.py，依据 AUTHORIZATION.selftest.json）
+[PASS] subprocess_ok_authorized.py                期望=判失败    实际=判失败   
+          └─ 命中: L13: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30) ← 路径 `director_brain/planner.py` 不在授权范围 ['execution/', 'observation_service/', 'tests/']
+[PASS] perimeter_bad_unauthorized_tool.py         期望=判失败    实际=判失败   
+          └─ 命中: L7: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: return subprocess.run(cmd, capture_output=True, text=True).stdout ← 工具 `curl` 不在授权清单 ['ffmpeg', 'ffprobe']
+[PASS] perimeter_bad_dynamic_cmd.py               期望=判失败    实际=判失败   
+          └─ 命中: L6: E_PERIMETER_UNAUTHORIZED_SUBPROCESS: return subprocess.run(build_cmd(name), capture_output=True) ← 静态无法证明授权（命令非字面量/未解析到变量）
+[PASS] network_in_scope_ok.py                     期望=判通过    实际=判通过   
+          └─ 放行依据: L12: [已授权] 联网调用（路径 observation_service/vlm_adapter.py 在授权层内）
+[PASS] network_in_scope_ok.py                     期望=判失败    实际=判失败   
+          └─ 命中: L12: E_PERIMETER_NETWORK: req = urllib.request.Request(url, data=json.dumps(payload).encode(       )) ← 路径 `director_brain/planner.py` 不在联网授权层 ['observation_service/', 'tests/']
+[PASS] mock_ok.py                                 期望=判通过    实际=判通过   
+[PASS] pass_bad_empty_def.py                      期望=判失败    实际=判失败   
+          └─ 命中: L5: E_SHELL_EMPTY_BODY: `def` 空体只有 `pass`：def compute_edit_decisions(brief, observations): def compute
+[PASS] swallow_ok_narrow.py                       期望=判通过    实际=判通过   
+          └─ 放行依据: L10: [已限定] 窄例外吞异常 `except (OSError, ValueError):`（显式列出异常类型）
+[PASS] swallow_bad_broad.py                       期望=判失败    实际=判失败   
+          └─ 命中: L9: E_SILENT_SWALLOW_BROAD: 宽例外吞异常 `except Exception:: pass`
+[PASS] notimpl_bad_bare.py                        期望=判失败    实际=判失败   
+          └─ 命中: L6: E_NOT_IMPLEMENTED: `StubReasoner.generate_plan` 裸 raise NotImplementedError（无原因、无登记）
+[PASS] notimpl_bad_undeclared.py                  期望=判失败    实际=判失败   
+          └─ 命中: L6: E_UNIMPLEMENTED_UNDECLARED: `UndeclaredStub.generate_plan` 带原因抛未实现，但未在 AUTHORIZATION.json 的 declared_unimplemented 登记 ← not wired yet, will do later
+[PASS] notimpl_ok_declared.py                     期望=判通过    实际=判通过   
+          └─ 放行依据: L6: [已登记未实现] `DeclaredStub.generate_plan`：requires ollama endpoint; current environment uses heuristic
+--------------------------------------------------------------------------------------
+判定正确率: 24/24
+判负能力  : 16/16 个坏样例被判失败
+结论      : [OK] 校验器有效（能判失败，非假阴性）
+gate.py sha256 = 5a73b91ee7b99fa68b87e142a4daf1710d179a064ec8fd9d7e75298c062fc386
+======================================================================================

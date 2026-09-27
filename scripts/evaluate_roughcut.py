@@ -149,8 +149,12 @@ def run_pipeline(input_path: str, target_duration: int):
     validation_result = validate_plan(edl, plan, all_obs)
     is_valid, errors = validation_result
     if not is_valid:
-        edl, plan = repair_plan(edl, plan, all_obs)
-        validation_result = validate_plan(edl, plan, all_obs)
+        outcome = repair_plan(edl, plan, all_obs)
+        if outcome.requires_director:
+            print(f"[repair] ABSTAIN: {outcome.reason_code}: {outcome.reason}")
+        else:
+            edl, plan = outcome.edl, outcome.plan
+            validation_result = validate_plan(edl, plan, all_obs)
 
     return edl, plan, all_obs, relations, graph
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 
-from director_brain.models.director_plan import DirectorDecisionPlan
+from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.plan_validator import validate_plan
@@ -41,11 +41,20 @@ def _edl(edits):
         approval_state="draft")
 
 
-def _plan():
+def _plan(edl=None):
+    """构造 plan；传入 edl 时与 EDL 逐位一致（T1 新校验契约要求 plan↔EDL 一致）。"""
+    if edl is None:
+        sequence, decisions = [], []
+    else:
+        sequence = [e.source_asset_id for e in edl.ordered_edits]
+        decisions = [
+            Decision(decision_id=f"dec_{i}", purpose="select_shot", shot_refs=[aid])
+            for i, aid in enumerate(sequence)
+        ]
     return DirectorDecisionPlan(
         schema_version="1.0", project_id="p", created_at=int(time.time()), producer="t",
         source_ref="t", plan_id="plan", version="0.1", brief_version="0.1",
-        film_state_version="0.1", sequence=[], decisions=[], constraints=[],
+        film_state_version="0.1", sequence=sequence, decisions=decisions, constraints=[],
         open_questions=[], validation_status="pending", approval_state="draft")
 
 
@@ -54,7 +63,7 @@ OBS = [_obs("a"), _obs("b")]
 
 def test_valid_accepted():
     edl = _edl([_edit("a", 1_000_000, 3_000_000), _edit("b", 5_000_000, 8_000_000)])
-    ok, errors = validate_plan(edl, _plan(), OBS)
+    ok, errors = validate_plan(edl, _plan(edl), OBS)
     assert ok is True, errors
     assert errors == []
 

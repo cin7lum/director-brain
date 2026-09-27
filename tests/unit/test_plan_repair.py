@@ -1,20 +1,15 @@
-"""M2.3 Plan Repair 单元测试。
+"""M2.3 Plan Repair 单元测试（T1 收权版契约）。
 
-验证 repair_plan 的 rule1-9：
-- rule1: 移除 unknown source_asset_id
-- rule2: 修复 in_frame >= out_frame（交换或移除）
-- rule3: 过短片段拉长到 MIN_CLIP_US 或移除
-- rule4: 去重同一 source_asset_id
-- rule5: 过长片段截断到 MAX_CLIP_US
-- rule6: 修复重叠片段
-- rule7: 按 in_frame 排序
-- rule8: 重新计算 expected_duration
-- rule9: 重新验证并更新 plan.validation_status
+裁定（"Plan = 导演依据"）：repair 只做**物理修复**（已选镜头内 in/out 调整），
+无权增删镜头、无权重排。修复不了就 ABSTAIN（一等返回值 RepairOutcome，
+带受控枚举原因码），退回导演层重新出 plan。
 
-额外验证：
-- 不修改原对象
-- 空 EDL 返回空 EDL，不抛异常
-- producer == "plan_repair_v0.1"
+覆盖：
+- ABSTAIN：空 EDL / unknown asset / 重复选片 / out<=0 / 源过短 /
+  大幅重叠 / 目标时长物理不可达
+- OK：交换端点 / 扩展到 MIN / 截断到 MAX / 小幅重叠截断 / 时长延长与缩短
+- 不变量：镜头集合与顺序不变、plan↔EDL 一致性保持、原对象不被修改、
+  物理调整写入 plan.open_questions 留痕、producer 更新
 """
 from __future__ import annotations
 
@@ -22,10 +17,20 @@ import time
 
 import pytest
 
-from director_brain.models.director_plan import DirectorDecisionPlan
+from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
-from director_brain.plan_repair import repair_plan
+from director_brain.plan_repair import (
+    REASON_DUPLICATE_SHOT,
+    REASON_DURATION_UNREACHABLE,
+    REASON_EMPTY_SELECTION,
+    REASON_INVALID_TIME_RANGE,
+    REASON_OVERLAP_UNRESOLVABLE,
+    REASON_SHOT_TOO_SHORT,
+    REASON_UNKNOWN_SOURCE_ASSET,
+    RepairOutcome,
+    repair_plan,
+)
 from director_brain.plan_validator import validate_plan
 from gen1_adapter.heuristic_baseline import MAX_CLIP_US, MIN_CLIP_US
 
@@ -98,7 +103,24 @@ def _edl(edits: list[EditItem]) -> EditorialDecisionList:
     )
 
 
-def _plan(constraints: list[str] | None = None) -> DirectorDecisionPlan:
+def _plan(
+    edl: EditorialDecisionList | None = None,
+    constraints: list[str] | None = None,
+) -> DirectorDecisionPlan:
+    """构造与 edl 逐位一致的 plan（ok 路径要求输入即一致）；edl=None 时为空 plan。"""
+    if edl is None:
+        sequence: list[str] = []
+        decisions: list[Decision] = []
+    else:
+        sequence = [e.source_asset_id for e in edl.ordered_edits]
+        decisions = [
+            Decision(
+                decision_id=f"dec_{i}",
+                purpose="select_shot",
+                shot_refs=[e.source_asset_id],
+            )
+            for i, e in enumerate(edl.ordered_edits)
+        ]
     return DirectorDecisionPlan(
         schema_version="1.0",
         project_id="test_proj",
@@ -109,8 +131,8 @@ def _plan(constraints: list[str] | None = None) -> DirectorDecisionPlan:
         version="0.1",
         brief_version="0.1",
         film_state_version="0.1",
-        sequence=[],
-        decisions=[],
+        sequence=sequence,
+        decisions=decisions,
         constraints=constraints or [],
         open_questions=[],
         validation_status="pending",
@@ -126,212 +148,90 @@ OBS = [
 ]
 
 
+def _assert_abstain(outcome: RepairOutcome, reason_code: str) -> None:
+    assert outcome.status == "abstain"
+    assert outcome.requires_director is True
+    assert outcome.reason_code == reason_code
+    assert outcome.reason, "abstain 必须带人类可读原因"
+    assert outcome.edl is None and outcome.plan is None
+
+
 # ---------------------------------------------------------------------------
-# rule1: unknown asset removed
+# ABSTAIN：修复器无权处理的镜头集合级缺陷
 # ---------------------------------------------------------------------------
 
-def test_unknown_asset_removed():
+def test_empty_edl_abstains():
+    outcome = repair_plan(_edl([]), _plan(), OBS)
+    _assert_abstain(outcome, REASON_EMPTY_SELECTION)
+
+
+def test_unknown_asset_abstains():
     edits = [
         _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
         _edit("shot_ghost", in_frame=4_000_000, out_frame=6_000_000),
     ]
     edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    asset_ids = [e.source_asset_id for e in new_edl.ordered_edits]
-    assert "shot_ghost" not in asset_ids
-    assert "shot_a" in asset_ids
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    _assert_abstain(outcome, REASON_UNKNOWN_SOURCE_ASSET)
 
 
-# ---------------------------------------------------------------------------
-# rule2: in >= out fixed or removed
-# ---------------------------------------------------------------------------
-
-def test_in_ge_out_swapped_when_out_positive():
-    # in=5M, out=1M → 交换 → in=1M, out=5M
-    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=1_000_000)]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    assert len(new_edl.ordered_edits) == 1
-    e = new_edl.ordered_edits[0]
-    assert e.in_frame < e.out_frame
-    assert e.in_frame == 1_000_000
-    assert e.out_frame == 5_000_000
-
-
-def test_in_ge_out_removed_when_out_zero():
-    # in=5M, out=0 → 无法交换 → 移除
-    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=0)]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    assert len(new_edl.ordered_edits) == 0
-
-
-# ---------------------------------------------------------------------------
-# rule3: too-short clips extended or removed
-# ---------------------------------------------------------------------------
-
-def test_too_short_clip_extended_when_source_long():
-    # edit 仅 0.5M (4.0M-4.5M)，但 shot_a 源镜头长 10M → 拉长到 MIN_CLIP_US
-    edits = [_edit("shot_a", in_frame=4_000_000, out_frame=4_500_000)]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    assert len(new_edl.ordered_edits) == 1
-    e = new_edl.ordered_edits[0]
-    assert (e.out_frame - e.in_frame) >= MIN_CLIP_US
-
-
-def test_too_short_clip_removed_when_source_short():
-    # shot_c 源镜头仅 0.5M < MIN_CLIP_US → 移除
-    edits = [_edit("shot_c", in_frame=100_000, out_frame=300_000)]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    assert len(new_edl.ordered_edits) == 0
-
-
-# ---------------------------------------------------------------------------
-# rule5: too-long clips truncated
-# ---------------------------------------------------------------------------
-
-def test_too_long_clip_truncated():
-    # edit 10M (0-10M) > MAX_CLIP_US (6M) → 截断到 6M
-    edits = [_edit("shot_a", in_frame=0, out_frame=10_000_000)]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    assert len(new_edl.ordered_edits) == 1
-    e = new_edl.ordered_edits[0]
-    assert (e.out_frame - e.in_frame) <= MAX_CLIP_US
-
-
-# ---------------------------------------------------------------------------
-# rule6: overlap fixed
-# ---------------------------------------------------------------------------
-
-def test_overlap_fixed():
-    # shot_a: 0-5M, shot_b: 3-8M → 重叠 3-5M
-    edits = [
-        _edit("shot_a", in_frame=0, out_frame=5_000_000),
-        _edit("shot_b", in_frame=3_000_000, out_frame=8_000_000),
-    ]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    # 修复后不应有重叠
-    sorted_edits = sorted(new_edl.ordered_edits, key=lambda e: e.in_frame)
-    for i in range(len(sorted_edits) - 1):
-        assert sorted_edits[i].out_frame <= sorted_edits[i + 1].in_frame
-
-
-def test_rule6_large_overlap_removed_recorded():
-    # shot_a: 0-4M (dur=4M), shot_b: 2-3M (dur=1M)
-    # overlap = 4M-2M = 2M, smaller = 1M, ratio = 2.0 >= 0.5 → 大幅重叠移除 shot_b
-    edits = [
-        _edit("shot_a", in_frame=0, out_frame=4_000_000),
-        _edit("shot_b", in_frame=2_000_000, out_frame=3_000_000),
-    ]
-    edl = _edl(edits)
-    plan = _plan()
-    new_edl, new_plan = repair_plan(edl, plan, OBS)
-    # shot_b 被移除，只剩 shot_a
-    asset_ids = [e.source_asset_id for e in new_edl.ordered_edits]
-    assert asset_ids == ["shot_a"]
-    # open_questions 记录了移除
-    assert any("removed edit" in q for q in new_plan.open_questions)
-
-
-# ---------------------------------------------------------------------------
-# rule4: dedupe same source_asset_id
-# ---------------------------------------------------------------------------
-
-def test_dedupe_same_asset():
+def test_duplicate_shot_abstains():
+    """同一镜头被选中多次 → 保留哪一次属创作决策 → ABSTAIN。"""
     edits = [
         _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
         _edit("shot_a", in_frame=5_000_000, out_frame=7_000_000),  # 重复 asset
     ]
     edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    asset_ids = [e.source_asset_id for e in new_edl.ordered_edits]
-    # 同一 asset 只保留一个
-    assert asset_ids.count("shot_a") == 1
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    _assert_abstain(outcome, REASON_DUPLICATE_SHOT)
 
 
-# ---------------------------------------------------------------------------
-# rule7/8/9: sort, recompute duration, revalidate
-# ---------------------------------------------------------------------------
+def test_invalid_time_range_out_zero_abstains():
+    """in=5M, out=0 → 无法交换 → ABSTAIN（历史行为是静默移除）。"""
+    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=0)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    _assert_abstain(outcome, REASON_INVALID_TIME_RANGE)
 
-def test_sorted_by_in_frame():
+
+def test_too_short_source_abstains():
+    """shot_c 源镜头仅 0.5M < MIN_CLIP_US → 无法物理扩展 → ABSTAIN。"""
+    edits = [_edit("shot_c", in_frame=100_000, out_frame=300_000)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    _assert_abstain(outcome, REASON_SHOT_TOO_SHORT)
+
+
+def test_large_overlap_abstains():
+    """大幅重叠（>= 较短片段 50%）→ 留谁删谁是创作决策 → ABSTAIN。"""
+    # shot_a: 0-4M (dur=4M), shot_b: 2-3M (dur=1M)；overlap=2M, ratio=2.0
     edits = [
-        _edit("shot_b", in_frame=8_000_000, out_frame=10_000_000),
-        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
+        _edit("shot_a", in_frame=0, out_frame=4_000_000),
+        _edit("shot_b", in_frame=2_000_000, out_frame=3_000_000),
     ]
     edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    in_frames = [e.in_frame for e in new_edl.ordered_edits]
-    assert in_frames == sorted(in_frames)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    _assert_abstain(outcome, REASON_OVERLAP_UNRESOLVABLE)
 
 
-def test_expected_duration_recomputed():
-    edits = [
-        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
-        _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
+def test_duration_unreachable_abstains():
+    """单镜头物理延长到极限（MAX_CLIP_US=6M）仍达不到目标下界 → ABSTAIN。
+
+    历史行为是从未选中镜头追加（shot_function="repair_appended"）——已移除。
+    """
+    obs = [
+        _obs("shot_a", 0, 10_000_000),
+        _obs("shot_b", 10_000_000, 20_000_000),
+        _obs("shot_c", 20_000_000, 30_000_000),
     ]
+    edits = [_edit("shot_a", in_frame=1_000_000, out_frame=3_000_000)]
     edl = _edl(edits)
-    plan = _plan()
-    new_edl, _ = repair_plan(edl, plan, OBS)
-    expected = sum(e.out_frame - e.in_frame for e in new_edl.ordered_edits)
-    assert new_edl.expected_duration == expected
+    plan = _plan(edl, constraints=["target_duration_us=15000000"])
+    outcome = repair_plan(edl, plan, obs)
+    _assert_abstain(outcome, REASON_DURATION_UNREACHABLE)
 
 
-def test_plan_validation_status_updated():
-    edits = [
-        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
-        _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
-    ]
-    edl = _edl(edits)
-    plan = _plan()
-    _, new_plan = repair_plan(edl, plan, OBS)
-    assert new_plan.validation_status in ("valid", "repaired_with_errors")
-
-
-# ---------------------------------------------------------------------------
-# Composite: bad EDL repaired, errors reduced
-# ---------------------------------------------------------------------------
-
-def test_bad_edl_errors_reduced():
-    edits = [
-        _edit("shot_a", in_frame=5_000_000, out_frame=1_000_000),  # in > out
-        _edit("shot_ghost", in_frame=0, out_frame=2_000_000),  # unknown
-        _edit("shot_a", in_frame=3_000_000, out_frame=5_000_000),  # dup + overlap
-        _edit("shot_a", in_frame=4_000_000, out_frame=6_000_000),  # overlap
-    ]
-    edl = _edl(edits)
-    plan = _plan()
-
-    is_valid_before, errors_before = validate_plan(edl, plan, OBS)
-    assert is_valid_before is False
-    assert len(errors_before) > 0
-
-    new_edl, new_plan = repair_plan(edl, plan, OBS)
-    is_valid_after, errors_after = validate_plan(new_edl, new_plan, OBS)
-    # 修复后 errors 必须减少（或完全消除）
-    assert len(errors_after) <= len(errors_before)
-    assert len(errors_after) < len(errors_before), (
-        f"errors not reduced: before={errors_before}, after={errors_after}"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Immutability: original objects not modified
-# ---------------------------------------------------------------------------
-
-def test_original_not_modified():
+def test_abstain_does_not_modify_originals():
     edits = [
         _edit("shot_a", in_frame=5_000_000, out_frame=1_000_000),  # in > out
         _edit("shot_ghost", in_frame=0, out_frame=2_000_000),
@@ -341,72 +241,95 @@ def test_original_not_modified():
     original_edit_count = len(edl.ordered_edits)
     original_validation_status = plan.validation_status
 
-    repair_plan(edl, plan, OBS)
+    outcome = repair_plan(edl, plan, OBS)
 
+    assert outcome.requires_director is True
     assert len(edl.ordered_edits) == original_edit_count
     assert plan.validation_status == original_validation_status
 
 
 # ---------------------------------------------------------------------------
-# Empty EDL
+# OK：白名单内的物理修复
 # ---------------------------------------------------------------------------
 
-def test_empty_edl_returns_empty():
-    edl = _edl([])
-    plan = _plan()
-    new_edl, new_plan = repair_plan(edl, plan, OBS)
-    assert new_edl.ordered_edits == []
-    assert new_edl.expected_duration == 0
+def _edl_ids(outcome: RepairOutcome) -> list[str]:
+    return [e.source_asset_id for e in outcome.edl.ordered_edits]
 
 
-# ---------------------------------------------------------------------------
-# producer
-# ---------------------------------------------------------------------------
-
-def test_producer_updated():
-    edits = [_edit("shot_a", in_frame=1_000_000, out_frame=3_000_000)]
+def test_swap_fixes_inverted_range():
+    # in=5M, out=1M → 交换 → in=1M, out=5M；镜头集合与顺序不变
+    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=1_000_000)]
     edl = _edl(edits)
-    plan = _plan()
-    new_edl, new_plan = repair_plan(edl, plan, OBS)
-    assert new_edl.producer == "plan_repair_v0.1"
-    assert new_plan.producer == "plan_repair_v0.1"
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a"]
+    e = outcome.edl.ordered_edits[0]
+    assert e.in_frame == 1_000_000
+    assert e.out_frame == 5_000_000
+    assert any(a.startswith("swap_endpoints:") for a in outcome.adjustments)
 
 
-# ---------------------------------------------------------------------------
-# rule10: duration repair (too-short / too-long)
-# ---------------------------------------------------------------------------
+def test_extend_to_min_within_source():
+    # edit 仅 0.5M (4.0M-4.5M)，shot_a 源镜头长 10M → 物理扩展到 MIN_CLIP_US
+    edits = [_edit("shot_a", in_frame=4_000_000, out_frame=4_500_000)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a"]
+    e = outcome.edl.ordered_edits[0]
+    assert (e.out_frame - e.in_frame) >= MIN_CLIP_US
 
-def _obs_timeline(asset_id: str, start: int, end: int) -> FilmObservation:
-    """构造在连续时间线上的观测（模拟真实镜头分段，互不重叠）。"""
-    return _obs(asset_id, start=start, end=end)
+
+def test_truncate_to_max():
+    # edit 10M (0-10M) > MAX_CLIP_US (6M) → 截断到 6M，镜头保留
+    edits = [_edit("shot_a", in_frame=0, out_frame=10_000_000)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a"]
+    e = outcome.edl.ordered_edits[0]
+    assert (e.out_frame - e.in_frame) <= MAX_CLIP_US
 
 
-def test_rule10_extends_and_appends_when_too_short():
-    """总时长 2s < target 15s 的 90% → repair 后进入 [13.5M, 16.5M] 且 valid。"""
-    obs = [
-        _obs_timeline("shot_a", 0, 10_000_000),
-        _obs_timeline("shot_b", 10_000_000, 20_000_000),
-        _obs_timeline("shot_c", 20_000_000, 30_000_000),
+def test_small_overlap_trimmed_keeps_both_shots():
+    """小幅重叠（< 较短片段 50%）→ 截断时间在前的片段，两个镜头都保留。"""
+    # shot_a: 0-5M, shot_b: 4.5-8M → overlap=0.5M, smaller=3.5M, ratio≈0.14
+    edits = [
+        _edit("shot_a", in_frame=0, out_frame=5_000_000),
+        _edit("shot_b", in_frame=4_500_000, out_frame=8_000_000),
     ]
-    # 初始只有 shot_a 的 1M-3M（2s）
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a", "shot_b"], "小幅重叠不得删镜头"
+    a = outcome.edl.ordered_edits[0]
+    b = outcome.edl.ordered_edits[1]
+    assert a.out_frame <= b.in_frame, "修复后不得再重叠"
+    ok, errors = validate_plan(outcome.edl, outcome.plan, OBS)
+    assert ok, f"errors={errors}"
+
+
+def test_duration_extension_within_reach():
+    """目标 4M：edit 2M 在源范围内物理延长到下界 3.6M → OK（不追加镜头）。"""
+    obs = [_obs("shot_a", 0, 10_000_000)]
     edits = [_edit("shot_a", in_frame=1_000_000, out_frame=3_000_000)]
     edl = _edl(edits)
-    plan = _plan(constraints=["target_duration_us=15000000"])
+    plan = _plan(edl, constraints=["target_duration_us=4000000"])
+    outcome = repair_plan(edl, plan, obs)
+    assert outcome.status == "ok"
+    total = sum(e.out_frame - e.in_frame for e in outcome.edl.ordered_edits)
+    assert 3_600_000 <= total <= 4_400_000, f"total={total}"
+    ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
+    assert ok, f"errors={errors}"
 
-    new_edl, new_plan = repair_plan(edl, plan, obs)
-    total = sum(e.out_frame - e.in_frame for e in new_edl.ordered_edits)
-    assert 13_500_000 <= total <= 16_500_000, f"total={total} not in range"
-    ok, errors = validate_plan(new_edl, new_plan, obs)
-    assert ok, f"repair still invalid: {errors}"
 
-
-def test_rule10_truncates_when_too_long():
-    """总时长 20s > target 15s 的 110% → repair 后缩短到目标范围。"""
+def test_duration_truncation_within_reach():
+    """总时长 20M > 目标 15M 上界 16.5M → 物理缩短到范围内 → OK（不删镜头）。"""
     obs = [
-        _obs_timeline("shot_a", 0, 5_000_000),
-        _obs_timeline("shot_b", 5_000_000, 10_000_000),
-        _obs_timeline("shot_c", 10_000_000, 15_000_000),
-        _obs_timeline("shot_d", 15_000_000, 20_000_000),
+        _obs("shot_a", 0, 5_000_000),
+        _obs("shot_b", 5_000_000, 10_000_000),
+        _obs("shot_c", 10_000_000, 15_000_000),
+        _obs("shot_d", 15_000_000, 20_000_000),
     ]
     edits = [
         _edit("shot_a", in_frame=0, out_frame=5_000_000),
@@ -415,10 +338,91 @@ def test_rule10_truncates_when_too_long():
         _edit("shot_d", in_frame=15_000_000, out_frame=20_000_000),
     ]
     edl = _edl(edits)
-    plan = _plan(constraints=["target_duration_us=15000000"])
+    plan = _plan(edl, constraints=["target_duration_us=15000000"])
+    outcome = repair_plan(edl, plan, obs)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a", "shot_b", "shot_c", "shot_d"], "截短不得删镜头"
+    total = sum(e.out_frame - e.in_frame for e in outcome.edl.ordered_edits)
+    assert 13_500_000 <= total <= 16_500_000, f"total={total}"
 
-    new_edl, new_plan = repair_plan(edl, plan, obs)
-    total = sum(e.out_frame - e.in_frame for e in new_edl.ordered_edits)
-    assert 13_500_000 <= total <= 16_500_000, f"total={total} not in range"
-    ok, errors = validate_plan(new_edl, new_plan, obs)
-    assert ok, f"repair still invalid: {errors}"
+
+# ---------------------------------------------------------------------------
+# 不变量
+# ---------------------------------------------------------------------------
+
+def test_ok_repair_preserves_plan_edl_consistency():
+    """物理修复不得破坏 plan↔EDL 一致性（T1 新校验必须保持 PASS）。"""
+    edits = [
+        _edit("shot_a", in_frame=5_000_000, out_frame=1_000_000),
+        _edit("shot_b", in_frame=5_500_000, out_frame=8_000_000),
+    ]
+    edl = _edl(edits)
+    plan = _plan(edl)
+    outcome = repair_plan(edl, plan, OBS)
+    assert outcome.status == "ok"
+    ok, errors = validate_plan(outcome.edl, outcome.plan, OBS)
+    assert ok, f"修复后 plan↔EDL 不一致: {errors}"
+    assert outcome.plan.sequence == _edl_ids(outcome)
+
+
+def test_ok_repair_records_adjustments_in_open_questions():
+    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=1_000_000)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert outcome.adjustments
+    assert any("repair: " in q for q in outcome.plan.open_questions)
+
+
+def test_ok_repair_does_not_modify_originals():
+    edits = [_edit("shot_a", in_frame=5_000_000, out_frame=1_000_000)]
+    edl = _edl(edits)
+    plan = _plan(edl)
+    original_edits = [e.model_copy(deep=True) for e in edl.ordered_edits]
+    original_status = plan.validation_status
+
+    repair_plan(edl, plan, OBS)
+
+    assert [e.model_copy(deep=True) for e in edl.ordered_edits] == original_edits
+    assert plan.validation_status == original_status
+
+
+def test_expected_duration_recomputed():
+    edits = [
+        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
+        _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
+    ]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    expected = sum(e.out_frame - e.in_frame for e in outcome.edl.ordered_edits)
+    assert outcome.edl.expected_duration == expected
+
+
+def test_producer_updated():
+    edits = [_edit("shot_a", in_frame=1_000_000, out_frame=3_000_000)]
+    edl = _edl(edits)
+    outcome = repair_plan(edl, _plan(edl), OBS)
+    assert outcome.status == "ok"
+    assert outcome.edl.producer == "plan_repair_v0.2"
+    assert outcome.plan.producer == "plan_repair_v0.2"
+
+
+def test_composite_physical_fix_reduces_errors():
+    """可物理修复的坏 EDL：交换端点 + 扩展过短 → 修复后校验通过、集合不变。"""
+    edits = [
+        _edit("shot_a", in_frame=5_000_000, out_frame=1_000_000),  # in > out
+        _edit("shot_b", in_frame=5_500_000, out_frame=6_000_000),  # 过短（0.5M）
+    ]
+    edl = _edl(edits)
+    plan = _plan(edl)
+    is_valid_before, errors_before = validate_plan(edl, plan, OBS)
+    assert is_valid_before is False
+    assert len(errors_before) > 0
+
+    outcome = repair_plan(edl, plan, OBS)
+    assert outcome.status == "ok"
+    assert _edl_ids(outcome) == ["shot_a", "shot_b"]
+    ok, errors = validate_plan(outcome.edl, outcome.plan, OBS)
+    assert ok, f"errors={errors}"
+    assert len(errors) < len(errors_before)

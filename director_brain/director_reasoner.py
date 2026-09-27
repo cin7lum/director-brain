@@ -159,26 +159,46 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         paired: list[tuple[str, EditItem, Decision]] = []
         borrowed_any = False
         fallback_any = False
+        #: 已被选入 plan 的镜头 id（T1 修复：一份 plan 内同一镜头只选一次）
+        selected_ids: set[str] = set()
 
         for act_node in act_nodes:
             act_name = act_node.attributes["act"]
             shot_ids = set(act_node.attributes.get("shot_ids", []))
-            act_cands = [c for c in candidates if c["source_shot_id"] in shot_ids]
+            # T1 修复：同一镜头在一份 plan 中只选入一次。重复选入会让 EDL 出现
+            # 同 asset 的嵌套区间（validator 判 overlap），历史上由 repair 越权
+            # 删镜头"兜底"——按"Plan=导演依据"裁定，缺陷必须在导演层消除。
+            # 注意：有意的镜头复用（reprise）未来需以"不重叠子区间"显式表达，
+            # 当前 schema 不支持，先按保守规则排除。
+            act_cands = [
+                c for c in candidates
+                if c["source_shot_id"] in shot_ids
+                and c["source_shot_id"] not in selected_ids
+            ]
 
-            # 空幕兜底：本幕时间范围内无镜头时，从全局候选借用
-            # （resolve 幕优先取时间最靠后的镜头，hook 幕取最靠前的）
+            # 空幕兜底：本幕时间范围内无镜头时，从**未被选用**的全局候选借用。
+            # VLM 判为 discard 的镜头视为导演层已否决，不参与借用（宁可空幕
+            # 也不启用被否决的素材）；resolve 幕优先取时间最靠后的镜头，
+            # hook 幕取最靠前的。
             borrowed = False
             if not act_cands and candidates:
-                sorted_cands = sorted(candidates, key=lambda c: c["source_in_us"])
-                if act_name == "resolve":
-                    act_cands = [copy.deepcopy(sorted_cands[-1])]
-                elif act_name == "hook":
-                    act_cands = [copy.deepcopy(sorted_cands[0])]
-                else:
-                    mid = len(sorted_cands) // 2
-                    act_cands = [copy.deepcopy(sorted_cands[mid])]
-                borrowed = True
-                borrowed_any = True
+                pool = [
+                    c for c in candidates
+                    if c["source_shot_id"] not in selected_ids
+                    and c.get("vlm_role") != "discard"
+                ]
+                if pool:
+                    sorted_cands = sorted(pool, key=lambda c: c["source_in_us"])
+                    if act_name == "resolve":
+                        act_cands = [copy.deepcopy(sorted_cands[-1])]
+                    elif act_name == "hook":
+                        act_cands = [copy.deepcopy(sorted_cands[0])]
+                    else:
+                        mid = len(sorted_cands) // 2
+                        act_cands = [copy.deepcopy(sorted_cands[mid])]
+                    borrowed = True
+                    borrowed_any = True
+                # pool 为空：可用镜头已全被前幕选用（或仅剩 discard），本幕保持空
 
             per_act_target = max(
                 int(_ACT_RATIO[act_name] * brief.target_duration),
@@ -265,6 +285,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     requires_approval=requires_approval,
                 )
                 paired.append((act_name, edit, decision))
+                selected_ids.add(edit.source_asset_id)
 
         # ---- 按幕顺序（hook→develop→peak→resolve），同幕内按 in_frame 升序 ----
         paired.sort(key=lambda p: (_ACT_ORDER.get(p[0], 99), p[1].in_frame))
