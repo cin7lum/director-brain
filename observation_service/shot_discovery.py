@@ -10,7 +10,7 @@ import os
 import re
 import subprocess
 
-from director_brain._utils import file_sha256, short_hash
+from director_brain.utils import file_sha256, short_hash
 
 
 DISCOVERY_VERSION = "v0.1"

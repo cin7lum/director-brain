@@ -12,7 +12,7 @@ import json
 import time
 from pathlib import Path
 
-from director_brain._utils import file_sha256, short_hash
+from director_brain.utils import file_sha256, short_hash
 from director_brain.analysis_cache import AnalysisCache
 from director_brain.config import load_settings
 from director_brain.models.film_observation import ClaimKind, FilmObservation

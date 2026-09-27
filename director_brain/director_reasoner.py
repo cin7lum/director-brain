@@ -22,7 +22,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList

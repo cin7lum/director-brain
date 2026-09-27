@@ -13,7 +13,7 @@ import json
 import re
 import time
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.film_observation import FilmObservation
 

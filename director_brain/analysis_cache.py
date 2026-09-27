@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.film_observation import FilmObservation
 
 

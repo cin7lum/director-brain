@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
 

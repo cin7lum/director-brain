@@ -15,7 +15,7 @@ import logging
 import time
 from pathlib import Path
 
-from director_brain._utils import file_sha256
+from director_brain.utils import file_sha256
 from director_brain.config import load_settings
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 
@@ -34,7 +34,7 @@ _MEDIA_HASH_PLACEHOLDER = "asr_placeholder"
 def _media_sha256(video_path: str) -> str:
     """流式计算视频文件的 sha256。
 
-    复用 :func:`director_brain._utils.file_sha256`；文件不存在或不可读时
+    复用 :func:`director_brain.utils.file_sha256`；文件不存在或不可读时
     返回 :data:`_MEDIA_HASH_PLACEHOLDER`，不阻断转写主流程（mock 测试传入的
     是不存在的假路径）。
     """

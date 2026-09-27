@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.edl import EditItem, EditorialDecisionList
 
 PRODUCER = "edl_generator_v0.1"

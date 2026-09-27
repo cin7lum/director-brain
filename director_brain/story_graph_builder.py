@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import time
 
-from director_brain._utils import short_hash
+from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.film_observation import FilmObservation
 from director_brain.models.story_graph import (

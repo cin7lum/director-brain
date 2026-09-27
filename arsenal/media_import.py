@@ -1,7 +1,7 @@
 """Arsenal 媒体导入与代理生成。
 
 流程：ffprobe 元数据探测 → 复制原始素材 → ffmpeg 低分辨率代理 → 写入 media_manifest.json。
-SHA-256 复用 ``director_brain._utils.file_sha256``，不在此模块重复实现。
+SHA-256 复用 ``director_brain.utils.file_sha256``，不在此模块重复实现。
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-from director_brain._utils import file_sha256
+from director_brain.utils import file_sha256
 
 #: 代理默认宽度（高度由 -2 保证偶数）
 _DEFAULT_PROXY_WIDTH = 480

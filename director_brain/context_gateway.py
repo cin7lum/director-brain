@@ -14,7 +14,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from director_brain._utils import file_sha256, short_hash
+from director_brain.utils import file_sha256, short_hash
 from director_brain.models.film_context import ContextLayer, FilmContextSnapshot
 from director_brain.models.film_observation import FilmObservation
 from storage.repository import BrainRepository
