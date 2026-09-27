@@ -1,0 +1,11 @@
+{
+  "comment": "L2 迷你矩阵：本机现有两段 Sintel 素材（CC 授权）× 3 意图配置。正式矩阵待项目所有者提供真实素材后扩充。",
+  "tasks": [
+    {"tag": "ref-base15", "video": "sintel_ref_480p.mp4", "target_seconds": 15, "intent": null},
+    {"tag": "ref-fastcut15", "video": "sintel_ref_480p.mp4", "target_seconds": 15, "intent": "快剪风格，避免模糊镜头"},
+    {"tag": "ref-slow10", "video": "sintel_ref_480p.mp4", "target_seconds": 10, "intent": "慢节奏，长镜头"},
+    {"tag": "trailer-base15", "video": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4", "target_seconds": 15, "intent": null},
+    {"tag": "trailer-fastcut15", "video": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4", "target_seconds": 15, "intent": "快剪风格"},
+    {"tag": "trailer-slow10", "video": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4", "target_seconds": 10, "intent": "慢节奏，长镜头"}
+  ]
+}

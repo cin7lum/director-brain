@@ -171,18 +171,61 @@ def intent_compliance(plan: dict, target_seconds: float | None,
 
 
 # ---------------------------------------------------------------------------
+# 指标收集（结构化，供计分卡与 L2 矩阵聚合共用）
+# ---------------------------------------------------------------------------
+
+def collect_metrics(video: str, edl: dict | None, plan: dict | None,
+                    target_seconds: float | None) -> dict:
+    """收集全部 L1 指标，返回结构化 dict（含 hard_defect 判定）。"""
+    streams = probe_stream_durations(video)
+    blacks = detect_black_frames(video)
+    freezes = detect_freeze(video)
+    silences = detect_silence(video)
+    pacing = edl_pacing(edl) if edl else None
+    spread = edl_source_spread(edl) if edl else None
+
+    video_dur = streams.get("video") if streams.get("ok") else None
+    intent = intent_compliance(plan, target_seconds, video_dur)
+
+    av_mismatch = bool(
+        streams.get("ok") and streams.get("audio") and streams.get("video")
+        and abs(streams["video"] - streams["audio"]) > 0.5
+    )
+    hard = (
+        not streams.get("ok")
+        or bool(blacks)
+        or bool(freezes)
+        or av_mismatch
+        or any(f["verdict"] == "FAIL" for f in intent)
+    )
+    return {
+        "streams": streams,
+        "black_frames": blacks,
+        "freezes": freezes,
+        "silences": silences,
+        "av_mismatch": av_mismatch,
+        "pacing": pacing,
+        "source_spread": spread,
+        "intent": intent,
+        "hard_defect": hard,
+    }
+
+
+# ---------------------------------------------------------------------------
 # 计分卡
 # ---------------------------------------------------------------------------
 
 def build_scorecard(video: str, edl: dict | None, plan: dict | None,
                     target_seconds: float | None) -> tuple[str, bool]:
     """返回 (markdown 计分卡, 是否存在硬伤)。"""
+    m = collect_metrics(video, edl, plan, target_seconds)
+    streams = m["streams"]
+    hard_defect = m["hard_defect"]
+
     lines: list[str] = [f"# L1 客观指标计分卡 · {Path(video).name}", ""]
-    hard_defect = False
 
     # ---- 技术质量 ----
     lines += ["## 技术质量（守门员，任一 FAIL 即硬伤）", ""]
-    streams = probe_stream_durations(video)
     if not streams.get("ok"):
         lines.append(f"- [FAIL] 流探测失败：{streams.get('reason')}")
         hard_defect = True
@@ -190,11 +233,11 @@ def build_scorecard(video: str, edl: dict | None, plan: dict | None,
         vd, ad = streams["video"], streams["audio"]
         lines.append(f"- [INFO] 视频流 {vd:.2f}s，音频流 "
                      f"{f'{ad:.2f}s' if ad else '无音轨'}")
-        if ad and vd and abs(vd - ad) > 0.5:
+        if m["av_mismatch"]:
             lines.append(f"- [FAIL] 音画时长错位 {abs(vd - ad):.2f}s（>0.5s）")
             hard_defect = True
 
-    blacks = detect_black_frames(video)
+    blacks = m["black_frames"]
     if blacks:
         lines.append(f"- [FAIL] 黑帧 {len(blacks)} 段："
                      + ", ".join(f"{s:.1f}-{e:.1f}s" for s, e in blacks[:5]))
@@ -202,7 +245,7 @@ def build_scorecard(video: str, edl: dict | None, plan: dict | None,
     else:
         lines.append("- [PASS] 无黑帧")
 
-    freezes = detect_freeze(video)
+    freezes = m["freezes"]
     if freezes:
         lines.append(f"- [FAIL] 冻帧 {len(freezes)} 段："
                      + ", ".join(f"{s:.1f}+{d:.1f}s" for s, d in freezes[:5]))
@@ -210,7 +253,7 @@ def build_scorecard(video: str, edl: dict | None, plan: dict | None,
     else:
         lines.append("- [PASS] 无冻帧（≥1s）")
 
-    silences = detect_silence(video)
+    silences = m["silences"]
     if silences:
         total_silence = sum(e - s for s, e in silences)
         lines.append(f"- [INFO] 静音段 {len(silences)} 段（累计 {total_silence:.1f}s，"
@@ -220,8 +263,8 @@ def build_scorecard(video: str, edl: dict | None, plan: dict | None,
 
     # ---- 节奏 ----
     lines += ["", "## 节奏 Pacing（分布参考，无好坏判定）", ""]
-    if edl:
-        p = edl_pacing(edl)
+    if m["pacing"]:
+        p = m["pacing"]
         lines.append(
             f"- 镜头数 {p['shot_count']}，ASL {p.get('asl_seconds')}s，"
             f"最短 {p.get('min_clip_seconds')}s / 最长 {p.get('max_clip_seconds')}s，"
@@ -233,19 +276,16 @@ def build_scorecard(video: str, edl: dict | None, plan: dict | None,
 
     # ---- 意图达成 ----
     lines += ["", "## 意图达成（硬约束逐条）", ""]
-    if target_seconds or plan:
-        for f in intent_compliance(plan, target_seconds,
-                                   streams.get("video") if streams.get("ok") else None):
+    if m["intent"]:
+        for f in m["intent"]:
             lines.append(f"- [{f['verdict']}] {f['item']}：{f['value']}")
-            if f["verdict"] == "FAIL":
-                hard_defect = True
     else:
         lines.append("- [INFO] 未提供目标时长/plan，跳过")
 
     # ---- 镜头选择 ----
     lines += ["", "## 镜头选择（分布代理）", ""]
-    if edl:
-        sp = edl_source_spread(edl)
+    if m["source_spread"]:
+        sp = m["source_spread"]
         lines.append(f"- 所用片段在源时间轴上的跨度 {sp['source_span_seconds']}s"
                      f"（{sp['segment_count']} 段）")
     else:
