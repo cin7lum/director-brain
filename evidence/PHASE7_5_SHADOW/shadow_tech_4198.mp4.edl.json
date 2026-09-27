@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "project_id": "MVI_4198",
+  "created_at": 1790549269,
+  "producer": "plan_repair_v0.2",
+  "source_ref": "D:/新建豆包/100CANON/MVI_4198.MP4",
+  "edl_id": "edl_MVI_4198_80ecdb25aac4a971_repaired",
+  "version": "0.1",
+  "brief_version": "0.1",
+  "context_id": "graph_MVI_4198_0180cbe0b8c8dae4",
+  "source_asset_hashes": [
+    "68092cfc09b983475d2c6491ffc27a47624262c631222b9fd0b25acd0515c509"
+  ],
+  "timebase": 1000000,
+  "ordered_edits": [
+    {
+      "source_asset_id": "shot_29b9e1f91f5f714f",
+      "source_media_hash": "68092cfc09b983475d2c6491ffc27a47624262c631222b9fd0b25acd0515c509",
+      "in_frame": 5600000,
+      "out_frame": 6955000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "opening",
+      "rationale": "act=hook, heuristic:blur=95.22",
+      "act": "hook",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_7f267aa764e2e6ca",
+      "source_media_hash": "68092cfc09b983475d2c6491ffc27a47624262c631222b9fd0b25acd0515c509",
+      "in_frame": 8355000,
+      "out_frame": 9760000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "pacing",
+      "rationale": "act=develop, heuristic:blur=87.01",
+      "act": "develop",
+      "evidence_type": "heuristic"
+    }
+  ],
+  "decision_refs": [],
+  "audio_refs": [],
+  "overlay_refs": [],
+  "subtitle_refs": [],
+  "hard_rule_refs": [],
+  "artistic_choices": [],
+  "expected_duration": 2760000,
+  "plan_hash": null,
+  "approval_state": "draft",
+  "supersedes_edl_id": null
+}

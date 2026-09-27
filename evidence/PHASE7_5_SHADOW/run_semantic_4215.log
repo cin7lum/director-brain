@@ -1,0 +1,46 @@
+ASR 不可用：import faster_whisper 失败：No module named 'faster_whisper'
+[1/7] 分析媒体: D:/新建豆包/100CANON/MVI_4215.MP4
+      技术观测: 1 条
+[2/7] 语音转写...
+      语音观测: 0 条（ASR 归因: 有音轨但无有效转写——静音/无语音，详见服务日志）
+[3/7] 编译 Brief...
+      Brief ID: brief_MVI_4215_3fbf35b614de70c0, 目标时长: 5.0s
+      用户意图: 已接收（23 字，规则抽取入 Brief 约束）
+[4/7] 构建故事图...
+      图节点: 4, 边: 3
+[5/7] 推断关系...
+      推断关系边: 0 条（通路: EXPERIMENTAL——影子信号，不进决策）
+[6/7] 生成导演计划...
+[7/7] 验证计划...
+      验证未通过 (1 个错误)，执行修复...
+      物理调整 2 处（已留痕 plan.open_questions）
+      修复后验证: PASS
+[shadow] 链 B 语义决策（影子对账，不驱动成片）...
+      影子语义决策（SHADOW）: 模型 doubao-seed-2-1-lite-260915 ｜ 延迟 3468ms ｜ 重试 1 次
+        链 B 状态: NEEDS_CONTEXT ｜ 正向意图: ['adjust_pacing']
+        负向对账: 已覆盖 0 条（链 A 确定性执法）；未覆盖 3 条（无确定性执法，人工抽检项）
+          - 未覆盖: duration_extension
+          - 未覆盖: shot_identity
+          - 未覆盖: source_media
+        状态分歧: chain_a_proceeded_but_chain_b_status=NEEDS_CONTEXT
+============================================================
+EDL 摘要
+============================================================
+  镜头数:     1
+  总时长:     4.60s (4600000us)
+  四幕分配:   {'hook': 1}
+  关系边数:   0（影子信号，逐条见上方）
+  验证状态:   PASS
+  降级:       是（1 项，见下）
+    - relax_technical_usable:scope=global:level=2
+  通路状态（T4 shadow 协议）:
+    - vlm_semantic: EXPERIMENTAL —— VLM 逐镜头语义观测（shot_function/role/motion）
+    - relation_inference: EXPERIMENTAL —— 镜头间关系边（技术信号 + 可选 VLM 语义）
+    - asr_transcript: SHADOW —— ASR 语音转写观测
+    - semantic_reasoner: SHADOW —— 链 B 语义决策（LLM→DirectorDecision，影子对账）
+  EDL ID:     edl_MVI_4215_67a2d1d3f0d9bb73_repaired
+  Plan ID:    plan_MVI_4215_67a2d1d3f0d9bb73_repaired
+============================================================
+渲染中 -> evidence/PHASE7_5_SHADOW/shadow_semantic_4215.mp4
+渲染完成: evidence/PHASE7_5_SHADOW/shadow_semantic_4215.mp4 (3851.2 KB)
+      剪辑清单: evidence/PHASE7_5_SHADOW/shadow_semantic_4215.mp4.edl.json + evidence/PHASE7_5_SHADOW/shadow_semantic_4215.mp4.plan.json

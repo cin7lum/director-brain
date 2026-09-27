@@ -28,6 +28,7 @@ from director_brain.pathway_protocol import get_pathway_status
 from director_brain.plan_repair import repair_plan
 from director_brain.plan_validator import validate_plan
 from director_brain.relation_inference import infer_relations
+from director_brain.semantic_shadow import ShadowReport, run_shadow_semantic
 from director_brain.story_graph_builder import build_story_graph
 from execution.renderer import render_edl
 from observation_service.pipeline import analyze_media
@@ -117,6 +118,32 @@ def _print_edl_summary(edl, plan, validation_result, relations, pathway_report):
     print(f"  EDL ID:     {edl.edl_id}")
     print(f"  Plan ID:    {plan.plan_id}")
     print("=" * 60)
+
+
+def _print_shadow_summary(report: ShadowReport) -> None:
+    """打印链 B 影子对账结果（全量上报，不驱动成片）。"""
+    if report.status == "completed":
+        print(
+            f"      影子语义决策（{report.pathway_status}）: 模型 {report.model}"
+            f" ｜ 延迟 {report.latency_ms}ms ｜ 重试 {report.attempts} 次"
+        )
+        print(
+            f"        链 B 状态: {report.chain_b.get('status')}"
+            f" ｜ 正向意图: {report.positive_intents or '无'}"
+        )
+        print(
+            f"        负向对账: 已覆盖 {len(report.covered_negatives)} 条"
+            f"（链 A 确定性执法）；未覆盖 {len(report.uncovered_negatives)} 条"
+            f"（无确定性执法，人工抽检项）"
+        )
+        for token in report.uncovered_negatives:
+            print(f"          - 未覆盖: {token}")
+        if report.status_divergence:
+            print(f"        状态分歧: {report.status_divergence}")
+    elif report.status == "failed":
+        print(f"      影子语义决策失败（响亮降级，主链不受影响）: {report.reason}")
+    else:
+        print(f"      影子语义决策跳过: {report.reason}")
 
 
 def run_roughcut(
@@ -219,6 +246,26 @@ def run_roughcut(
             "constraints": plan.constraints,
         })
 
+        # ---- 链 B 影子语义决策辅助（阶段 7.5，SHADOW）----
+        # 与链 A 并行产出 DirectorDecision 并全量对账上报；影子输出只进
+        # 账本/报告，绝不驱动选片/修复/渲染（消费侧由 pathway_protocol
+        # fail-closed 把关）。任何失败响亮降级，不阻断主链。
+        # 覆盖两条退出路径：修复放弃（chain A 拒绝时链 B 的独立读法正是
+        # 最有价值的对账信号）+ 正常验证后——禁止半消费。
+        def _run_semantic_shadow(chain_a_proceeded: bool) -> None:
+            if not intent_text:
+                return
+            print("[shadow] 链 B 语义决策（影子对账，不驱动成片）...")
+            report = run_shadow_semantic(
+                intent_text,
+                chain_a_constraints=plan.constraints,
+                chain_a_valid=chain_a_proceeded,
+                decision_id=f"shadow_{plan.plan_id}",
+                ledger=ledger,
+                output_path=output_path,
+            )
+            _print_shadow_summary(report)
+
         # ---- 6. 验证 + 修复 ----
         print("[7/7] 验证计划...")
         validation_result = validate_plan(edl, plan, all_obs)
@@ -238,6 +285,7 @@ def run_roughcut(
                 # Plan=导演依据：修复器无权增删镜头，物理修复不可行时 fail-closed 上抛
                 print(f"      修复放弃（repair_requires_director）: {outcome.reason_code}")
                 print(f"      原因: {outcome.reason}")
+                _run_semantic_shadow(chain_a_proceeded=False)
                 _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
                 return 1
             edl, plan = outcome.edl, outcome.plan
@@ -253,6 +301,10 @@ def run_roughcut(
         # P1-c：验证状态回写——plan.validation_status 不再停留在 pending
         if not repaired or is_valid:
             plan.validation_status = "valid" if is_valid else "invalid"
+
+        # ---- 6.5 链 B 影子语义决策：正常验证路径（修复放弃路径已在本函数
+        # 内提前覆盖）——禁止半消费 ----
+        _run_semantic_shadow(chain_a_proceeded=is_valid)
 
         # ---- 打印摘要 ----
         _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())

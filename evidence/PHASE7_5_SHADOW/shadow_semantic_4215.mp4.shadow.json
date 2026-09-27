@@ -1,0 +1,63 @@
+{
+  "pathway": "semantic_reasoner",
+  "pathway_status": "SHADOW",
+  "status": "completed",
+  "reason": null,
+  "model": "doubao-seed-2-1-lite-260915",
+  "prompt_version": "1.1",
+  "schema_version": "pydantic_DirectorDecision",
+  "latency_ms": 3468,
+  "attempts": 1,
+  "chain_b": {
+    "decision_id": "dir-20240520-001",
+    "creative_intent": "保留人物动作的完整性，避免将连续动作切碎，整体节奏放缓。",
+    "target": [
+      "shot_order",
+      "pacing",
+      "source_media"
+    ],
+    "desired_relation_or_change": [
+      "adjust_pacing"
+    ],
+    "must_preserve": [
+      "shot_identity",
+      "source_media"
+    ],
+    "must_avoid": [
+      "duration_extension"
+    ],
+    "parameterization": {
+      "magnitude": "slight",
+      "exact_value": null,
+      "unit": null,
+      "certainty": "unknown"
+    },
+    "required_context": [
+      "shot_duration",
+      "current_cut_point",
+      "available_media_range"
+    ],
+    "confidence": 0.8,
+    "evidence": [
+      "保留人物动作的完整",
+      "不要把动作切碎",
+      "节奏慢一点"
+    ],
+    "status": "NEEDS_CONTEXT",
+    "user_terminology": [
+      "动作完整",
+      "不要切碎动作",
+      "节奏慢一点"
+    ]
+  },
+  "covered_negatives": [],
+  "uncovered_negatives": [
+    "duration_extension",
+    "shot_identity",
+    "source_media"
+  ],
+  "status_divergence": "chain_a_proceeded_but_chain_b_status=NEEDS_CONTEXT",
+  "positive_intents": [
+    "adjust_pacing"
+  ]
+}

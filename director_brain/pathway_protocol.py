@@ -49,6 +49,12 @@ _STATUS: dict[str, PathwayStatus] = {
     #: ASR 已随主链计算并全量归因上报（T4），其 Brief 消费不驱动选片——
     #: 现实角色即影子，故默认 SHADOW 而非 EXPERIMENTAL。
     "asr_transcript": PathwayStatus.SHADOW,
+    #: 链 B 语义决策（阶段 7.5）：已准入模型（doubao-seed-2-1-lite-260915，
+    #: 见 evidence/DIRECTOR_BRAIN_MODEL_ADMISSION/MODEL_ADMISSION.md）经
+    #: ark_adapter 并行产出 DirectorDecision，全量对账上报，不驱动成片。
+    #: 与 asr_transcript 同理：现实角色即影子，默认 SHADOW；置 ACTIVE 属
+    #: 治理决策，须用户确认且以 L2/L3 影子期证据为前提。
+    "semantic_reasoner": PathwayStatus.SHADOW,
 }
 
 #: 各通路的一句话职责（上报用）。
@@ -56,6 +62,7 @@ _PATHWAY_PURPOSE: dict[str, str] = {
     "vlm_semantic": "VLM 逐镜头语义观测（shot_function/role/motion）",
     "relation_inference": "镜头间关系边（技术信号 + 可选 VLM 语义）",
     "asr_transcript": "ASR 语音转写观测",
+    "semantic_reasoner": "链 B 语义决策（LLM→DirectorDecision，影子对账）",
 }
 
 

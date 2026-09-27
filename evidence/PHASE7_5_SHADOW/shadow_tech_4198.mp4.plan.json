@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "project_id": "MVI_4198",
+  "created_at": 1790549269,
+  "producer": "plan_repair_v0.2",
+  "source_ref": "D:/新建豆包/100CANON/MVI_4198.MP4",
+  "plan_id": "plan_MVI_4198_80ecdb25aac4a971_repaired",
+  "version": "0.1",
+  "brief_version": "0.1",
+  "film_state_version": "0.1",
+  "sequence": [
+    "shot_29b9e1f91f5f714f",
+    "shot_7f267aa764e2e6ca"
+  ],
+  "decisions": [
+    {
+      "decision_id": "dec_hook_slot_01",
+      "purpose": "select_shot",
+      "shot_refs": [
+        "shot_29b9e1f91f5f714f"
+      ],
+      "evidence_refs": [
+        "det_shot_29b9e1f91f5f714f"
+      ],
+      "rationale": "act=hook, heuristic:blur=95.22",
+      "alternatives": [],
+      "confidence": 0.8,
+      "requires_approval": true
+    },
+    {
+      "decision_id": "dec_develop_slot_01",
+      "purpose": "select_shot",
+      "shot_refs": [
+        "shot_7f267aa764e2e6ca"
+      ],
+      "evidence_refs": [
+        "det_shot_7f267aa764e2e6ca"
+      ],
+      "rationale": "act=develop, heuristic:blur=87.01",
+      "alternatives": [],
+      "confidence": 0.8,
+      "requires_approval": true
+    }
+  ],
+  "constraints": [
+    "target_duration_us=3000000",
+    "must_avoid:blur_score<50.0:模糊",
+    "must_avoid:brightness_mean<40.0:过暗",
+    "min_clip_us=400000",
+    "max_clip_us=3000000"
+  ],
+  "open_questions": [
+    "some_decisions_require_approval",
+    "borrowed_shots_from_other_acts",
+    "degraded_selection_used",
+    "constraint: must_avoid「模糊」排除镜头 shot_b600ef710cb21860（blur_score below 50.0）",
+    "repair: extend:shot_7f267aa764e2e6ca:out 9405000->9760000",
+    "repair: extend:shot_29b9e1f91f5f714f:out 6400000->6955000"
+  ],
+  "degraded": true,
+  "degradation_events": [
+    "borrowed_shot:act=hook:shot=shot_29b9e1f91f5f714f",
+    "borrowed_shot:act=develop:shot=shot_7f267aa764e2e6ca"
+  ],
+  "validation_status": "valid",
+  "approval_state": "draft",
+  "supersedes_plan_id": null
+}

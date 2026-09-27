@@ -1,0 +1,57 @@
+{
+  "pathway": "semantic_reasoner",
+  "pathway_status": "SHADOW",
+  "status": "completed",
+  "reason": null,
+  "model": "doubao-seed-2-1-lite-260915",
+  "prompt_version": "1.1",
+  "schema_version": "pydantic_DirectorDecision",
+  "latency_ms": 3032,
+  "attempts": 1,
+  "chain_b": {
+    "decision_id": "dec-fast-pace-visual-quality",
+    "creative_intent": "采用快剪节奏推进整体叙事，同时保证所有画面清晰锐利，剔除过暗的镜头素材。",
+    "target": [
+      "pacing",
+      "source_media"
+    ],
+    "desired_relation_or_change": [
+      "adjust_pacing"
+    ],
+    "must_preserve": [],
+    "must_avoid": [
+      "blurry_visuals",
+      "underexposed_shots"
+    ],
+    "parameterization": {
+      "magnitude": "fast",
+      "exact_value": null,
+      "unit": null,
+      "certainty": "unknown"
+    },
+    "required_context": [
+      "current_shot_duration",
+      "available_media_range",
+      "shot_visual_quality"
+    ],
+    "confidence": 0.8,
+    "evidence": [
+      "快剪节奏",
+      "画面不要模糊",
+      "不要过暗的镜头"
+    ],
+    "status": "NEEDS_CONTEXT",
+    "user_terminology": [
+      "快剪节奏"
+    ]
+  },
+  "covered_negatives": [],
+  "uncovered_negatives": [
+    "blurry_visuals",
+    "underexposed_shots"
+  ],
+  "status_divergence": "chain_a_proceeded_but_chain_b_status=NEEDS_CONTEXT",
+  "positive_intents": [
+    "adjust_pacing"
+  ]
+}

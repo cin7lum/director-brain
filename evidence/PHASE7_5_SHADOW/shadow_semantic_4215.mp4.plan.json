@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "project_id": "MVI_4215",
+  "created_at": 1790549308,
+  "producer": "plan_repair_v0.2",
+  "source_ref": "D:/新建豆包/100CANON/MVI_4215.MP4",
+  "plan_id": "plan_MVI_4215_67a2d1d3f0d9bb73_repaired",
+  "version": "0.1",
+  "brief_version": "0.1",
+  "film_state_version": "0.1",
+  "sequence": [
+    "shot_c81bc9f55f1380b5"
+  ],
+  "decisions": [
+    {
+      "decision_id": "dec_hook_slot_01",
+      "purpose": "select_shot",
+      "shot_refs": [
+        "shot_c81bc9f55f1380b5"
+      ],
+      "evidence_refs": [
+        "det_shot_c81bc9f55f1380b5"
+      ],
+      "rationale": "act=hook, heuristic:blur=37.88",
+      "alternatives": [],
+      "confidence": 1.0,
+      "requires_approval": true
+    }
+  ],
+  "constraints": [
+    "target_duration_us=5000000",
+    "min_clip_us=800000",
+    "max_clip_us=6000000"
+  ],
+  "open_questions": [
+    "some_decisions_require_approval",
+    "degraded_selection_used",
+    "constraint_unverifiable: must_avoid「把动作切碎」（当前技术观测无法验证语义内容，待语义证据通路）",
+    "repair: extend:shot_c81bc9f55f1380b5:out 3860000->6920000",
+    "repair: extend:shot_c81bc9f55f1380b5:in 3060000->2320000"
+  ],
+  "degraded": true,
+  "degradation_events": [
+    "relax_technical_usable:scope=global:level=2"
+  ],
+  "validation_status": "valid",
+  "approval_state": "draft",
+  "supersedes_plan_id": null
+}
