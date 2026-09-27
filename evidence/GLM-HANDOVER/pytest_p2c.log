@@ -1,0 +1,69 @@
+.....................F.................................................. [ 14%]
+.......s................................................................ [ 28%]
+........................................................................ [ 43%]
+........................................................................ [ 57%]
+.................F...................................................... [ 71%]
+........................................................................ [ 86%]
+......................................................................   [100%]
+================================== FAILURES ===================================
+_________ TestStatusInvariants.test_ready_with_none_exact_downgraded __________
+
+self = <tests.test_parameterization_phase1.TestStatusInvariants object at 0x000001D74EE52AD0>
+
+    def test_ready_with_none_exact_downgraded(self):
+        d = _make_director_decision(status="READY", exact_value=None)
+        fixed, violations = validate_director_decision(d)
+>       assert fixed.status.value == "NEEDS_CONTEXT"
+E       AssertionError: assert 'READY' == 'NEEDS_CONTEXT'
+E         
+E         - NEEDS_CONTEXT
+E         + READY
+
+tests\test_parameterization_phase1.py:235: AssertionError
+______________ TestR1Entrypoint.test_r1_5_service_wires_reasoner ______________
+
+self = <tests.unit.test_phase1a_r1.TestR1Entrypoint object at 0x000001D75F26C910>
+
+    def test_r1_5_service_wires_reasoner(self):
+        """Service → SemanticDirectorReasoner → LLMAdapter chain."""
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t", creative_intent="t", status=DecisionStatus.READY),
+            model="test", latency_ms=10,
+        )
+        reasoner = SemanticDirectorReasoner(llm_adapter=mock_llm)
+        service = SemanticDirectorService(reasoner=reasoner)
+    
+        result = service.process_direction("test input")
+        assert isinstance(result, DirectorRequestResult)
+        assert result.decision is not None
+>       assert result.status == "READY"
+E       AssertionError: assert 'NEEDS_CONTEXT' == 'READY'
+E         
+E         - READY
+E         + NEEDS_CONTEXT
+
+tests\unit\test_phase1a_r1.py:114: AssertionError
+============================== warnings summary ===============================
+tests\unit\test_media_import.py:42
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:42: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:62
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:97
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:97: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/unit/test_director_reasoner.py::test_factory_llm
+  D:\新建豆包\AI-Director\tests\unit\test_director_reasoner.py:165: UserWarning: LLM director reasoner is not implemented; returning a placeholder instance whose generate_plan() raises NotImplementedError. Use strategy='heuristic' for the deterministic reasoner.
+    reasoner = get_director_reasoner("llm", provider="ollama", config={"model": "x"})
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_parameterization_phase1.py::TestStatusInvariants::test_ready_with_none_exact_downgraded
+FAILED tests/unit/test_phase1a_r1.py::TestR1Entrypoint::test_r1_5_service_wires_reasoner
+2 failed, 499 passed, 1 skipped, 4 warnings in 64.83s (0:01:04)

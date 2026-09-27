@@ -1,0 +1,193 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "下游输出：导演决策依据（含 rationale/confidence）",
+  "schema": {
+    "$defs": {
+      "Decision": {
+        "additionalProperties": false,
+        "description": "单条编辑决策理由（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "shot_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Shot Refs",
+            "type": "array"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rationale"
+          },
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confidence"
+          },
+          "requires_approval": {
+            "default": false,
+            "title": "Requires Approval",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "decision_id",
+          "purpose"
+        ],
+        "title": "Decision",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "面向执行的导演决策计划。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "plan_id": {
+        "title": "Plan Id",
+        "type": "string"
+      },
+      "version": {
+        "title": "Version",
+        "type": "string"
+      },
+      "brief_version": {
+        "title": "Brief Version",
+        "type": "string"
+      },
+      "film_state_version": {
+        "title": "Film State Version",
+        "type": "string"
+      },
+      "sequence": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Sequence",
+        "type": "array"
+      },
+      "decisions": {
+        "items": {
+          "$ref": "#/$defs/Decision"
+        },
+        "title": "Decisions",
+        "type": "array"
+      },
+      "constraints": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Constraints",
+        "type": "array"
+      },
+      "open_questions": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Open Questions",
+        "type": "array"
+      },
+      "degraded": {
+        "default": false,
+        "title": "Degraded",
+        "type": "boolean"
+      },
+      "degradation_events": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Degradation Events",
+        "type": "array"
+      },
+      "validation_status": {
+        "title": "Validation Status",
+        "type": "string"
+      },
+      "approval_state": {
+        "title": "Approval State",
+        "type": "string"
+      },
+      "supersedes_plan_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Supersedes Plan Id"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "plan_id",
+      "version",
+      "brief_version",
+      "film_state_version",
+      "validation_status",
+      "approval_state"
+    ],
+    "title": "DirectorDecisionPlan",
+    "type": "object"
+  }
+}

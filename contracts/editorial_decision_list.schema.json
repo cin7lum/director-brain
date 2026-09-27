@@ -1,0 +1,265 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "下游输出：交给 03/04 的可执行剪辑清单",
+  "schema": {
+    "$defs": {
+      "EditItem": {
+        "additionalProperties": false,
+        "description": "单条剪辑决策（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "source_asset_id": {
+            "title": "Source Asset Id",
+            "type": "string"
+          },
+          "source_media_hash": {
+            "title": "Source Media Hash",
+            "type": "string"
+          },
+          "in_frame": {
+            "title": "In Frame",
+            "type": "integer"
+          },
+          "out_frame": {
+            "title": "Out Frame",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "transition": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transition"
+          },
+          "effect_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Effect Refs",
+            "type": "array"
+          },
+          "shot_function": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shot Function"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rationale"
+          },
+          "act": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Act"
+          },
+          "evidence_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Type"
+          }
+        },
+        "required": [
+          "source_asset_id",
+          "source_media_hash",
+          "in_frame",
+          "out_frame",
+          "timebase"
+        ],
+        "title": "EditItem",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "一份完整的编辑决策表。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "edl_id": {
+        "title": "Edl Id",
+        "type": "string"
+      },
+      "version": {
+        "title": "Version",
+        "type": "string"
+      },
+      "brief_version": {
+        "title": "Brief Version",
+        "type": "string"
+      },
+      "context_id": {
+        "title": "Context Id",
+        "type": "string"
+      },
+      "source_asset_hashes": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Source Asset Hashes",
+        "type": "array"
+      },
+      "timebase": {
+        "title": "Timebase",
+        "type": "integer"
+      },
+      "ordered_edits": {
+        "items": {
+          "$ref": "#/$defs/EditItem"
+        },
+        "title": "Ordered Edits",
+        "type": "array"
+      },
+      "decision_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Decision Refs",
+        "type": "array"
+      },
+      "audio_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Audio Refs",
+        "type": "array"
+      },
+      "overlay_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Overlay Refs",
+        "type": "array"
+      },
+      "subtitle_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Subtitle Refs",
+        "type": "array"
+      },
+      "hard_rule_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Hard Rule Refs",
+        "type": "array"
+      },
+      "artistic_choices": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Artistic Choices",
+        "type": "array"
+      },
+      "expected_duration": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Expected Duration"
+      },
+      "plan_hash": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Plan Hash"
+      },
+      "approval_state": {
+        "title": "Approval State",
+        "type": "string"
+      },
+      "supersedes_edl_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Supersedes Edl Id"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "edl_id",
+      "version",
+      "brief_version",
+      "context_id",
+      "timebase",
+      "approval_state"
+    ],
+    "title": "EditorialDecisionList",
+    "type": "object"
+  }
+}

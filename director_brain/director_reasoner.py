@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import time
 import warnings
 from abc import ABC, abstractmethod
@@ -37,6 +38,8 @@ from director_brain.intent_constraints import (
     encode_bounds,
     interpret_constraints,
 )
+
+logger = logging.getLogger(__name__)
 
 PRODUCER = "heuristic_director_reasoner_v0.1"
 TIMEBASE_US = 1_000_000
@@ -518,6 +521,22 @@ class LLMDirectorReasoner(DirectorReasoner):
         )
 
 
+#: 第三方推理器注册表（P2-c 插拔点）：strategy 名 → 工厂 callable。
+#: 内置 heuristic/llm 走硬编码分支以保持向后兼容；外部实现经
+#: :func:`register_reasoner` 插入，无需改动本模块。
+_REASONER_REGISTRY: dict[str, callable] = {}
+
+
+def register_reasoner(strategy: str, factory) -> None:
+    """注册自定义导演推理器工厂（插拔点）。
+
+    factory 签名与内置一致：``factory(**kwargs) -> DirectorReasoner``。
+    重复注册同名校盖旧实现；注册不校验基类（鸭子类型，调用方负责）。
+    """
+    _REASONER_REGISTRY[strategy] = factory
+    logger.info("reasoner registered: %s", strategy)
+
+
 def get_director_reasoner(strategy: str = "heuristic", **kwargs) -> DirectorReasoner:
     """按策略名构造导演推理器。"""
     if strategy == "heuristic":
@@ -530,4 +549,7 @@ def get_director_reasoner(strategy: str = "heuristic", **kwargs) -> DirectorReas
             stacklevel=2,
         )
         return LLMDirectorReasoner(**kwargs)
-    raise ValueError(f"unknown director reasoner strategy: {strategy!r}")
+    factory = _REASONER_REGISTRY.get(strategy)
+    if factory is None:
+        raise ValueError(f"unknown director reasoner strategy: {strategy!r}")
+    return factory(**kwargs)

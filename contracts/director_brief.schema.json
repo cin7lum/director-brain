@@ -1,0 +1,175 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "中间产物：用户意图 × 素材事实的编译结果",
+  "schema": {
+    "additionalProperties": false,
+    "description": "创作者对成片的意图说明。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "brief_id": {
+        "title": "Brief Id",
+        "type": "string"
+      },
+      "version": {
+        "title": "Version",
+        "type": "string"
+      },
+      "source_text": {
+        "title": "Source Text",
+        "type": "string"
+      },
+      "language": {
+        "title": "Language",
+        "type": "string"
+      },
+      "intent": {
+        "title": "Intent",
+        "type": "string"
+      },
+      "audience": {
+        "title": "Audience",
+        "type": "string"
+      },
+      "target_duration": {
+        "title": "Target Duration",
+        "type": "integer"
+      },
+      "source_duration_us": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Duration Us"
+      },
+      "delivery_profile": {
+        "title": "Delivery Profile",
+        "type": "string"
+      },
+      "themes": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Themes",
+        "type": "array"
+      },
+      "relationships": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Relationships",
+        "type": "array"
+      },
+      "emotional_arc": {
+        "title": "Emotional Arc",
+        "type": "string"
+      },
+      "visual_language": {
+        "title": "Visual Language",
+        "type": "string"
+      },
+      "editing_language": {
+        "title": "Editing Language",
+        "type": "string"
+      },
+      "sound_language": {
+        "title": "Sound Language",
+        "type": "string"
+      },
+      "must_include": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Must Include",
+        "type": "array"
+      },
+      "must_avoid": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Must Avoid",
+        "type": "array"
+      },
+      "privacy_constraints": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Privacy Constraints",
+        "type": "array"
+      },
+      "approval_state": {
+        "title": "Approval State",
+        "type": "string"
+      },
+      "approved_by": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Approved By"
+      },
+      "approved_at": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Approved At"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "brief_id",
+      "version",
+      "source_text",
+      "language",
+      "intent",
+      "audience",
+      "target_duration",
+      "delivery_profile",
+      "emotional_arc",
+      "visual_language",
+      "editing_language",
+      "sound_language",
+      "approval_state"
+    ],
+    "title": "DirectorBrief",
+    "type": "object"
+  }
+}

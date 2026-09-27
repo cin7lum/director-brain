@@ -1,0 +1,130 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "上游输入：Film Intelligence 公共感知层的观测",
+  "schema": {
+    "$defs": {
+      "ClaimKind": {
+        "description": "观测断言的置信级别（共 6 级）。",
+        "enum": [
+          "measured",
+          "model_observation",
+          "human_confirmed",
+          "inferred",
+          "user_asserted",
+          "not_determined"
+        ],
+        "title": "ClaimKind",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "对一段媒体素材的单次可溯源观测。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "observation_id": {
+        "title": "Observation Id",
+        "type": "string"
+      },
+      "media_asset_id": {
+        "title": "Media Asset Id",
+        "type": "string"
+      },
+      "media_hash": {
+        "title": "Media Hash",
+        "type": "string"
+      },
+      "start_frame": {
+        "title": "Start Frame",
+        "type": "integer"
+      },
+      "end_frame": {
+        "title": "End Frame",
+        "type": "integer"
+      },
+      "timebase": {
+        "title": "Timebase",
+        "type": "integer"
+      },
+      "observation_type": {
+        "title": "Observation Type",
+        "type": "string"
+      },
+      "claim": {
+        "title": "Claim",
+        "type": "string"
+      },
+      "provider": {
+        "title": "Provider",
+        "type": "string"
+      },
+      "model_version": {
+        "title": "Model Version",
+        "type": "string"
+      },
+      "prompt_version": {
+        "title": "Prompt Version",
+        "type": "string"
+      },
+      "confidence": {
+        "title": "Confidence",
+        "type": "number"
+      },
+      "evidence_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Evidence Refs",
+        "type": "array"
+      },
+      "review_state": {
+        "title": "Review State",
+        "type": "string"
+      },
+      "claim_kind": {
+        "$ref": "#/$defs/ClaimKind"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "observation_id",
+      "media_asset_id",
+      "media_hash",
+      "start_frame",
+      "end_frame",
+      "timebase",
+      "observation_type",
+      "claim",
+      "provider",
+      "model_version",
+      "prompt_version",
+      "confidence",
+      "review_state",
+      "claim_kind"
+    ],
+    "title": "FilmObservation",
+    "type": "object"
+  }
+}

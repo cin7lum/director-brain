@@ -1,0 +1,165 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "中间产物：素材叙事结构（四幕骨架）",
+  "schema": {
+    "$defs": {
+      "StoryEdge": {
+        "additionalProperties": false,
+        "description": "故事图边（嵌入式组件；每条推断边必须带推断状态与证据）。",
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "edge_type": {
+            "$ref": "#/$defs/StoryEdgeType"
+          },
+          "inference_status": {
+            "title": "Inference Status",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          }
+        },
+        "required": [
+          "edge_id",
+          "from_node",
+          "to_node",
+          "edge_type",
+          "inference_status",
+          "confidence"
+        ],
+        "title": "StoryEdge",
+        "type": "object"
+      },
+      "StoryEdgeType": {
+        "description": "故事图边类型。",
+        "enum": [
+          "temporal",
+          "causal_candidate",
+          "visual_transition",
+          "emotional_turn",
+          "narrative_link"
+        ],
+        "title": "StoryEdgeType",
+        "type": "string"
+      },
+      "StoryNode": {
+        "additionalProperties": false,
+        "description": "故事图节点（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "$ref": "#/$defs/StoryNodeType"
+          },
+          "ref_id": {
+            "title": "Ref Id",
+            "type": "string"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "ref_id"
+        ],
+        "title": "StoryNode",
+        "type": "object"
+      },
+      "StoryNodeType": {
+        "description": "故事图节点类型。",
+        "enum": [
+          "person",
+          "event",
+          "location",
+          "shot",
+          "observation",
+          "act"
+        ],
+        "title": "StoryNodeType",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "从观测与实体构建的故事结构。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "graph_id": {
+        "title": "Graph Id",
+        "type": "string"
+      },
+      "version": {
+        "title": "Version",
+        "type": "string"
+      },
+      "nodes": {
+        "items": {
+          "$ref": "#/$defs/StoryNode"
+        },
+        "title": "Nodes",
+        "type": "array"
+      },
+      "edges": {
+        "items": {
+          "$ref": "#/$defs/StoryEdge"
+        },
+        "title": "Edges",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "graph_id",
+      "version"
+    ],
+    "title": "StoryGraph",
+    "type": "object"
+  }
+}
