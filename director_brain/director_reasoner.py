@@ -28,7 +28,7 @@ from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
-from gen1_adapter.heuristic_baseline import generate_edl, MIN_CLIP_US
+from director_brain.providers.heuristic import generate_edl, MIN_CLIP_US
 
 PRODUCER = "heuristic_director_reasoner_v0.1"
 TIMEBASE_US = 1_000_000

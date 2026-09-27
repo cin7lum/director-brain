@@ -9,6 +9,7 @@ __pycache__/
 .env.local
 .venv/
 venv/
+.venv*/
 
 # 构建/分发产物（pip install -e . 会在仓内生成 build/，属可再生工件）
 build/

@@ -41,7 +41,7 @@ from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
 from director_brain.plan_validator import validate_plan, _parse_target_duration
-from gen1_adapter.heuristic_baseline import MAX_CLIP_US, MIN_CLIP_US
+from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US
 
 PRODUCER = "plan_repair_v0.2"
 

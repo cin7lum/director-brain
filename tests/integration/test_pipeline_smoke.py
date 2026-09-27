@@ -12,7 +12,7 @@ from director_brain.brief_compiler import compile_brief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.plan_validator import validate_plan
-from gen1_adapter.heuristic_baseline import generate_edl
+from director_brain.providers.heuristic import generate_edl
 
 
 def _tech_obs(asset_id: str, start_us: int, end_us: int, blur: float) -> FilmObservation:

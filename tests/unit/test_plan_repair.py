@@ -32,7 +32,7 @@ from director_brain.plan_repair import (
     repair_plan,
 )
 from director_brain.plan_validator import validate_plan
-from gen1_adapter.heuristic_baseline import MAX_CLIP_US, MIN_CLIP_US
+from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US
 
 
 # ---------------------------------------------------------------------------
