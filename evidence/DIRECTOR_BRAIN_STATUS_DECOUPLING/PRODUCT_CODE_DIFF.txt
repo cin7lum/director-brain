@@ -1,0 +1,45 @@
+﻿# Product Code Diff
+
+## Scope: 02 Director Brain ONLY
+No changes to 03 Arsenal, J_CUT, DaVinci Provider, 05 FQL, Render, Safety Kernel.
+
+## Files Changed (5)
+
+1. director_brain/parameterization/post_validation.py
+   - Removed: READY + exact_value=None → NEEDS_CONTEXT global downgrade
+   - Added: READY + no desired_relation → NEEDS_CONTEXT
+   - Added: READY + semantic conflict → CONFLICTING_CONSTRAINTS
+   - Kept: CONFLICTING_CONSTRAINTS + exact_value warning
+
+2. director_brain/service.py
+   - Added: semantic_status field to DirectorRequestResult
+   - Added: execution_readiness field to DirectorRequestResult
+   - Renamed: _compute_overall_status → _compute_execution_readiness
+   - Updated: execution readiness computation rules
+
+3. director_brain/arsenal_adapter.py
+   - Added: from_service_result() — canonical readiness gate
+   - Kept: to_arsenal_parameterization() — both semantic + param required
+   - Kept: is_execution_ready() helper
+
+4. tests/test_parameterization_phase1.py
+   - Updated: TestStatusInvariants (7 semantic-only tests)
+   - Added: TestStatusDecoupling (S1-S7 status matrix tests)
+   - Removed: redundant non-parameter-capability test
+
+5. tests/unit/test_phase1a_r1.py
+   - Updated: mock DirectorDecision now includes desired_relation_or_change
+
+## Stats
+- 5 files changed
+- 300 insertions(+)
+- 71 deletions(-)
+
+## NOT Modified
+- 03 Arsenal (any file)
+- J_CUT contract / profile / verification
+- DaVinci / Blackmagic Provider
+- 05 FQL / observation_service
+- Render capability
+- Safety Kernel (timeout/ambiguous/reconcile)
+- OTIO / MCP transport

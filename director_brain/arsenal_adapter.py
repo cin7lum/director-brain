@@ -1,7 +1,7 @@
 """Thin 02→03 adapter.
 
 Maps Director Brain (02) outputs to Arsenal (03) inputs.
-Only produces 03 execution parameters when ParameterizationDecision.status == READY.
+Only produces 03 execution parameters when execution is READY.
 Otherwise returns None — caller must not invoke 03 execution.
 
 This is the ONLY integration point between 02 and 03.
@@ -24,6 +24,11 @@ def to_arsenal_parameterization(
 
     Returns None if not ready for execution (caller must NOT invoke 03).
     Returns a dict suitable for 03's dataclass DirectorDecision.parameterization field.
+
+    Gating:
+    - Semantic must be READY (intent understood clearly)
+    - Parameterization must be READY (exact execution parameter determined)
+    - Neither condition alone is sufficient.
     """
     # Semantic must be READY
     if semantic.status is None or semantic.status.value != "READY":
@@ -57,6 +62,32 @@ def to_arsenal_parameterization(
         "feasible_min": parameterization.feasible_range.min_value if parameterization.feasible_range else None,
         "feasible_max": parameterization.feasible_range.max_value if parameterization.feasible_range else None,
     }
+
+
+def from_service_result(
+    service_result: Any,
+) -> dict[str, Any] | None:
+    """Convert a SemanticDirectorService result to 03 parameterization.
+
+    Uses the canonical execution_readiness from the service — does NOT
+    duplicate status logic. Only produces payload when execution_readiness == "READY".
+
+    Args:
+        service_result: DirectorRequestResult from SemanticDirectorService.process_direction()
+
+    Returns:
+        03 parameterization dict if READY, None otherwise.
+    """
+    if service_result is None:
+        return None
+    if getattr(service_result, "execution_readiness", "") != "READY":
+        return None
+    if service_result.semantic_decision is None:
+        return None
+    return to_arsenal_parameterization(
+        service_result.semantic_decision,
+        service_result.parameterization_decision,
+    )
 
 
 def is_execution_ready(

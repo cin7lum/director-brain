@@ -102,7 +102,11 @@ class TestR1Entrypoint:
         mock_llm = MagicMock(spec=LLMAdapter)
         mock_llm.generate_decision.return_value = LLMResult(
             decision=DirectorDecision(
-                decision_id="t", creative_intent="t", status=DecisionStatus.READY),
+                decision_id="t", creative_intent="t",
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+                must_preserve=["picture_cut_position"],
+                must_avoid=["transition"]),
             model="test", latency_ms=10,
         )
         reasoner = SemanticDirectorReasoner(llm_adapter=mock_llm)

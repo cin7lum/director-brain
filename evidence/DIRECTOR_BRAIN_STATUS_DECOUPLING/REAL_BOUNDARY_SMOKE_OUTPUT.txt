@@ -1,0 +1,44 @@
+﻿============================================================
+REAL BOUNDARY SMOKE: Status Decoupling
+============================================================
+
+User request: 让下一句声音提前一点进入，让镜头切换更自然，但不要改变画面的切点，也不要加转场。
+
+Context: fps=24.0, B src_start=10, handle=10, dialogue_onset=10f
+
+--- 02 Semantic Director (Ollama qwen2.5:7b) ---
+  semantic_status: READY
+  execution_readiness: READY
+  status (backward compat): READY
+  desired_relation: ['audio_precedes_picture']
+  must_preserve: ['picture_cut_position']
+  must_avoid: ['transition', 'duration_extension']
+  exact_value (semantic): None
+  post_validation_violations: []
+  param_status: READY
+  param_exact_value: 10.0
+  param_unit: frames
+  param_evidence: ['external_dialogue_onset_frame_10']
+
+--- Assertions ---
+  PASS: Semantic READY (not downgraded by exact_value=None)
+  PASS: Parameterization READY (10f from dialogue onset)
+  PASS: Execution READY
+  PASS: Adapter emits 03 payload: exact_value=10.0
+
+  PASS: NO 03 write performed (boundary smoke stops at adapter)
+
+--- Negative: without dialogue evidence ---
+  semantic_status: READY
+  param_status: NEEDS_DECISION
+  execution_readiness: WAITING_FOR_DECISION
+  PASS: Semantic stays READY, execution = WAITING_FOR_DECISION (correct abstention)
+
+--- Negative: semantic incomplete with param READY ---
+  semantic_status: NEEDS_CONTEXT
+  execution_readiness: NEEDS_CONTEXT
+  PASS: Semantic incomplete → adapter blocks (param READY cannot rescue)
+
+============================================================
+ALL ASSERTIONS PASSED
+Boundary smoke confirms: semantic ↔ parameterization ↔ execution decoupled

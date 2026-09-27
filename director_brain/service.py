@@ -4,11 +4,13 @@ This is the formal 02 runtime wiring:
   user direction → SemanticDirectorService → SemanticDirectorReasoner → LLMAdapter → DirectorDecision
   → (optional) ParameterizationContext → JCutParameterizer → ParameterizationDecision
 
+Three independent status concepts:
+  - semantic_status: Is the user's intent understood clearly? (DirectorDecision.status)
+  - parameterization_status: Are execution parameters determined? (ParameterizationDecision.status)
+  - execution_readiness: Can this be handed to 03? (semantic READY + parameterization READY)
+
 It does NOT build a workflow engine or agent framework.
 It only composes the existing components and exposes a clean entry path.
-
-NEEDS_CONTEXT and SEMANTIC_REASONER_UNAVAILABLE propagate to the caller.
-No silent heuristic fallback.
 """
 from __future__ import annotations
 
@@ -33,11 +35,17 @@ class DirectorRequestResult:
     Separates three concerns:
     - semantic_decision: WHAT the user wants (DirectorDecision)
     - parameterization_decision: HOW to execute / why not (ParameterizationDecision)
-    - overall_status: can this be handed to 03?
+    - status: EXECUTION readiness (can this be handed to 03?)
+
+    Additional explicit fields prevent downstream from guessing:
+    - semantic_status: DirectorDecision.status (semantic understanding only)
+    - execution_readiness: canonical combined readiness
     """
     semantic_decision: DirectorDecision | None
     parameterization_decision: ParameterizationDecision | None = None
-    status: str = ""  # overall execution readiness
+    status: str = ""  # execution readiness (backward-compatible alias)
+    semantic_status: str = ""  # DirectorDecision.status value
+    execution_readiness: str = ""  # canonical: READY / NOT_READY / BLOCKED / WAITING_FOR_*
     error: str | None = None
     trace_id: str = ""
     model: str = ""
@@ -53,15 +61,16 @@ class SemanticDirectorService:
     """Formal 02 application entrypoint for semantic director reasoning.
 
     Wires: user input → SemanticDirectorReasoner → LLMAdapter → DirectorDecision
-           → post-validation → (optional) parameterizer → ParameterizationDecision
+           → post-validation (semantic only) → (optional) parameterizer → ParameterizationDecision
+           → execution readiness composition
 
     Usage:
         service = SemanticDirectorService()
         result = service.process_direction("让下一句声音提前一点进入...")
-        if result.status == "READY":
+        if result.execution_readiness == "READY":
             arsenal.execute(result.semantic_decision, result.parameterization_decision)
-        elif result.status == "NEEDS_CONTEXT":
-            gather_context(...)
+        elif result.execution_readiness == "WAITING_FOR_DECISION":
+            present_candidates_to_user(result.parameterization_decision)
         else:
             report_to_user(result.status, result.error)
     """
@@ -81,18 +90,12 @@ class SemanticDirectorService:
 
         Steps:
         1. Semantic reasoning (LLM) → DirectorDecision
-        2. Post-validation: fix READY+exact_value=None bug (downgrade, never fill)
+        2. Post-validation: semantic consistency only (never checks parameter completeness)
         3. If parameterization_context provided: run deterministic parameterizer
-        4. Compute overall status from both decisions
+        4. Compute execution readiness from semantic + parameterization
 
         Fail-closed: any failure returns SEMANTIC_REASONER_UNAVAILABLE.
         No silent heuristic fallback.
-
-        Args:
-            user_direction: Natural language director request.
-            context: Optional available context string for LLM.
-            decision_id: Optional explicit decision ID.
-            parameterization_context: Optional provider-neutral context for parameterization.
         """
         trace_id = f"svc_{int(time.time() * 1000)}"
 
@@ -107,14 +110,17 @@ class SemanticDirectorService:
                 semantic_decision=None,
                 parameterization_decision=None,
                 status="SEMANTIC_REASONER_UNAVAILABLE",
+                semantic_status="UNAVAILABLE",
+                execution_readiness="NOT_READY",
                 error=result.error,
                 trace_id=trace_id,
                 model=result.model,
                 latency_ms=result.latency_ms,
             )
 
-        # Step 2: Post-validation (fix READY+exact_value=None bug)
+        # Step 2: Post-validation (semantic consistency only)
         decision, violations = validate_director_decision(result.decision)
+        semantic_status = decision.status.value if decision.status else "UNDERSPECIFIED"
 
         # Step 3: Parameterization (if context available)
         param_decision: ParameterizationDecision | None = None
@@ -127,13 +133,15 @@ class SemanticDirectorService:
                 user_exact_value=user_exact,
             )
 
-        # Step 4: Overall status
-        overall_status = self._compute_overall_status(decision, param_decision)
+        # Step 4: Execution readiness
+        execution_readiness = self._compute_execution_readiness(decision, param_decision)
 
         return DirectorRequestResult(
             semantic_decision=decision,
             parameterization_decision=param_decision,
-            status=overall_status,
+            status=execution_readiness,
+            semantic_status=semantic_status,
+            execution_readiness=execution_readiness,
             error=None,
             trace_id=trace_id,
             model=result.model,
@@ -142,28 +150,44 @@ class SemanticDirectorService:
         )
 
     @staticmethod
-    def _compute_overall_status(
+    def _compute_execution_readiness(
         decision: DirectorDecision,
         param_decision: ParameterizationDecision | None,
     ) -> str:
-        """Compute overall execution readiness from semantic + parameterization decisions.
+        """Compute canonical execution readiness from semantic + parameterization.
 
-        Only READY if BOTH semantic and parameterization are READY.
-        Otherwise propagate the most specific non-READY status.
+        Returns the overall status string (backward-compatible):
+        - Semantic READY + Parameterization READY → READY
+        - Semantic READY + Parameterization NEEDS_CONTEXT → WAITING_FOR_CONTEXT
+        - Semantic READY + Parameterization NEEDS_DECISION → WAITING_FOR_DECISION
+        - Semantic READY + no param context → READY (semantic clear, params not yet evaluated)
+        - Semantic not READY → propagate semantic status (NEEDS_CONTEXT, UNDERSPECIFIED, etc.)
+        - Semantic CONFLICT / Parameterization CONFLICT/UNSATISFIABLE → BLOCKED
         """
         semantic_status = decision.status.value if decision.status else "UNDERSPECIFIED"
 
-        # If semantic isn't READY, that takes priority
+        # Semantic conflict → BLOCKED
+        if semantic_status in ("CONFLICTING_CONSTRAINTS", "UNSUPPORTED"):
+            return "BLOCKED"
+
+        # Semantic not ready → propagate semantic status (caller needs to resolve intent first)
         if semantic_status != "READY":
             return semantic_status
 
-        # Semantic is READY. Check parameterization.
+        # Semantic READY. Check parameterization.
         if param_decision is None:
-            # No parameterization context — semantic READY is the best we have
+            # No parameterization context provided yet — semantic is ready,
+            # execution depends on obtaining parameters
             return "READY"
 
         param_status = param_decision.status.value
         if param_status == "READY":
             return "READY"
-        # Parameterization not ready — propagate its status
-        return param_status
+        if param_status == "NEEDS_CONTEXT":
+            return "WAITING_FOR_CONTEXT"
+        if param_status == "NEEDS_DECISION":
+            return "WAITING_FOR_DECISION"
+        if param_status in ("CONFLICT", "UNSATISFIABLE"):
+            return "BLOCKED"
+        # UNAVAILABLE or other
+        return "NOT_READY"

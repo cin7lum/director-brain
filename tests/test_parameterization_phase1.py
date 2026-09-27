@@ -227,13 +227,18 @@ class TestPOC16Regression:
 # ============================================================
 
 class TestStatusInvariants:
-    """READY + exact_value=None must be invalid for parameter-required capabilities."""
+    """Semantic status invariants after decoupling from parameterization.
 
-    def test_ready_with_none_exact_downgraded(self):
+    DirectorDecision.status describes SEMANTIC readiness only.
+    exact_value=None is NOT a semantic incompleteness — parameterizer handles it.
+    """
+
+    def test_ready_with_none_exact_stays_ready(self):
+        """Semantic clear + exact_value=None → READY (parameterizer fills value)."""
         d = _make_director_decision(status="READY", exact_value=None)
         fixed, violations = validate_director_decision(d)
-        assert fixed.status.value == "NEEDS_CONTEXT"
-        assert len(violations) > 0
+        assert fixed.status.value == "READY"
+        assert len(violations) == 0
 
     def test_ready_with_exact_kept(self):
         d = _make_director_decision(status="READY", exact_value=10.0)
@@ -247,20 +252,170 @@ class TestStatusInvariants:
         assert fixed.status.value == "NEEDS_CONTEXT"
 
     def test_post_validator_never_fills_value(self):
-        """Post-validator must NOT create exact_value — only downgrade status."""
+        """Post-validator must NOT create exact_value — only downgrade for semantic issues."""
         d = _make_director_decision(status="READY", exact_value=None)
         fixed, _ = validate_director_decision(d)
         assert fixed.parameterization is not None
         assert fixed.parameterization.exact_value is None
 
-    def test_non_parameter_capability_ready_kept(self):
-        """READY without exact_value is fine if capability doesn't need parameter."""
-        d = _make_director_decision(
-            status="READY", exact_value=None,
-            desired_relation=["some_other_capability"],
+    def test_ready_without_desired_relation_downgraded(self):
+        """READY but no desired_relation_or_change → NEEDS_CONTEXT (intent unclear)."""
+        d = DirectorDecision(
+            decision_id="test-no-relation",
+            creative_intent="No relation test",
+            status="READY",
+            desired_relation_or_change=[],
+            must_preserve=["picture_cut_position"],
+            must_avoid=["transition"],
+            parameterization=Parameterization(exact_value=None, unit="frames", certainty="unknown"),
+            confidence=0.7,
+            evidence=[],
+            user_terminology=[],
         )
         fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "NEEDS_CONTEXT"
+        assert len(violations) > 0
+
+    def test_ready_with_semantic_conflict_downgraded(self):
+        """READY but desired_relation contradicts must_avoid → CONFLICTING_CONSTRAINTS."""
+        d = DirectorDecision(
+            decision_id="test-conflict",
+            creative_intent="Conflict test",
+            status="READY",
+            desired_relation_or_change=["audio_precedes_picture"],
+            must_preserve=["picture_cut_position"],
+            must_avoid=["audio_precedes_picture"],
+            parameterization=Parameterization(exact_value=10.0, unit="frames", certainty="explicit"),
+            confidence=0.7,
+            evidence=[],
+            user_terminology=[],
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
+        assert len(violations) > 0
+
+    def test_conflicting_with_exact_value_warned(self):
+        d = DirectorDecision(
+            decision_id="test-conflict2",
+            creative_intent="Conflict test",
+            status="CONFLICTING_CONSTRAINTS",
+            desired_relation_or_change=["audio_precedes_picture"],
+            must_preserve=[],
+            must_avoid=["audio_precedes_picture"],
+            parameterization=Parameterization(exact_value=10.0, unit="frames", certainty="explicit"),
+            confidence=0.7,
+            evidence=[],
+            user_terminology=[],
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
+        assert any("exact_value" in v for v in violations)
+
+
+# ============================================================
+# Semantic ↔ Parameterization ↔ Execution Decoupling Tests (S1-S7)
+# ============================================================
+
+class TestStatusDecoupling:
+    """Three independent status concepts must not be conflated.
+
+    S1: Semantic complete + no parameter → Semantic READY
+    S2: Semantic complete + Parameterizer NEEDS_DECISION → execution not ready
+    S3: Semantic complete + Parameterizer READY → execution ready
+    S4: Semantic incomplete + Parameterizer READY → blocked
+    S5: Semantic conflict + Parameterizer READY → blocked
+    S6: Semantic ready + parameter infeasible → blocked
+    S7: Removing parameter evidence → semantic remains READY → execution NOT_READY
+    """
+
+    def test_s1_semantic_complete_no_param_stays_ready(self):
+        """S1: Semantic clear + exact_value=None → Semantic READY (not NEEDS_CONTEXT)."""
+        d = _make_director_decision(status="READY", exact_value=None)
+        fixed, _ = validate_director_decision(d)
         assert fixed.status.value == "READY"
+
+    def test_s2_semantic_ready_param_needs_decision_not_execution_ready(self):
+        """S2: Semantic READY + Parameterizer NEEDS_DECISION → adapter returns None."""
+        semantic = _make_director_decision(status="READY", exact_value=None)
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=None)
+        param = JCutParameterizer().parameterize(ctx, user_exact_value=None)
+        assert param.status == ParameterizationStatus.NEEDS_DECISION
+        assert to_arsenal_parameterization(semantic, param) is None
+        assert is_execution_ready(semantic, param) is False
+
+    def test_s3_semantic_ready_param_ready_execution_ready(self):
+        """S3: Semantic READY + Parameterizer READY → adapter produces payload."""
+        semantic = _make_director_decision(status="READY", exact_value=None)
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[10])
+        param = JCutParameterizer().parameterize(ctx, user_exact_value=None)
+        assert param.status == ParameterizationStatus.READY
+        assert param.exact_value == 10.0
+        result = to_arsenal_parameterization(semantic, param)
+        assert result is not None
+        assert result["exact_value"] == 10.0
+
+    def test_s4_semantic_incomplete_param_ready_blocked(self):
+        """S4: Semantic NEEDS_CONTEXT + Parameterizer READY → adapter blocks."""
+        semantic = _make_director_decision(status="NEEDS_CONTEXT", exact_value=None)
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[10])
+        param = JCutParameterizer().parameterize(ctx, user_exact_value=None)
+        assert param.status == ParameterizationStatus.READY
+        # Parameterization READY cannot rescue semantic incompleteness
+        assert to_arsenal_parameterization(semantic, param) is None
+
+    def test_s5_semantic_conflict_param_ready_blocked(self):
+        """S5: Semantic CONFLICTING_CONSTRAINTS + Parameterizer READY → blocked."""
+        semantic = DirectorDecision(
+            decision_id="test-s5",
+            creative_intent="Conflict",
+            status="CONFLICTING_CONSTRAINTS",
+            desired_relation_or_change=["audio_precedes_picture"],
+            must_preserve=[],
+            must_avoid=["audio_precedes_picture"],
+            parameterization=Parameterization(exact_value=10.0, unit="frames", certainty="explicit"),
+            confidence=0.7,
+            evidence=[],
+            user_terminology=[],
+        )
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[10])
+        param = JCutParameterizer().parameterize(ctx, user_exact_value=None)
+        assert param.status == ParameterizationStatus.READY
+        assert to_arsenal_parameterization(semantic, param) is None
+
+    def test_s6_semantic_ready_param_infeasible_blocked(self):
+        """S6: Semantic READY + Parameterizer UNSATISFIABLE → blocked."""
+        semantic = _make_director_decision(status="READY", exact_value=None)
+        ctx = _make_ctx(handle=0, source_start=0)
+        param = JCutParameterizer().parameterize(ctx, user_exact_value=None)
+        assert param.status == ParameterizationStatus.UNSATISFIABLE
+        assert to_arsenal_parameterization(semantic, param) is None
+
+    def test_s7_remove_param_evidence_semantic_stays_ready_execution_not_ready(self):
+        """S7: Removing parameter evidence → semantic stays READY, execution becomes NOT_READY.
+
+        This is the key metamorphic test: semantic understanding does not depend on
+        parameter evidence. Execution readiness does.
+        """
+        semantic = _make_director_decision(status="READY", exact_value=None)
+
+        # With dialogue evidence → parameter READY → execution ready
+        ctx_with = _make_ctx(handle=24, source_start=24, dialogue_onsets=[10])
+        param_with = JCutParameterizer().parameterize(ctx_with, user_exact_value=None)
+        assert param_with.status == ParameterizationStatus.READY
+        assert to_arsenal_parameterization(semantic, param_with) is not None
+
+        # Semantic stays READY regardless of parameter evidence
+        fixed_semantic, _ = validate_director_decision(semantic)
+        assert fixed_semantic.status.value == "READY"
+
+        # Remove dialogue evidence → parameter NEEDS_DECISION → execution NOT ready
+        ctx_without = _make_ctx(handle=24, source_start=24, dialogue_onsets=None)
+        param_without = JCutParameterizer().parameterize(ctx_without, user_exact_value=None)
+        assert param_without.status == ParameterizationStatus.NEEDS_DECISION
+        assert to_arsenal_parameterization(semantic, param_without) is None
+
+        # Semantic still READY (it was never dependent on parameter evidence)
+        assert fixed_semantic.status.value == "READY"
 
 
 # ============================================================

@@ -1,0 +1,50 @@
+﻿{
+    "evidence_files":  [
+                           "ADAPTER_GATE_RESULTS.md",
+                           "CONFLICT_NEGATIVE.md",
+                           "EVIDENCE_MANIFEST.json",
+                           "EVIDENCE_REMOVAL_METAMORPHIC.md",
+                           "EXECUTION_READINESS_CONTRACT.md",
+                           "EXECUTION_REPORT.md",
+                           "FRESH_INSTALL_RESULTS.md",
+                           "FULL_TEST_RESULTS.txt",
+                           "HARD_CASE_NO_EVIDENCE.md",
+                           "HARD_CASE_WITH_EVIDENCE.md",
+                           "HISTORICAL_STATUS_ASSERTION_CORRECTION.md",
+                           "NEW_STATUS_MODEL.md",
+                           "OLD_STATUS_MODEL.md",
+                           "PARAMETERIZATION_STATUS_CONTRACT.md",
+                           "PRODUCT_CODE_DIFF.txt",
+                           "REAL_BOUNDARY_SMOKE.md",
+                           "REAL_BOUNDARY_SMOKE_OUTPUT.txt",
+                           "ROOT_CAUSE.md",
+                           "SEMANTIC_PARAMETERIZATION_EXECUTION_MATRIX.md",
+                           "SEMANTIC_STATUS_CONTRACT.md",
+                           "SEMANTIC_UNDERSPECIFIED_NEGATIVE.md"
+                       ],
+    "files_changed":  [
+                          "director_brain/parameterization/post_validation.py",
+                          "director_brain/service.py",
+                          "director_brain/arsenal_adapter.py",
+                          "tests/test_parameterization_phase1.py",
+                          "tests/unit/test_phase1a_r1.py"
+                      ],
+    "root_cause":  "Semantic readiness conflated with parameterization readiness in single status field",
+    "product_code_scope":  "02 ONLY — no 03/05/DaVinci changes",
+    "phase":  "DIRECTOR_BRAIN_STATUS_DECOUPLING",
+    "test_results":  {
+                         "real_boundary_smoke":  "ALL ASSERTIONS PASSED",
+                         "fresh_install":  "18/18 passed",
+                         "unit_tests":  "108 passed"
+                     },
+    "real_smoke_key_results":  {
+                                   "execution_readiness":  "READY",
+                                   "adapter_emits_payload":  true,
+                                   "parameterization_status":  "READY",
+                                   "parameterization_exact_value":  10,
+                                   "semantic_status":  "READY",
+                                   "zero_write":  true
+                               },
+    "fix":  "Decoupled three status concepts: semantic (DirectorDecision.status), parameterization (ParameterizationDecision.status), execution (DirectorRequestResult.execution_readiness)",
+    "status":  "IMPLEMENTATION_READY_FOR_REVIEW"
+}

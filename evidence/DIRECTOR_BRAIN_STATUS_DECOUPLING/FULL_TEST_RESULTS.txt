@@ -1,0 +1,56 @@
+﻿# Full Test Results
+
+## Targeted Regression (relevant to status decoupling)
+Command: pytest tests/test_parameterization_phase1.py tests/unit/test_semantic_reasoner.py tests/unit/test_phase1a_r1.py tests/unit/test_director_reasoner.py tests/unit/test_intent_constraints.py -q
+Result: 108 passed, 1 warning in 27.27s
+
+## Parameterization Phase 1 Tests Only
+Command: pytest tests/test_parameterization_phase1.py -q
+Result: 57 passed in 0.38s
+
+## Fresh Install Verification
+Venv: .venv_status_decoupling_fresh (clean, wheel installed)
+Module: site-packages/director_brain/ (confirmed)
+Result: 18/18 assertions PASSED
+
+## Real Boundary Smoke
+Environment: .venv_gate_e_final + Ollama qwen2.5:7b
+Result: ALL ASSERTIONS PASSED
+- Positive: semantic READY + param READY(10f) + execution READY + adapter emits payload
+- Negative 1: no dialogue → WAITING_FOR_DECISION (correct abstention)
+- Negative 2: semantic incomplete → blocked (param cannot rescue)
+
+## Test Breakdown
+
+### TestStatusInvariants (7 tests)
+- test_ready_with_none_exact_stays_ready: PASS
+- test_ready_with_exact_kept: PASS
+- test_needs_context_unchanged: PASS
+- test_post_validator_never_fills_value: PASS
+- test_ready_without_desired_relation_downgraded: PASS
+- test_ready_with_semantic_conflict_downgraded: PASS
+- test_conflicting_with_exact_value_warned: PASS
+
+### TestStatusDecoupling S1-S7 (7 tests)
+- S1 semantic complete + no param → Semantic READY: PASS
+- S2 semantic complete + param NEEDS_DECISION → execution not ready: PASS
+- S3 semantic complete + param READY → execution ready: PASS
+- S4 semantic incomplete + param READY → blocked: PASS
+- S5 semantic conflict + param READY → blocked: PASS
+- S6 semantic ready + param infeasible → blocked: PASS
+- S7 remove param evidence → semantic stays READY → execution NOT_READY: PASS
+
+### 16-Case POC Regression: 16/16 PASS
+### Metamorphic M1-M5: 5/5 PASS
+### Evidence Removal: 2/2 PASS
+### No-Clamping/Conflict: 4/4 PASS
+### No-Hallucination: 4/4 PASS
+### Adapter: 5/5 PASS
+### Model Schema: 3/3 PASS
+### Semantic Reasoner: all PASS
+### Phase1A R1: all PASS
+
+## No Regressions
+All existing tests continue to pass. No test was removed or weakened.
+Only one assertion was updated (test_ready_with_none_exact_downgraded → stays_ready),
+which is documented in HISTORICAL_STATUS_ASSERTION_CORRECTION.md.
