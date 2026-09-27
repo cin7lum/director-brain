@@ -8,6 +8,11 @@
 4. 间隙可接受（不同镜头的源引用之间天然有间隙）
 5. ``source_asset_id`` 必须存在于 observations 的 media_asset_id 集合
 6. 总时长在目标范围 ±10%（仅当 ``plan.constraints`` 含 ``target_duration_us=XXX``）
+7. plan↔EDL 一致性：``plan.sequence`` 必须与 EDL 的 source_asset_id 序列
+   逐位相同（T1 修复新增——历史版本只校验 EDL，repair 删镜头后 plan 与
+   EDL 静默分裂仍报 PASS）
+8. plan↔EDL 一致性：所有 ``decision.shot_refs`` 摊平后与 EDL 的
+   source_asset_id 集合一致（多重集比较，T1 修复新增）
 
 Validator 如实报告所有错误，不做修复——修复由 :mod:`plan_repair` 或人工决定。
 """
@@ -38,6 +43,10 @@ def validate_plan(
     # ---- Rule 1: 总时长 > 0（空 EDL 报错）----
     if len(edits) == 0:
         errors.append("empty EDL: no edits")
+        if plan.sequence:
+            errors.append(
+                "plan/edl split: plan.sequence non-empty while EDL is empty"
+            )
         return (False, errors)
 
     total_duration = sum(e.out_frame - e.in_frame for e in edits)
@@ -78,6 +87,22 @@ def validate_plan(
                 f"duration {total_duration}us outside target range "
                 f"[{low}, {high}]us"
             )
+
+    # ---- Rule 7: plan.sequence 与 EDL 镜头序列逐位一致（T1 修复新增）----
+    edl_ids = [e.source_asset_id for e in edits]
+    if plan.sequence != edl_ids:
+        errors.append(
+            f"plan/edl split: plan.sequence {plan.sequence} != "
+            f"EDL source_asset_id sequence {edl_ids}"
+        )
+
+    # ---- Rule 8: decision.shot_refs 摊平后与 EDL 镜头集合一致（T1 修复新增）----
+    shot_refs = [ref for d in plan.decisions for ref in d.shot_refs]
+    if sorted(shot_refs) != sorted(edl_ids):
+        errors.append(
+            f"plan/edl split: flattened decision.shot_refs {sorted(shot_refs)} != "
+            f"EDL source_asset_id set {sorted(edl_ids)}"
+        )
 
     return (len(errors) == 0, errors)
 

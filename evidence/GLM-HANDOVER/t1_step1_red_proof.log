@@ -1,0 +1,6 @@
+[1] 一致样本（修复前）: valid=True errors=[]
+[2] 分裂样本（EDL 2 段 / plan 3 段）: valid=False
+    - plan/edl split: plan.sequence ['shot_a', 'shot_b', 'shot_c'] != EDL source_asset_id sequence ['shot_a', 'shot_b']
+    - plan/edl split: flattened decision.shot_refs ['shot_a', 'shot_b', 'shot_c'] != EDL source_asset_id set ['shot_a', 'shot_b']
+
+[PASS] 校验对历史分裂形态判红（能变红），对一致样本放行（不误伤）。

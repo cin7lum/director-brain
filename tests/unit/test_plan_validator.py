@@ -1,18 +1,20 @@
 """M2.3 Plan Validator 单元测试。
 
-验证 validate_plan 的 6 条规则：
+验证 validate_plan 的 8 条规则：
 1. 总时长 > 0（空 EDL → "empty EDL: no edits"）
 2. 每个片段 in_frame < out_frame
 3. 无重叠片段（按 in_frame 排序后相邻检查）
 4. 间隙可接受（不报错）
 5. source_asset_id 存在性
 6. 时长在目标范围内（±10%，仅当 plan.constraints 含 target_duration_us 时检查）
+7. plan.sequence 与 EDL source_asset_id 序列逐位一致（T1 修复新增）
+8. decision.shot_refs 摊平后与 EDL 镜头集合一致（T1 修复新增）
 """
 from __future__ import annotations
 
 import time
 
-from director_brain.models.director_plan import DirectorDecisionPlan
+from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.plan_validator import validate_plan
@@ -86,7 +88,11 @@ def _edl(edits: list[EditItem]) -> EditorialDecisionList:
     )
 
 
-def _plan(constraints: list[str] | None = None) -> DirectorDecisionPlan:
+def _plan(
+    constraints: list[str] | None = None,
+    sequence: list[str] | None = None,
+    decisions: list[Decision] | None = None,
+) -> DirectorDecisionPlan:
     return DirectorDecisionPlan(
         schema_version="1.0",
         project_id="test_proj",
@@ -97,13 +103,25 @@ def _plan(constraints: list[str] | None = None) -> DirectorDecisionPlan:
         version="0.1",
         brief_version="0.1",
         film_state_version="0.1",
-        sequence=[],
-        decisions=[],
+        sequence=sequence if sequence is not None else [],
+        decisions=decisions if decisions is not None else [],
         constraints=constraints or [],
         open_questions=[],
         validation_status="pending",
         approval_state="draft",
     )
+
+
+def _decisions_for(edl: EditorialDecisionList) -> list[Decision]:
+    """构造与 EDL 逐位一致的 decisions（每片段一条 select_shot）。"""
+    return [
+        Decision(
+            decision_id=f"dec_{i}",
+            purpose="select_shot",
+            shot_refs=[e.source_asset_id],
+        )
+        for i, e in enumerate(edl.ordered_edits)
+    ]
 
 
 OBS = [_obs("shot_a"), _obs("shot_b"), _obs("shot_c")]
@@ -197,7 +215,11 @@ def test_valid_edl_no_constraint():
         _edit("shot_c", in_frame=10_000_000, out_frame=12_000_000),
     ]
     edl = _edl(edits)
-    plan = _plan(constraints=[])  # 无 target_duration_us
+    plan = _plan(
+        constraints=[],  # 无 target_duration_us
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=_decisions_for(edl),
+    )
     is_valid, errors = validate_plan(edl, plan, OBS)
     assert is_valid is True, f"errors={errors}"
     assert errors == []
@@ -243,8 +265,76 @@ def test_no_target_duration_skips_rule6():
         _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
     ]
     edl = _edl(edits)
-    plan = _plan(constraints=["other_constraint=foo"])  # 无 target_duration_us
+    plan = _plan(
+        constraints=["other_constraint=foo"],  # 无 target_duration_us
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=_decisions_for(edl),
+    )
     is_valid, errors = validate_plan(edl, plan, OBS)
     # 不应有 target range 错误
     assert not any("outside target range" in e for e in errors)
     assert is_valid is True
+
+
+# ---------------------------------------------------------------------------
+# Rule 7: plan.sequence 与 EDL 序列一致（T1 修复新增）
+# ---------------------------------------------------------------------------
+
+def test_plan_sequence_mismatch_caught():
+    """历史 P0-1 分裂场景：EDL 少了一个片段而 plan 未更新 → 必须判红。"""
+    edits = [
+        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
+        _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
+    ]
+    edl = _edl(edits)
+    # plan 仍记录 3 个镜头（repair 删镜头后未回写的分裂形态）
+    plan = _plan(
+        sequence=["shot_a", "shot_b", "shot_c"],
+        decisions=_decisions_for(edl) + [
+            Decision(decision_id="dec_orphan", purpose="select_shot", shot_refs=["shot_c"])
+        ],
+    )
+    is_valid, errors = validate_plan(edl, plan, OBS)
+    assert is_valid is False
+    assert any("plan/edl split" in e and "plan.sequence" in e for e in errors)
+
+
+def test_plan_shot_refs_mismatch_caught():
+    """decisions.shot_refs 与 EDL 镜头集合不一致 → 必须判红。"""
+    edits = [_edit("shot_a", in_frame=1_000_000, out_frame=3_000_000)]
+    edl = _edl(edits)
+    plan = _plan(
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=[Decision(decision_id="dec_0", purpose="select_shot", shot_refs=["shot_b"])],
+    )
+    is_valid, errors = validate_plan(edl, plan, OBS)
+    assert is_valid is False
+    assert any("plan/edl split" in e and "shot_refs" in e for e in errors)
+
+
+def test_consistent_plan_and_edl_passes():
+    """plan 与 EDL 完全一致时，Rule 7/8 不报错。"""
+    edits = [
+        _edit("shot_a", in_frame=1_000_000, out_frame=3_000_000),
+        _edit("shot_b", in_frame=5_000_000, out_frame=8_000_000),
+    ]
+    edl = _edl(edits)
+    plan = _plan(
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=_decisions_for(edl),
+    )
+    is_valid, errors = validate_plan(edl, plan, OBS)
+    split_errors = [e for e in errors if "plan/edl split" in e]
+    assert split_errors == [], f"unexpected split errors: {split_errors}"
+    assert is_valid is True
+
+
+def test_empty_edl_with_nonempty_plan_sequence_caught():
+    """空 EDL + 非空 plan.sequence 也是分裂 → 必须判红。"""
+    edl = _edl([])
+    plan = _plan(sequence=["shot_a"], decisions=[
+        Decision(decision_id="dec_0", purpose="select_shot", shot_refs=["shot_a"])
+    ])
+    is_valid, errors = validate_plan(edl, plan, OBS)
+    assert is_valid is False
+    assert any("plan/edl split" in e for e in errors)

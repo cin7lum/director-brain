@@ -9,7 +9,7 @@ import json
 import time
 
 from director_brain.brief_compiler import compile_brief
-from director_brain.models.director_plan import DirectorDecisionPlan
+from director_brain.models.director_plan import Decision, DirectorDecisionPlan
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.plan_validator import validate_plan
 from gen1_adapter.heuristic_baseline import generate_edl
@@ -63,11 +63,16 @@ def test_pipeline_smoke_observations_to_validated_edl():
     edl = generate_edl("pipeline_proj", candidates, 6_000_000)
     assert len(edl.ordered_edits) >= 1
 
-    # 3. validator 校验 EDL
+    # 3. validator 校验 EDL（plan 与 EDL 逐位一致，符合 T1 新校验契约）
+    edl_ids = [e.source_asset_id for e in edl.ordered_edits]
     plan = DirectorDecisionPlan(
         schema_version="1.0", project_id="pipeline_proj", created_at=int(time.time()),
         producer="test", source_ref="test", plan_id="plan", version="0.1",
-        brief_version="0.1", film_state_version="0.1", sequence=[], decisions=[],
+        brief_version="0.1", film_state_version="0.1", sequence=edl_ids,
+        decisions=[
+            Decision(decision_id=f"dec_{i}", purpose="select_shot", shot_refs=[aid])
+            for i, aid in enumerate(edl_ids)
+        ],
         constraints=["target_duration_us=6000000"], open_questions=[],
         validation_status="pending", approval_state="draft")
     ok, errors = validate_plan(edl, plan, observations)
