@@ -12,6 +12,7 @@ canonical schema used by ollama adapter. No second schema copy.
 """
 from __future__ import annotations
 
+import http.client as http_client
 import json
 import time
 import urllib.error
@@ -100,9 +101,11 @@ class ZhipuLLMAdapter:
                 raw = resp.read().decode("utf-8")
         except urllib.error.HTTPError as e:
             body = ""
+            # 窄例外：读错误响应体失败的已知来源是 socket 层读错误与
+            # HTTP 层不完整读取；外层仍返回 fail-closed，不吞其他异常。
             try:
                 body = e.read().decode("utf-8", errors="replace")
-            except Exception:
+            except (OSError, http_client.HTTPException):
                 pass
             latency = int((time.time() - start) * 1000)
             return LLMResult(

@@ -79,8 +79,13 @@ def run_roughcut(
     output_path: str,
     target_duration: int = _DEFAULT_TARGET_DURATION,
     dry_run: bool = False,
+    intent_text: str | None = None,
 ) -> int:
-    """执行端到端粗剪流程。返回 0 成功，非 0 失败。"""
+    """执行端到端粗剪流程。返回 0 成功，非 0 失败。
+
+    intent_text: 用户创作意图的自然语言原文，透传给 brief_compiler
+    （规则抽取 must_include / must_avoid 约束）；None 表示未提供。
+    """
     # ---- 输入检查 ----
     if not os.path.isfile(input_path):
         print(f"错误：输入视频不存在: {input_path}", file=sys.stderr)
@@ -108,8 +113,11 @@ def run_roughcut(
             video_path=input_path,
             observations=all_obs,
             target_duration_us=target_duration_us,
+            intent_text=intent_text,
         )
         print(f"      Brief ID: {brief.brief_id}, 目标时长: {brief.target_duration / 1e6:.1f}s")
+        if intent_text:
+            print(f"      用户意图: 已接收（{len(intent_text)} 字，规则抽取入 Brief 约束）")
 
         # ---- 3. Story Graph ----
         print("[4/7] 构建故事图...")
@@ -201,12 +209,19 @@ def main():
         action="store_true",
         help="只生成 EDL 并打印摘要，不渲染视频",
     )
+    parser.add_argument(
+        "--intent",
+        type=str,
+        default=None,
+        help="用户创作意图（自然语言），编译进 Brief 约束（P0-4 入口）",
+    )
     args = parser.parse_args()
     sys.exit(run_roughcut(
         input_path=args.input,
         output_path=args.output,
         target_duration=args.target_duration,
         dry_run=args.dry_run,
+        intent_text=args.intent,
     ))
 
 

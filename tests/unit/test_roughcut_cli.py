@@ -195,6 +195,35 @@ class TestRoughcutCLI:
         mocks["render"].assert_not_called()
         assert not output_file.exists()
 
+    def test_intent_text_forwarded_to_brief_compiler(self, monkeypatch, tmp_path):
+        """P0-4 入口：intent_text 透传给 compile_brief（None 表示未提供）。"""
+        mod = _load_roughcut()
+        mocks = _patch_pipeline(monkeypatch, mod)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "output.mp4"
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            dry_run=True,
+            intent_text="做一个快节奏的短视频，不要模糊镜头",
+        )
+
+        assert rc == 0
+        _, kwargs = mocks["brief"].call_args
+        assert kwargs.get("intent_text") == "做一个快节奏的短视频，不要模糊镜头"
+
+        # 未提供时透传 None（而非缺参）
+        mod2 = _load_roughcut()
+        mocks2 = _patch_pipeline(monkeypatch, mod2)
+        mod2.run_roughcut(
+            input_path=str(input_file), output_path=str(output_file), dry_run=True,
+        )
+        _, kwargs2 = mocks2["brief"].call_args
+        assert kwargs2.get("intent_text") is None
+
     def test_normal_run_calls_render(self, monkeypatch, tmp_path):
         """非 dry-run 调用 render_edl 并返回 0。"""
         mod = _load_roughcut()
