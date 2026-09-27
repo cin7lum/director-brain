@@ -17,6 +17,18 @@ from director_brain.models.story_graph import (
     StoryNodeType,
 )
 
+from director_brain.models.parameterization import (
+    AudioEvent,
+    AudioEventType,
+    CandidateSource,
+    ClipBoundary,
+    FeasibleRange,
+    ParameterCandidate,
+    ParameterizationContext,
+    ParameterizationDecision,
+    ParameterizationStatus,
+)
+
 __all__ = [
     "BaseRecord",
     "DirectorBrief",
@@ -37,4 +49,13 @@ __all__ = [
     "DirectorDecisionPlan",
     "Decision",
     "RevisionProposal",
+    "ParameterizationDecision",
+    "ParameterizationContext",
+    "ParameterizationStatus",
+    "ParameterCandidate",
+    "CandidateSource",
+    "FeasibleRange",
+    "ClipBoundary",
+    "AudioEvent",
+    "AudioEventType",
 ]
