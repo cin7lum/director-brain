@@ -1,0 +1,245 @@
+{
+  "comment": "L2 第二批：新 20 段 × 2 意图（base + 慢节奏）= 40 任务，补齐慢节奏覆盖。",
+  "tasks": [
+    {
+      "tag": "MVI_4337-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4337.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4337-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4337.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4375-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4375.MP4",
+      "target_seconds": 3,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4375-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4375.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4305-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4305.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4305-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4305.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4331-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4331.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4331-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4331.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4302-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4302.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4302-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4302.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4260-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4260.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4260-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4260.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4358-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4358.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4358-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4358.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4455-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4455.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4455-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4455.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4329-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4329.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4329-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4329.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4276-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4276.MP4",
+      "target_seconds": 2,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4276-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4276.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4469-base14",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4469.MP4",
+      "target_seconds": 14,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4469-slow14",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4469.MP4",
+      "target_seconds": 14,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4199-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4199.MP4",
+      "target_seconds": 4,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4199-slow4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4199.MP4",
+      "target_seconds": 4,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4352-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4352.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4352-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4352.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4214-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4214.MP4",
+      "target_seconds": 4,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4214-slow4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4214.MP4",
+      "target_seconds": 4,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4466-base34",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4466.MP4",
+      "target_seconds": 34,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4466-slow34",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4466.MP4",
+      "target_seconds": 34,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4290-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4290-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4299-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4299.MP4",
+      "target_seconds": 6,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4299-slow6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4299.MP4",
+      "target_seconds": 6,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4409-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4409.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4409-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4409.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4295-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4295.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4295-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4295.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    },
+    {
+      "tag": "MVI_4378-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4378.MP4",
+      "target_seconds": 1,
+      "intent": null
+    },
+    {
+      "tag": "MVI_4378-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4378.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头"
+    }
+  ]
+}

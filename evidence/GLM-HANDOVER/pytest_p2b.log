@@ -1,0 +1,27 @@
+........................................................................ [ 14%]
+................s....................................................... [ 28%]
+........................................................................ [ 42%]
+........................................................................ [ 56%]
+........................................................................ [ 70%]
+........................................................................ [ 84%]
+........................................................................ [ 98%]
+.........                                                                [100%]
+============================== warnings summary ===============================
+tests\unit\test_media_import.py:42
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:42: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:62
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:97
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:97: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/unit/test_director_reasoner.py::test_factory_llm
+  D:\新建豆包\AI-Director\tests\unit\test_director_reasoner.py:165: UserWarning: LLM director reasoner is not implemented; returning a placeholder instance whose generate_plan() raises NotImplementedError. Use strategy='heuristic' for the deterministic reasoner.
+    reasoner = get_director_reasoner("llm", provider="ollama", config={"model": "x"})
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+512 passed, 1 skipped, 4 warnings in 76.95s (0:01:16)

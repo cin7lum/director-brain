@@ -1,0 +1,16 @@
+{
+  "total": 40,
+  "produced": 33,
+  "refused": 7,
+  "errored": 0,
+  "produced_with_hard_defect": 0,
+  "refusal_reasons": [
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable",
+    "target_duration_unreachable"
+  ]
+}

@@ -349,7 +349,10 @@ def repair_plan(
                 )
 
         elif current > high:
-            gap = current - high
+            # P2-d 边界余量（与延长路径对称）：截断目标取上界 -2%，
+            # 避免渲染取整后偏差恰好压线 +10% 被 L1 判 FAIL（慢节奏实测）
+            trunc_target = high - int(0.02 * target)
+            gap = current - trunc_target
 
             # 优先缩短非启发式证据的最长片段（确定性技术优先级；P1-b 结构化判据）
             def _trunc_priority(i: int) -> tuple:

@@ -304,3 +304,39 @@ def test_repair_backward_extension_and_margin():
     assert any(":in " in a for a in outcome.adjustments), outcome.adjustments
     ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
     assert ok, f"errors={errors}"
+
+
+def test_repair_truncation_boundary_margin():
+    """P2-d 对称修复：截断目标取上界 -2%（慢节奏实测 10.0% 压线翻车）。
+
+    构造：单镜头 4s（0-4M），慢节奏界 min 1.5s/max 8s，目标 2s
+    （high=2.2M）。旧实现截到 high=2.2M 恰好压线；新实现截到 2.16M。
+    """
+    from director_brain.plan_repair import repair_plan
+
+    obs = [_obs("shot_a", 0, 10_000_000, 200.0)]
+    edits = [EditItem(source_asset_id="shot_a", source_media_hash="hash_shot_a",
+                      in_frame=0, out_frame=4_000_000, timebase=1_000_000)]
+    edl = EditorialDecisionList(
+        schema_version="1.0", project_id="p1a", created_at=int(time.time()),
+        producer="test", source_ref="t", edl_id="edl_t", version="0.1",
+        brief_version="0.1", context_id="c", timebase=1_000_000,
+        ordered_edits=edits, expected_duration=4_000_000, approval_state="draft")
+    ids = [e.source_asset_id for e in edl.ordered_edits]
+    plan = DirectorDecisionPlan(
+        schema_version="1.0", project_id="p1a", created_at=int(time.time()),
+        producer="test", source_ref="t", plan_id="plan_t", version="0.1",
+        brief_version="0.1", film_state_version="0.1", sequence=ids,
+        decisions=[Decision(decision_id="dec_0", purpose="select_shot",
+                            shot_refs=ids)],
+        constraints=["target_duration_us=2000000", "min_clip_us=1500000",
+                     "max_clip_us=8000000"],
+        open_questions=[], validation_status="pending", approval_state="draft")
+    outcome = repair_plan(edl, plan, obs)
+    assert outcome.status == "ok", outcome.reason
+    total = sum(e.out_frame - e.in_frame for e in outcome.edl.ordered_edits)
+    high = int(1.1 * 2_000_000)
+    assert total < high, f"total={total} 仍压上界 {high}"
+    assert total >= high - int(0.02 * 2_000_000) - 1, f"total={total} 过度截断"
+    ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
+    assert ok, f"errors={errors}"
