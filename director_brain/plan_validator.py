@@ -7,7 +7,8 @@
 3. 无重叠片段（按 ``in_frame`` 排序后相邻检查）
 4. 间隙可接受（不同镜头的源引用之间天然有间隙）
 5. ``source_asset_id`` 必须存在于 observations 的 media_asset_id 集合
-6. 总时长在目标范围 ±10%（仅当 ``plan.constraints`` 含 ``target_duration_us=XXX``）
+6. 总时长在目标范围 ±10%（仅当 ``plan.constraints`` 含 ``target_duration_us=XXX``；
+   8b 起按时长按**成片总时长**（Σd−ΣD，转场感知）判定
 7. plan↔EDL 一致性：``plan.sequence`` 必须与 EDL 的 source_asset_id 序列
    逐位相同（T1 修复新增——历史版本只校验 EDL，repair 删镜头后 plan 与
    EDL 静默分裂仍报 PASS）
@@ -25,6 +26,7 @@ import json
 import re
 
 from director_brain.intent_constraints import TechnicalAvoidRule
+from director_brain.timeline import total_output_duration_us
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
@@ -72,7 +74,9 @@ def validate_plan(
             )
         return (False, errors)
 
-    total_duration = sum(e.out_frame - e.in_frame for e in edits)
+    # 8b：转场感知——渲染出的成片时长是 Σd−ΣD（xfade 重叠缩时间线），
+    # 时长预算必须对齐真实成片，否则带转场的 plan 会静默偏短。
+    total_duration = total_output_duration_us(edl)
 
     # ---- Rule 5: source_asset_id 存在性（先收集集合，避免重复报错）----
     known_asset_ids = {o.media_asset_id for o in observations}

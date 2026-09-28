@@ -273,7 +273,12 @@ def repair_plan(
     if target is not None:
         low = int(0.9 * target)
         high = int(1.1 * target)
+        # 8b：转场感知——修复目标是**成片总时长**（Σd−ΣD）落在 ±10% 内
         current = sum(e.out_frame - e.in_frame for e in edits)
+        current -= sum(
+            e.transition.duration_us for i, e in enumerate(edits[:-1])
+            if e.transition is not None and e.transition.type == "xfade"
+        )
 
         if current < low:
             # P2-d 边界余量：延长目标取下界 +2%，避免渲染帧取整后偏差

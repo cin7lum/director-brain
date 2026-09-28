@@ -1,0 +1,67 @@
+........................................................................ [ 13%]
+................s....................................................... [ 26%]
+........................................................................ [ 39%]
+........................................................................ [ 52%]
+...........................................s............................ [ 65%]
+........................................................................ [ 78%]
+.............................s.......................................... [ 92%]
+.................F.........................                              [100%]
+================================== FAILURES ===================================
+_______________ test_repair_duration_budget_is_transition_aware _______________
+
+    def test_repair_duration_budget_is_transition_aware():
+        """8b：repair 延长量按成片总时长缺口计算（含转场补偿）。"""
+        from director_brain.plan_repair import repair_plan
+        tr = TransitionSpec(type="xfade", name="fade", duration_us=500_000)
+        # 两镜头各 1.5s，xfade 0.5s → 成片 2.5s；目标 3.2s（低界 2.88s）
+        # 缺口 = 2.88+2%×3.2 − 2.5 = 0.46M，需延长补偿转场吞噬的量
+        edl = _edl([(0, 1_500_000), (5_000_000, 6_500_000)], transition=tr)
+        obs = []
+        for i, (a, b) in enumerate([(0, 10_000_000), (10_000_000, 20_000_000)]):
+            obs.append(FilmObservation(
+                observation_id=f"o{i}", media_asset_id=f"s{i}",
+                media_hash=f"h{i}", start_frame=a, end_frame=b,
+                timebase=1_000_000, observation_type="deterministic_technical",
+                claim=json.dumps({"blur_score": 200.0, "exposure_ok": True}),
+                provider="t", model_version="t", prompt_version="t", confidence=1.0,
+                review_state="auto_verified", claim_kind=ClaimKind.MEASURED,
+                schema_version="1.0", project_id="t", created_at=0,
+                producer="t", source_ref="t.mp4"))
+        from director_brain.plan_repair import repair_plan as _rp
+        outcome = _rp(edl, DirectorDecisionPlan(
+            schema_version="1.0", project_id="t", created_at=0, producer="t",
+            source_ref="t", plan_id="p", version="0.1", brief_version="0.1",
+            film_state_version="0.1",
+            sequence=[e.source_asset_id for e in edl.ordered_edits],
+            decisions=[], constraints=["target_duration_us=3200000"],
+            open_questions=[], validation_status="pending", approval_state="draft"), obs)
+        assert outcome.status == "ok", outcome.reason
+        from director_brain.timeline import total_output_duration_us
+        rendered = total_output_duration_us(outcome.edl)
+        assert 2_880_000 <= rendered <= 3_520_000, f"rendered={rendered}"
+>       ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
+                     ^^^^^^^^^^^^^
+E       NameError: name 'validate_plan' is not defined
+
+tests\unit\test_transitions.py:190: NameError
+============================== warnings summary ===============================
+tests\unit\test_media_import.py:42
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:42: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:62
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:97
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:97: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/unit/test_director_reasoner.py::test_factory_llm
+  D:\新建豆包\AI-Director\tests\unit\test_director_reasoner.py:165: UserWarning: LLM director reasoner is not implemented; returning a placeholder instance whose generate_plan() raises NotImplementedError. Use strategy='heuristic' for the deterministic reasoner.
+    reasoner = get_director_reasoner("llm", provider="ollama", config={"model": "x"})
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_transitions.py::test_repair_duration_budget_is_transition_aware
+1 failed, 543 passed, 3 skipped, 4 warnings in 49.87s

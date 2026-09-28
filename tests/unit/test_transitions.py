@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import execution.renderer as renderer
+from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import (
     EditItem,
     EditorialDecisionList,
@@ -17,6 +18,7 @@ from director_brain.models.edl import (
 )
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.timeline import compute_output_timeline, total_output_duration_us
+from director_brain.plan_validator import validate_plan
 from execution.renderer import render_edl
 from observation_service.srt import build_srt
 
@@ -135,3 +137,60 @@ def test_subtitle_and_transition_compound(tmp_path):
         capture_output=True, text=True, timeout=60)
     streams = json.loads(probe.stdout)["streams"]
     assert any(s.get("codec_type") == "subtitle" for s in streams)
+
+
+def test_validator_duration_budget_is_transition_aware():
+    """8b：validator Rule 6 按成片总时长（Σd−ΣD）判定，不再被转场蒙蔽。"""
+    from director_brain.plan_validator import validate_plan
+    tr = TransitionSpec(type="xfade", name="fade", duration_us=500_000)
+    # Σd=5.0M，xfade 0.5M → 成片 4.5M；目标 5.2M（允许 [4.68,5.72]）
+    edl = _edl([(0, 2_000_000), (2_000_000, 5_000_000)], transition=tr)
+    obs = []
+    plan = DirectorDecisionPlan(
+        schema_version="1.0", project_id="t", created_at=0, producer="t",
+        source_ref="t", plan_id="p", version="0.1", brief_version="0.1",
+        film_state_version="0.1",
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=[], constraints=["target_duration_us=5200000"],
+        open_questions=[], validation_status="pending", approval_state="draft")
+    ok, errors = validate_plan(edl, plan, obs)
+    assert ok is False, "成片 4.5M < 下界 4.68M，必须判红（旧 Σd 逻辑会漏判）"
+    assert any("outside target range" in e for e in errors)
+
+
+def test_repair_duration_budget_is_transition_aware():
+    """8b：repair 延长量按成片总时长缺口计算（含转场补偿）。"""
+    from director_brain.plan_repair import repair_plan
+    tr = TransitionSpec(type="xfade", name="fade", duration_us=500_000)
+    # 两镜头各 1.5s，xfade 0.5s → 成片 2.5s；目标 3.2s（低界 2.88s）
+    # 缺口 = 2.88+2%×3.2 − 2.5 = 0.46M，需延长补偿转场吞噬的量
+    edl = _edl([(0, 1_500_000), (5_000_000, 6_500_000)], transition=tr)
+    obs = []
+    for i, (a, b) in enumerate([(0, 10_000_000), (10_000_000, 20_000_000)]):
+        obs.append(FilmObservation(
+            observation_id=f"o{i}", media_asset_id=f"s{i}",
+            media_hash=f"h{i}", start_frame=a, end_frame=b,
+            timebase=1_000_000, observation_type="deterministic_technical",
+            claim=json.dumps({"blur_score": 200.0, "exposure_ok": True}),
+            provider="t", model_version="t", prompt_version="t", confidence=1.0,
+            review_state="auto_verified", claim_kind=ClaimKind.MEASURED,
+            schema_version="1.0", project_id="t", created_at=0,
+            producer="t", source_ref="t.mp4"))
+    from director_brain.models.director_plan import Decision
+    from director_brain.plan_repair import repair_plan as _rp
+    outcome = _rp(edl, DirectorDecisionPlan(
+        schema_version="1.0", project_id="t", created_at=0, producer="t",
+        source_ref="t", plan_id="p", version="0.1", brief_version="0.1",
+        film_state_version="0.1",
+        sequence=[e.source_asset_id for e in edl.ordered_edits],
+        decisions=[Decision(decision_id=f"dec_{i}", purpose="select_shot",
+                            shot_refs=[e.source_asset_id])
+                   for i, e in enumerate(edl.ordered_edits)],
+        constraints=["target_duration_us=3200000"],
+        open_questions=[], validation_status="pending", approval_state="draft"), obs)
+    assert outcome.status == "ok", outcome.reason
+    from director_brain.timeline import total_output_duration_us
+    rendered = total_output_duration_us(outcome.edl)
+    assert 2_880_000 <= rendered <= 3_520_000, f"rendered={rendered}"
+    ok, errors = validate_plan(outcome.edl, outcome.plan, obs)
+    assert ok, f"errors={errors}"
