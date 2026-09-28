@@ -1,0 +1,14 @@
+[1] 评审帧: 7 张（compound 成片抽帧）｜ 模型: glm-4v-flash
+
+[2] 语义约束验证: must_include「日出」
+    present=True  confidence=4
+    依据: 画面的光线和颜色表明可能是日出时分
+
+[3] 技术可验证对照: must_include「雪地/积雪场景」
+    present=True  依据: 画面中有明显的雪地和积雪
+
+=== 结论 ===
+语义约束从 constraint_unverifiable（永久无法判定）升级为
+VLM 可判定（present/confidence/证据三要素齐备）——
+治理上仍需冻结验证阈值后方可进 validator 判红，但'无法验证'的
+根本约束已被云端 vision API 解除。

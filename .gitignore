@@ -27,3 +27,16 @@ dist/
 
 # 真实运行产出
 tests/real_output/
+
+# 成片/探针二进制（证据报告与 JSON 留库，媒体文件留磁盘）
+evidence/GLM-HANDOVER/l2_*_outputs/
+evidence/GLM-HANDOVER/stage9_probe/
+evidence/GLM-HANDOVER/compound/*.mp4
+evidence/GLM-HANDOVER/compound/*.wav
+evidence/GLM-HANDOVER/compound/judge_frames/
+evidence/GLM-HANDOVER/_kf_*.jpg
+evidence/GLM-HANDOVER/_audio_probe.mp4
+evidence/GLM-HANDOVER/**/*.mp4
+evidence/GLM-HANDOVER/**/*.wav
+evidence/GLM-HANDOVER/**/*.jpg
+# compound 目录：媒体排除但 JSON/SRT 报告留库

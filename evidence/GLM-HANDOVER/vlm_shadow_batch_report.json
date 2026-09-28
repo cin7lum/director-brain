@@ -1,0 +1,894 @@
+{
+  "summary": {
+    "clips": 40,
+    "ok": 39,
+    "errors": 1,
+    "total_shots_observed": 55,
+    "vlm_degraded_shots": 0,
+    "vlm_valid_rate": 1.0,
+    "clips_with_delta": 0,
+    "delta_rate": 0.0,
+    "discard_intercepted_clips": 0,
+    "role_distribution": {
+      "broll": 6,
+      "hero": 35,
+      "support": 14
+    }
+  },
+  "rows": [
+    {
+      "status": "ok",
+      "shots": 2,
+      "vlm_valid": 2,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_a4f467d8e7cc6247": "broll",
+        "shot_b91d8eb3c85f83cc": "broll"
+      },
+      "base_selection": [
+        "shot_a4f467d8e7cc6247",
+        "shot_b91d8eb3c85f83cc"
+      ],
+      "vlm_selection": [
+        "shot_a4f467d8e7cc6247",
+        "shot_b91d8eb3c85f83cc"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4209.MP4",
+      "target_s": 5,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_ffe6f17e3cd66c2f": "hero"
+      },
+      "base_selection": [
+        "shot_ffe6f17e3cd66c2f"
+      ],
+      "vlm_selection": [
+        "shot_ffe6f17e3cd66c2f"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4212.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_700b9241e99cf4f8": "support"
+      },
+      "base_selection": [
+        "shot_700b9241e99cf4f8"
+      ],
+      "vlm_selection": [
+        "shot_700b9241e99cf4f8"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4223.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_62ff8ee5523bcd03": "hero"
+      },
+      "base_selection": [
+        "shot_62ff8ee5523bcd03"
+      ],
+      "vlm_selection": [
+        "shot_62ff8ee5523bcd03"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4224.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_64c7ebcb448172d3": "hero"
+      },
+      "base_selection": [
+        "shot_64c7ebcb448172d3"
+      ],
+      "vlm_selection": [
+        "shot_64c7ebcb448172d3"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4230.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_3dbfdf694e123816": "hero"
+      },
+      "base_selection": [
+        "shot_3dbfdf694e123816"
+      ],
+      "vlm_selection": [
+        "shot_3dbfdf694e123816"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4240.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_6d97c2ddd613d22f": "hero"
+      },
+      "base_selection": [
+        "shot_6d97c2ddd613d22f"
+      ],
+      "vlm_selection": [
+        "shot_6d97c2ddd613d22f"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4241.MP4",
+      "target_s": 4,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_da98322d4419103e": "hero"
+      },
+      "base_selection": [
+        "shot_da98322d4419103e"
+      ],
+      "vlm_selection": [
+        "shot_da98322d4419103e"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_9c374398f07c46d8": "hero"
+      },
+      "base_selection": [
+        "shot_9c374398f07c46d8"
+      ],
+      "vlm_selection": [
+        "shot_9c374398f07c46d8"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4255.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_d55454b29ab82776": "hero"
+      },
+      "base_selection": [
+        "shot_d55454b29ab82776"
+      ],
+      "vlm_selection": [
+        "shot_d55454b29ab82776"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4256.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_899cabdffc548e3c": "hero"
+      },
+      "base_selection": [
+        "shot_899cabdffc548e3c"
+      ],
+      "vlm_selection": [
+        "shot_899cabdffc548e3c"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4261.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_6ad2d575ac2b6a8a": "hero"
+      },
+      "base_selection": [
+        "shot_6ad2d575ac2b6a8a"
+      ],
+      "vlm_selection": [
+        "shot_6ad2d575ac2b6a8a"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4262.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_6e5f6cd30a124b77": "hero"
+      },
+      "base_selection": [
+        "shot_6e5f6cd30a124b77"
+      ],
+      "vlm_selection": [
+        "shot_6e5f6cd30a124b77"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4265.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_0b83fd0938bbcc64": "support"
+      },
+      "base_selection": [
+        "shot_0b83fd0938bbcc64"
+      ],
+      "vlm_selection": [
+        "shot_0b83fd0938bbcc64"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_e4026b7a7c29c665": "hero"
+      },
+      "base_selection": [
+        "shot_e4026b7a7c29c665"
+      ],
+      "vlm_selection": [
+        "shot_e4026b7a7c29c665"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_9b81e0ebb6bfa089": "hero"
+      },
+      "base_selection": [
+        "shot_9b81e0ebb6bfa089"
+      ],
+      "vlm_selection": [
+        "shot_9b81e0ebb6bfa089"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4311.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_bcf581b61cf870ca": "hero"
+      },
+      "base_selection": [
+        "shot_bcf581b61cf870ca"
+      ],
+      "vlm_selection": [
+        "shot_bcf581b61cf870ca"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_s": 4,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_1dd8df27ef31e4d8": "hero"
+      },
+      "base_selection": [
+        "shot_1dd8df27ef31e4d8"
+      ],
+      "vlm_selection": [
+        "shot_1dd8df27ef31e4d8"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4327.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_d6a2c22e61276b94": "hero"
+      },
+      "base_selection": [
+        "shot_d6a2c22e61276b94"
+      ],
+      "vlm_selection": [
+        "shot_d6a2c22e61276b94"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4328.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_8715cddf122be4df": "hero"
+      },
+      "base_selection": [
+        "shot_8715cddf122be4df"
+      ],
+      "vlm_selection": [
+        "shot_8715cddf122be4df"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4339.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_2929449771e3f3d7": "hero",
+        "shot_92a3dfa63be7b025": "hero",
+        "shot_e4a35410fb077a4e": "hero"
+      },
+      "base_selection": [
+        "shot_2929449771e3f3d7",
+        "shot_92a3dfa63be7b025",
+        "shot_e4a35410fb077a4e"
+      ],
+      "vlm_selection": [
+        "shot_2929449771e3f3d7",
+        "shot_92a3dfa63be7b025",
+        "shot_e4a35410fb077a4e"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4341.MP4",
+      "target_s": 6,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_d7bfea159013c077": "hero"
+      },
+      "base_selection": [
+        "shot_d7bfea159013c077"
+      ],
+      "vlm_selection": [
+        "shot_d7bfea159013c077"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4372.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_4c8b9d7a4f1d6e23": "hero",
+        "shot_630610c302412fce": "support",
+        "shot_33a662c5d3017c29": "hero"
+      },
+      "base_selection": [
+        "shot_33a662c5d3017c29",
+        "shot_4c8b9d7a4f1d6e23",
+        "shot_630610c302412fce"
+      ],
+      "vlm_selection": [
+        "shot_33a662c5d3017c29",
+        "shot_4c8b9d7a4f1d6e23",
+        "shot_630610c302412fce"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4389.MP4",
+      "target_s": 5,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_0804b86b2e79f0a2": "support"
+      },
+      "base_selection": [
+        "shot_0804b86b2e79f0a2"
+      ],
+      "vlm_selection": [
+        "shot_0804b86b2e79f0a2"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4392.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_47cdc97103185aed": "support"
+      },
+      "base_selection": [
+        "shot_47cdc97103185aed"
+      ],
+      "vlm_selection": [
+        "shot_47cdc97103185aed"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4394.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_7cff5a24bfb0f16b": "hero"
+      },
+      "base_selection": [
+        "shot_7cff5a24bfb0f16b"
+      ],
+      "vlm_selection": [
+        "shot_7cff5a24bfb0f16b"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4395.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_209571817f44f3bf": "hero"
+      },
+      "base_selection": [
+        "shot_209571817f44f3bf"
+      ],
+      "vlm_selection": [
+        "shot_209571817f44f3bf"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4397.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_66d204b525e5d38d": "hero",
+        "shot_8b211f3aaf428fb5": "hero",
+        "shot_fae3b92c948f0bf5": "hero"
+      },
+      "base_selection": [
+        "shot_66d204b525e5d38d",
+        "shot_8b211f3aaf428fb5",
+        "shot_fae3b92c948f0bf5"
+      ],
+      "vlm_selection": [
+        "shot_66d204b525e5d38d",
+        "shot_8b211f3aaf428fb5",
+        "shot_fae3b92c948f0bf5"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4400.MP4",
+      "target_s": 5,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_501a77ab287a12e9": "hero"
+      },
+      "base_selection": [
+        "shot_501a77ab287a12e9"
+      ],
+      "vlm_selection": [
+        "shot_501a77ab287a12e9"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4404.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_ba65c806648cd6b7": "support"
+      },
+      "base_selection": [
+        "shot_ba65c806648cd6b7"
+      ],
+      "vlm_selection": [
+        "shot_ba65c806648cd6b7"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4406.MP4",
+      "target_s": 2,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_f9d363537392b1a1": "broll"
+      },
+      "base_selection": [
+        "shot_f9d363537392b1a1"
+      ],
+      "vlm_selection": [
+        "shot_f9d363537392b1a1"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4414.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_62058d26d7110101": "hero"
+      },
+      "base_selection": [
+        "shot_62058d26d7110101"
+      ],
+      "vlm_selection": [
+        "shot_62058d26d7110101"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4437.MP4",
+      "target_s": 4,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_32b1b91dca46c99b": "hero"
+      },
+      "base_selection": [
+        "shot_32b1b91dca46c99b"
+      ],
+      "vlm_selection": [
+        "shot_32b1b91dca46c99b"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4438.MP4",
+      "target_s": 3,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_8f9d799964f45792": "support",
+        "shot_a26a255ee6875e18": "hero",
+        "shot_8e1fd08a6917adb6": "hero"
+      },
+      "base_selection": [
+        "shot_8e1fd08a6917adb6",
+        "shot_8f9d799964f45792",
+        "shot_a26a255ee6875e18"
+      ],
+      "vlm_selection": [
+        "shot_8e1fd08a6917adb6",
+        "shot_8f9d799964f45792",
+        "shot_a26a255ee6875e18"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4446.MP4",
+      "target_s": 6,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 4,
+      "vlm_valid": 4,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_49c9ec90bf72b4a2": "support",
+        "shot_8ddfb094b1ae0833": "support",
+        "shot_12c97f918eb3b167": "support",
+        "shot_cf95ce3ac2aaa949": "broll"
+      },
+      "base_selection": [
+        "shot_12c97f918eb3b167",
+        "shot_49c9ec90bf72b4a2",
+        "shot_8ddfb094b1ae0833",
+        "shot_cf95ce3ac2aaa949"
+      ],
+      "vlm_selection": [
+        "shot_12c97f918eb3b167",
+        "shot_49c9ec90bf72b4a2",
+        "shot_8ddfb094b1ae0833",
+        "shot_cf95ce3ac2aaa949"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4447.MP4",
+      "target_s": 9,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_c867527e46265b9d": "support",
+        "shot_2eda86168d096968": "support",
+        "shot_7e676b2651f45491": "hero"
+      },
+      "base_selection": [
+        "shot_2eda86168d096968",
+        "shot_7e676b2651f45491",
+        "shot_c867527e46265b9d"
+      ],
+      "vlm_selection": [
+        "shot_2eda86168d096968",
+        "shot_7e676b2651f45491",
+        "shot_c867527e46265b9d"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4451.MP4",
+      "target_s": 6,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_c12c092740de158c": "hero"
+      },
+      "base_selection": [
+        "shot_c12c092740de158c"
+      ],
+      "vlm_selection": [
+        "shot_c12c092740de158c"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4452.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 1,
+      "vlm_valid": 1,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_5f8ef7c1e96c72d4": "support"
+      },
+      "base_selection": [
+        "shot_5f8ef7c1e96c72d4"
+      ],
+      "vlm_selection": [
+        "shot_5f8ef7c1e96c72d4"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4456.MP4",
+      "target_s": 1,
+      "intent": null
+    },
+    {
+      "status": "ok",
+      "shots": 3,
+      "vlm_valid": 3,
+      "vlm_degraded": 0,
+      "roles": {
+        "shot_8b6e5cd067db02c7": "support",
+        "shot_6dbdcadac718c074": "broll",
+        "shot_ec2e0c43071d4bd0": "broll"
+      },
+      "base_selection": [
+        "shot_6dbdcadac718c074",
+        "shot_8b6e5cd067db02c7",
+        "shot_ec2e0c43071d4bd0"
+      ],
+      "vlm_selection": [
+        "shot_6dbdcadac718c074",
+        "shot_8b6e5cd067db02c7",
+        "shot_ec2e0c43071d4bd0"
+      ],
+      "delta": [],
+      "delta_changed": false,
+      "discards_in_base": [],
+      "video": "D:\\新建豆包\\100CANON\\MVI_4458.MP4",
+      "target_s": 7,
+      "intent": null
+    },
+    {
+      "status": "no_shots",
+      "shots": 0,
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_s": 6,
+      "intent": null
+    }
+  ]
+}

@@ -76,3 +76,81 @@
 [VLM 1/1] OK   shot_0804b86b2e79f0a2 (28.8s) role=support fn=ACTION
     -> ok delta=False shots=1
 [25/40] MVI_4394.MP4 (target=2s) ...
+[VLM 1/1] OK   shot_47cdc97103185aed (34.4s) role=support fn=ACTION
+    -> ok delta=False shots=1
+[26/40] MVI_4395.MP4 (target=1s) ...
+[VLM 1/1] OK   shot_7cff5a24bfb0f16b (29.1s) role=hero fn=ESTABLISHING
+    -> ok delta=False shots=1
+[27/40] MVI_4397.MP4 (target=1s) ...
+[VLM 1/1] OK   shot_209571817f44f3bf (31.5s) role=hero fn=ESTABLISHING
+    -> ok delta=False shots=1
+[28/40] MVI_4400.MP4 (target=5s) ...
+[VLM 1/3] OK   shot_66d204b525e5d38d (17.5s) role=hero fn=ESTABLISHING
+[VLM 2/3] OK   shot_8b211f3aaf428fb5 (21.6s) role=hero fn=ESTABLISHING
+[VLM 3/3] OK   shot_fae3b92c948f0bf5 (28.0s) role=hero fn=ESTABLISHING
+    -> ok delta=False shots=3
+[29/40] MVI_4404.MP4 (target=1s) ...
+[VLM 1/1] OK   shot_501a77ab287a12e9 (15.0s) role=hero fn=ACTION
+    -> ok delta=False shots=1
+[30/40] MVI_4406.MP4 (target=2s) ...
+[VLM 1/1] OK   shot_ba65c806648cd6b7 (28.2s) role=support fn=ESTABLISHING
+    -> ok delta=False shots=1
+[31/40] MVI_4414.MP4 (target=3s) ...
+[VLM 1/1] OK   shot_f9d363537392b1a1 (35.1s) role=broll fn=DETAIL
+    -> ok delta=False shots=1
+[32/40] MVI_4437.MP4 (target=4s) ...
+[VLM 1/1] OK   shot_62058d26d7110101 (13.8s) role=hero fn=ACTION
+    -> ok delta=False shots=1
+[33/40] MVI_4438.MP4 (target=3s) ...
+[VLM 1/1] OK   shot_32b1b91dca46c99b (22.6s) role=hero fn=ESTABLISHING
+    -> ok delta=False shots=1
+[34/40] MVI_4446.MP4 (target=6s) ...
+[VLM 1/3] OK   shot_8f9d799964f45792 (33.3s) role=support fn=ACTION
+[VLM 2/3] OK   shot_a26a255ee6875e18 (33.3s) role=hero fn=ACTION
+[VLM 3/3] OK   shot_8e1fd08a6917adb6 (29.2s) role=hero fn=ACTION
+    -> ok delta=False shots=3
+[35/40] MVI_4447.MP4 (target=9s) ...
+[VLM 1/4] OK   shot_49c9ec90bf72b4a2 (40.1s) role=support fn=ACTION
+[VLM 2/4] OK   shot_8ddfb094b1ae0833 (45.0s) role=support fn=ACTION
+[VLM 3/4] OK   shot_12c97f918eb3b167 (39.8s) role=support fn=ACTION
+[VLM 4/4] FAIL shot_cf95ce3ac2aaa949 (49.5s) role=broll fn=SENSORY_INSERT
+    -> ok delta=False shots=4
+[36/40] MVI_4451.MP4 (target=6s) ...
+[VLM 1/3] OK   shot_c867527e46265b9d (45.8s) role=support fn=ACTION
+[VLM 2/3] OK   shot_2eda86168d096968 (35.9s) role=support fn=ACTION
+[VLM 3/3] OK   shot_7e676b2651f45491 (47.9s) role=hero fn=ESTABLISHING
+    -> ok delta=False shots=3
+[37/40] MVI_4452.MP4 (target=1s) ...
+[VLM 1/1] OK   shot_c12c092740de158c (31.6s) role=hero fn=ACTION
+    -> ok delta=False shots=1
+[38/40] MVI_4456.MP4 (target=1s) ...
+[VLM 1/1] OK   shot_5f8ef7c1e96c72d4 (32.4s) role=support fn=ACTION
+    -> ok delta=False shots=1
+[39/40] MVI_4458.MP4 (target=7s) ...
+[VLM 1/3] OK   shot_8b6e5cd067db02c7 (42.8s) role=support fn=ACTION
+[VLM 2/3] FAIL shot_6dbdcadac718c074 (51.4s) role=broll fn=SENSORY_INSERT
+[VLM 3/3] FAIL shot_ec2e0c43071d4bd0 (6.7s) role=broll fn=SENSORY_INSERT
+    -> ok delta=False shots=3
+[40/40] MVI_4467.MP4 (target=6s) ...
+    -> no_shots 
+
+=== 聚合 ===
+{
+  "clips": 40,
+  "ok": 39,
+  "errors": 1,
+  "total_shots_observed": 55,
+  "vlm_degraded_shots": 0,
+  "vlm_valid_rate": 1.0,
+  "clips_with_delta": 0,
+  "delta_rate": 0.0,
+  "discard_intercepted_clips": 0,
+  "role_distribution": {
+    "broll": 6,
+    "hero": 35,
+    "support": 14
+  }
+}
+
+报告: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\vlm_shadow_batch_report.json ｜ 总耗时 1762s
+exit=0

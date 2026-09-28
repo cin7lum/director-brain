@@ -154,7 +154,7 @@ def main() -> int:
         for i, f in enumerate(frames, 1):
             raw = _zhipu_vision_call(
                 [f], JUDGE_PROMPT + f"（本帧 frame 编号为 {i}）",
-                os.environ.get("VLM_MODEL", "glm-4v-flash"),
+                os.environ.get("JUDGE_MODEL", "glm-4v-flash"),
                 os.environ.get("ZHIPU_API_KEY", ""))
             lo, hi = raw.find("{"), raw.rfind("}")
             verdict_one = json.loads(raw[lo:hi + 1])

@@ -1,0 +1,22 @@
+{
+  "ledgers": {
+    "production_rate": {
+      "produced": 20,
+      "total": 24,
+      "text": "20/24 (83%)"
+    },
+    "defect_rate": {
+      "defective": 0,
+      "produced": 20,
+      "text": "0/20 (0%)"
+    },
+    "refusal_correctness": {
+      "explainable": 4,
+      "refused": 4,
+      "text": "4/4 (100%)"
+    }
+  },
+  "dev_holdout": {
+    "verdict": "PASS"
+  }
+}

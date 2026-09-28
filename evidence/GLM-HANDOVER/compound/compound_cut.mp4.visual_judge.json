@@ -7,54 +7,54 @@
       "technical": 3,
       "shots": 4,
       "pacing": 3,
-      "narrative": 4,
+      "narrative": 3,
       "visual": 3,
-      "note": "画面雾气朦胧，人物持杆立于雪山，信息量充足但视觉层次略显单调"
+      "note": "技术上有轻微模糊和曝光不足，但整体构图简洁有力"
     },
     {
       "frame": 2,
-      "technical": 3,
+      "technical": 2,
       "shots": 3,
-      "pacing": 4,
+      "pacing": 3,
       "narrative": 3,
-      "visual": 3,
-      "note": "动态模糊增强动作张力，但单帧信息量不足"
+      "visual": 2,
+      "note": "技术上有明显问题，但视觉上可能传达了战斗场景"
     },
     {
       "frame": 3,
-      "technical": 5,
+      "technical": 4,
       "shots": 4,
-      "pacing": 3,
-      "narrative": 3,
-      "visual": 5,
-      "note": "单帧画面清晰无技术问题，构图层次分明但节奏感不足"
+      "pacing": 4,
+      "narrative": 4,
+      "visual": 4,
+      "note": "技术质量和视觉呈现都较高，但叙事和节奏略显平淡"
     },
     {
       "frame": 4,
-      "technical": 5,
-      "shots": 5,
+      "technical": 4,
+      "shots": 4,
       "pacing": 4,
       "narrative": 4,
-      "visual": 5,
-      "note": "画面动态感强，色彩温暖，技术质量优秀，但单帧叙事信息稍弱"
+      "visual": 4,
+      "note": "画面清晰度较高，但缺乏叙事连贯性"
     },
     {
       "frame": 5,
-      "technical": 5,
-      "shots": 5,
+      "technical": 4,
+      "shots": 4,
       "pacing": 4,
       "narrative": 4,
-      "visual": 5,
-      "note": "画面清晰稳定，信息量充足且构图平衡，但单帧难以判断节奏与叙事连贯性"
+      "visual": 4,
+      "note": "画面清晰度较高，但缺乏动态元素"
     },
     {
       "frame": 6,
       "technical": 5,
       "shots": 5,
-      "pacing": 4,
-      "narrative": 4,
+      "pacing": 5,
+      "narrative": 5,
       "visual": 5,
-      "note": "画面构图精巧，色彩温暖，动态场景张力十足，技术呈现稳定。"
+      "note": "高质量的画面，具有丰富的细节和情感表达"
     },
     {
       "frame": 7,
@@ -62,23 +62,16 @@
       "shots": 5,
       "pacing": 5,
       "narrative": 5,
-      "visual": 4,
-      "note": "片尾字幕信息完整，技术无瑕疵，视觉简洁清晰"
+      "visual": 5,
+      "note": "技术质量高，信息量大且具有代表性，节奏平稳，叙事连贯，视觉美感强"
     }
   ],
   "aggregate": {
-    "technical": 4.43,
-    "shots": 4.43,
-    "pacing": 3.86,
-    "narrative": 3.86,
-    "visual": 4.29
+    "technical": 3.86,
+    "shots": 4.14,
+    "pacing": 4,
+    "narrative": 4,
+    "visual": 3.86
   },
-  "overall": {
-    "technical": 5,
-    "shots": 5,
-    "pacing": 5,
-    "narrative": 5,
-    "visual": 4,
-    "comment": "片尾字幕技术完美，信息传达清晰，视觉简洁专业"
-  }
+  "overall": {}
 }

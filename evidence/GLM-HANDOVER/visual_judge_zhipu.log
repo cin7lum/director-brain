@@ -1,0 +1,13 @@
+关键帧: 7 张（每镜头中点 1 帧）
+=== 像素级评审（本机 qwen3-vl，冻结五维量表）===
+  镜头1: tech=3 shots=4 pacing=3 narrative=3 visual=3 — 技术上有轻微模糊和曝光不足，但整体构图简洁有力
+  镜头2: tech=2 shots=3 pacing=3 narrative=3 visual=2 — 技术上有明显问题，但视觉上可能传达了战斗场景
+  镜头3: tech=4 shots=4 pacing=4 narrative=4 visual=4 — 技术质量和视觉呈现都较高，但叙事和节奏略显平淡
+  镜头4: tech=4 shots=4 pacing=4 narrative=4 visual=4 — 画面清晰度较高，但缺乏叙事连贯性
+  镜头5: tech=4 shots=4 pacing=4 narrative=4 visual=4 — 画面清晰度较高，但缺乏动态元素
+  镜头6: tech=5 shots=5 pacing=5 narrative=5 visual=5 — 高质量的画面，具有丰富的细节和情感表达
+  镜头7: tech=5 shots=5 pacing=5 narrative=5 visual=5 — 技术质量高，信息量大且具有代表性，节奏平稳，叙事连贯，视觉美感强
+均值: {'technical': 3.86, 'shots': 4.14, 'pacing': 4, 'narrative': 4, 'visual': 3.86}
+总评: None
+已写入 evidence\GLM-HANDOVER\compound\compound_cut.mp4.visual_judge.json
+zhipu_exit=0
