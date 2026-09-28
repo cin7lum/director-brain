@@ -1,0 +1,14 @@
+﻿pair_id,material,A_file,B_file,A_is,B_is
+pair01,MVI_4199,pair01_A_f029cfb4.mp4,pair01_B_f029cfb4.mp4,slow,base
+pair02,MVI_4214,pair02_A_52980e85.mp4,pair02_B_52980e85.mp4,slow,base
+pair03,MVI_4260,pair03_A_d3b98e68.mp4,pair03_B_d3b98e68.mp4,slow,base
+pair04,MVI_4276,pair04_A_55ec0547.mp4,pair04_B_55ec0547.mp4,slow,base
+pair05,MVI_4299,pair05_A_7d9d939d.mp4,pair05_B_7d9d939d.mp4,base,slow
+pair06,MVI_4305,pair06_A_15b27078.mp4,pair06_B_15b27078.mp4,slow,base
+pair07,MVI_4329,pair07_A_f8f3d546.mp4,pair07_B_f8f3d546.mp4,slow,base
+pair08,MVI_4331,pair08_A_8e98324f.mp4,pair08_B_8e98324f.mp4,slow,base
+pair09,MVI_4358,pair09_A_86b1d28c.mp4,pair09_B_86b1d28c.mp4,slow,base
+pair10,MVI_4375,pair10_A_b31afdb1.mp4,pair10_B_b31afdb1.mp4,base,slow
+pair11,MVI_4455,pair11_A_f2b6a2eb.mp4,pair11_B_f2b6a2eb.mp4,slow,base
+pair12,MVI_4466,pair12_A_11c4436b.mp4,pair12_B_11c4436b.mp4,slow,base
+pair13,MVI_4469,pair13_A_e3ff05a3.mp4,pair13_B_e3ff05a3.mp4,base,slow

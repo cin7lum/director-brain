@@ -1,0 +1,10 @@
+{
+  "total": 6,
+  "produced": 5,
+  "refused": 1,
+  "errored": 0,
+  "produced_with_hard_defect": 5,
+  "refusal_reasons": [
+    "target_duration_unreachable"
+  ]
+}
