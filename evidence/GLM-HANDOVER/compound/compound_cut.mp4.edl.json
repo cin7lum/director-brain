@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "project_id": "compound",
-  "created_at": 1790570035,
+  "created_at": 1790572265,
   "producer": "plan_repair_v0.2",
   "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
   "edl_id": "edl_compound_d30aa89ad726b0d6_repaired",
@@ -16,7 +16,7 @@
     {
       "source_asset_id": "shot_cdd0e442b56b14f7",
       "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
-      "in_frame": 4233333,
+      "in_frame": 4000000,
       "out_frame": 8000000,
       "timebase": 1000000,
       "transition": null,
@@ -78,8 +78,8 @@
     {
       "source_asset_id": "shot_79bc0b63e0c9c606",
       "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
-      "in_frame": 29000000,
-      "out_frame": 32000000,
+      "in_frame": 28000000,
+      "out_frame": 30766667,
       "timebase": 1000000,
       "transition": {
         "type": "xfade",

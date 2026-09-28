@@ -327,12 +327,15 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 MIN_CLIP_US,
             )
 
+            # route-9 导演层 policy：切点吸附场景边界（head 对齐）——
+            # 片段起点 = 源镜头起点（discover_shots 分段依据 = 场景边界）
             edl = generate_edl(
                 project_id=brief.project_id,
                 candidates=act_cands,
                 target_duration_us=per_act_target,
                 min_clip_us=min_clip_us,
                 max_clip_us=max_clip_us,
+                align="head",
             )
             act_edits: list[EditItem] = list(edl.ordered_edits)
             used_fallback = False
@@ -351,6 +354,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         target_duration_us=per_act_target,
                         min_clip_us=min_clip_us,
                         max_clip_us=max_clip_us,
+                        align="head",
                     )
                     relaxed_edits = list(edl_relaxed.ordered_edits)
                     if relaxed_edits:

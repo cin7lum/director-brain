@@ -5,47 +5,47 @@
     {
       "frame": 1,
       "technical": 3,
-      "shots": 3,
+      "shots": 4,
       "pacing": 3,
-      "narrative": 3,
+      "narrative": 4,
       "visual": 3,
-      "note": "单帧画面技术质量尚可，镜头选择与视觉表现中规中矩，叙事信息有限"
+      "note": "画面雾气朦胧，人物持杆立于雪山，信息量充足但视觉层次略显单调"
     },
     {
       "frame": 2,
-      "technical": 2,
-      "shots": 1,
-      "pacing": 3,
-      "narrative": 1,
-      "visual": 2,
-      "note": "画面严重模糊且曝光不足，信息量匮乏，镜头选择缺乏代表性"
+      "technical": 3,
+      "shots": 3,
+      "pacing": 4,
+      "narrative": 3,
+      "visual": 3,
+      "note": "动态模糊增强动作张力，但单帧信息量不足"
     },
     {
       "frame": 3,
       "technical": 5,
-      "shots": 5,
-      "pacing": 4,
-      "narrative": 4,
+      "shots": 4,
+      "pacing": 3,
+      "narrative": 3,
       "visual": 5,
-      "note": "画面构图层次分明，黄昏暖色调营造史诗感，废墟场景信息量充足但节奏略显平稳"
+      "note": "单帧画面清晰无技术问题，构图层次分明但节奏感不足"
     },
     {
       "frame": 4,
       "technical": 5,
-      "shots": 4,
+      "shots": 5,
       "pacing": 4,
       "narrative": 4,
       "visual": 5,
-      "note": "画面清晰动态，构图展现飞行场景，色彩温暖，叙事信息明确"
+      "note": "画面动态感强，色彩温暖，技术质量优秀，但单帧叙事信息稍弱"
     },
     {
       "frame": 5,
-      "technical": 4,
+      "technical": 5,
       "shots": 5,
-      "pacing": 5,
+      "pacing": 4,
       "narrative": 4,
       "visual": 5,
-      "note": "动态模糊强化动作张力，爪子与人物的互动构图精准，叙事信息明确"
+      "note": "画面清晰稳定，信息量充足且构图平衡，但单帧难以判断节奏与叙事连贯性"
     },
     {
       "frame": 6,
@@ -54,31 +54,31 @@
       "pacing": 4,
       "narrative": 4,
       "visual": 5,
-      "note": "画面清晰无技术瑕疵，构图与色彩出色，叙事互动性强，节奏感佳"
+      "note": "画面构图精巧，色彩温暖，动态场景张力十足，技术呈现稳定。"
     },
     {
       "frame": 7,
       "technical": 5,
-      "shots": 4,
-      "pacing": 4,
+      "shots": 5,
+      "pacing": 5,
       "narrative": 5,
       "visual": 4,
-      "note": "静态字幕信息量足但缺乏动态镜头，节奏平稳，叙事收尾清晰，视觉简洁"
+      "note": "片尾字幕信息完整，技术无瑕疵，视觉简洁清晰"
     }
   ],
   "aggregate": {
-    "technical": 4.14,
-    "shots": 3.86,
+    "technical": 4.43,
+    "shots": 4.43,
     "pacing": 3.86,
-    "narrative": 3.57,
-    "visual": 4.14
+    "narrative": 3.86,
+    "visual": 4.29
   },
   "overall": {
     "technical": 5,
-    "shots": 4,
-    "pacing": 4,
+    "shots": 5,
+    "pacing": 5,
     "narrative": 5,
     "visual": 4,
-    "comment": "技术完美，镜头选择为静态字幕信息量足但缺乏动态，节奏平稳，叙事连贯，视觉简洁清晰"
+    "comment": "片尾字幕技术完美，信息传达清晰，视觉简洁专业"
   }
 }

@@ -49,12 +49,27 @@ def compute_clip_window(
     shot_in_us: int,
     shot_out_us: int,
     clip_dur_us: int,
+    align: str = "center",
 ) -> tuple[int, int]:
-    """取镜头中点居中裁剪，边界钳制到 ``[shot_in_us, shot_out_us]``。
+    """按对齐策略取片段窗口，边界钳制到 ``[shot_in_us, shot_out_us]``。
+
+    align:
+    - ``"center"``（历史缺省）：镜头中点居中裁剪；
+    - ``"head"``（route-9 切点吸附）：窗口起点 = 源镜头起点——镜头起点即
+      场景边界（discover_shots 分段依据），**切在场景边界上**是专业剪辑
+      原则，切点自然度（scripts/cut_naturalness.py）由此提升。
 
     Guarantees: ``shot_in_us <= proposed_in_us < proposed_out_us <= shot_out_us``
     （调用方保证 ``clip_dur_us <= shot_out_us - shot_in_us``）。
     """
+    if align == "head":
+        proposed_in = shot_in_us
+        proposed_out = shot_in_us + clip_dur_us
+        if proposed_out > shot_out_us:
+            proposed_out = shot_out_us
+            proposed_in = proposed_out - clip_dur_us
+        return proposed_in, proposed_out
+
     shot_mid = (shot_in_us + shot_out_us) // 2
     half = clip_dur_us // 2
     proposed_in = shot_mid - half
@@ -119,6 +134,7 @@ class HeuristicBaseline:
         *,
         min_clip_us: int = MIN_CLIP_US,
         max_clip_us: int = MAX_CLIP_US,
+        align: str = "center",
     ) -> dict:
         """生成 V0.1 格式的 proposal dict。
 
@@ -160,7 +176,7 @@ class HeuristicBaseline:
 
             clip_dur = min(shot_dur, max_clip_us, remaining)
             proposed_in, proposed_out = compute_clip_window(
-                shot_in, shot_out, clip_dur
+                shot_in, shot_out, clip_dur, align=align
             )
 
             mult, hits = _vlm_multiplier(c, target_duration_us)
@@ -214,6 +230,7 @@ def generate_edl(
     *,
     min_clip_us: int = MIN_CLIP_US,
     max_clip_us: int = MAX_CLIP_US,
+    align: str = "center",
 ) -> EditorialDecisionList:
     """生成 EDL：产出 V0.1 proposal slots 后直接构造 EDL。
 
@@ -229,6 +246,7 @@ def generate_edl(
         target_duration_us=target_duration_us,
         min_clip_us=min_clip_us,
         max_clip_us=max_clip_us,
+        align=align,
     )
 
     edits = [
