@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
 import statistics
 import subprocess
 import sys
@@ -49,6 +50,30 @@ def extract_shot_keyframes(video: str, shot_mids_s: list[float],
             check=True, capture_output=True, timeout=60)
         frames.append(fp)
     return frames
+
+
+def _zhipu_vision_call(frames: list[Path], prompt: str,
+                       model: str, api_key: str) -> str:
+    """智谱 GLM-4V 系调用（OpenAI 兼容，免费档 GLM-4V-Flash）。"""
+    import urllib.request
+    content = [{"type": "text", "text": prompt}]
+    for f in frames:
+        b64 = base64.b64encode(f.read_bytes()).decode()
+        content.append({"type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
+    payload = {"model": model,
+               "messages": [{"role": "user", "content": content}],
+               "temperature": 0.1}
+    base = os.environ.get("ZHIPU_BASE_URL",
+                          "https://open.bigmodel.cn/api/paas/v4").rstrip("/")
+    req = urllib.request.Request(
+        base + "/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json",
+                 "Authorization": f"Bearer {api_key}"}, method="POST")
+    with urllib.request.urlopen(req, timeout=180) as r:
+        resp = json.loads(r.read())
+    return resp["choices"][0]["message"]["content"]
 
 
 def ollama_vision_judge(frames: list[Path], model: str = "qwen3-vl:latest",
@@ -122,7 +147,23 @@ def main() -> int:
     frames = extract_shot_keyframes(args.video, mids, out_dir)
     print(f"关键帧: {len(frames)} 张（每镜头中点 1 帧）")
 
-    verdict = ollama_vision_judge(frames)
+    provider = os.environ.get("JUDGE_PROVIDER", "local")
+    if provider == "zhipu":
+        # 云端免费档 GLM-4V-Flash：质量高于本地 8B，适合批量终评
+        per_shot = []
+        for i, f in enumerate(frames, 1):
+            raw = _zhipu_vision_call(
+                [f], JUDGE_PROMPT + f"（本帧 frame 编号为 {i}）",
+                os.environ.get("VLM_MODEL", "glm-4v-flash"),
+                os.environ.get("ZHIPU_API_KEY", ""))
+            lo, hi = raw.find("{"), raw.rfind("}")
+            verdict_one = json.loads(raw[lo:hi + 1])
+            shot = verdict_one.get("shots", [{}])[0] if "shots" in verdict_one else verdict_one
+            shot.setdefault("frame", i)
+            per_shot.append(shot)
+        verdict = {"shots": per_shot, "overall": {}}
+    else:
+        verdict = ollama_vision_judge(frames)
 
     dims = ["technical", "shots", "pacing", "narrative", "visual"]
     per_shot = verdict.get("shots", [])
