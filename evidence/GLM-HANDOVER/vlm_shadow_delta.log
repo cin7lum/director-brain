@@ -1,0 +1,42 @@
+[1] 技术观测: 15 镜头
+[2] VLM 语义观测（本机 qwen3-vl，逐镜头）...
+[VLM 1/15] cache hit  shot_0a1b84bc27c2053f
+[VLM 2/15] cache hit  shot_cdd0e442b56b14f7
+[VLM 3/15] cache hit  shot_3245852043084a00
+[VLM 4/15] cache hit  shot_563d8929b9969ab5
+[VLM 5/15] cache hit  shot_385d0e1bc5375209
+[VLM 6/15] cache hit  shot_d3bf1e03a4f33e8f
+[VLM 7/15] cache hit  shot_53a7ad8411bbde4b
+[VLM 8/15] cache hit  shot_577153ac1556da3a
+[VLM 9/15] cache hit  shot_4827e1e4e0fbf6ed
+[VLM 10/15] cache hit  shot_79bc0b63e0c9c606
+[VLM 11/15] cache hit  shot_672a3148e8d16e46
+[VLM 12/15] cache hit  shot_9a7d761e64524d53
+[VLM 13/15] cache hit  shot_7a75571b95f13f80
+[VLM 14/15] cache hit  shot_d002e5d74886baf2
+[VLM 15/15] cache hit  shot_f77bcf4b39d780a0
+    15 条语义观测，耗时 0s
+    shot_0a1b84bc27c2053f: role=broll fn=ESTABLISHING motion=static
+    shot_3245852043084a00: role=transition fn=TRANSITION motion=static
+    shot_385d0e1bc5375209: role=hero fn=ACTION motion=burst
+    shot_4827e1e4e0fbf6ed: role=hero fn=REACTION motion=static
+    shot_53a7ad8411bbde4b: role=broll fn=ESTABLISHING motion=static
+    shot_563d8929b9969ab5: role=hero fn=DETAIL motion=static
+    shot_577153ac1556da3a: role=hero fn=ACTION motion=burst
+    shot_672a3148e8d16e46: role=hero fn=ACTION motion=subtle
+    shot_79bc0b63e0c9c606: role=broll fn=SENSORY_INSERT motion=subtle
+    shot_7a75571b95f13f80: role=broll fn=ESTABLISHING motion=static
+    shot_9a7d761e64524d53: role=hero fn=ESTABLISHING motion=subtle
+    shot_cdd0e442b56b14f7: role=hero fn=ESTABLISHING motion=static
+    shot_d002e5d74886baf2: role=broll fn=ESTABLISHING motion=static
+    shot_d3bf1e03a4f33e8f: role=hero fn=ACTION motion=burst
+    shot_f77bcf4b39d780a0: role=broll fn=DETAIL motion=static
+
+[3] 链 A 决策（无 VLM）: 7 镜头 [('shot_cdd0e442b56b14f7', 4000000, 7000000), ('shot_385d0e1bc5375209', 16500000, 17500000), ('shot_53a7ad8411bbde4b', 23791667, 25875000), ('shot_577153ac1556da3a', 25875000, 27416667), ('shot_79bc0b63e0c9c606', 28000000, 30000000), ('shot_672a3148e8d16e46', 32000000, 36000000), ('shot_f77bcf4b39d780a0', 48000000, 52208333)]
+
+[4] 链 B 影子决策（VLM ACTIVE）: 7 镜头 [('shot_cdd0e442b56b14f7', 4000000, 7000000), ('shot_385d0e1bc5375209', 16500000, 17500000), ('shot_53a7ad8411bbde4b', 23791667, 25875000), ('shot_577153ac1556da3a', 25875000, 27416667), ('shot_79bc0b63e0c9c606', 28000000, 30000000), ('shot_672a3148e8d16e46', 32000000, 36000000), ('shot_f77bcf4b39d780a0', 48000000, 52208333)]
+    决策 delta: 新入 [] 处、移出 0 处、保留 7 处
+    VLM 角色判定: discard=[] hero=['shot_cdd0e442b56b14f7', 'shot_563d8929b9969ab5', 'shot_385d0e1bc5375209', 'shot_d3bf1e03a4f33e8f', 'shot_577153ac1556da3a', 'shot_4827e1e4e0fbf6ed', 'shot_672a3148e8d16e46', 'shot_9a7d761e64524d53']
+
+影子期 delta 报告已写入 D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\vlm_shadow_delta.json
+（通路状态已恢复 SHADOW；本实验为晋升证据产出，主链未受影响）
