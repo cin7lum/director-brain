@@ -1,0 +1,847 @@
+{
+  "comment": "阶段 8b 正式矩阵：271 段分层抽样（短/中/长），dev/holdout 对半隔离，×3 意图。 第一轮执行：分层抽样 40 段（dev 20/holdout 20）×3 意图。",
+  "dev_count": 135,
+  "holdout_count": 136,
+  "tasks": [
+    {
+      "tag": "dev-MVI_4311-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4311.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4311-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4311.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4311-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4311.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4392-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4392.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4392-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4392.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4392-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4392.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4395-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4395.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4395-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4395.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4395-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4395.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4256-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4256.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4256-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4256.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4256-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4256.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4290-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4290-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4290-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4290.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4223-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4223.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4223-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4223.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4223-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4223.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4240-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4240.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4240-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4240.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4240-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4240.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4262-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4262.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4262-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4262.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4262-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4262.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4320-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_seconds": 4,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4320-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4320-slow4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4320.MP4",
+      "target_seconds": 4,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4456-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4456.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4456-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4456.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4456-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4456.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4301-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4301-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4301-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4301.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4404-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4404.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4404-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4404.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4404-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4404.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4212-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4212.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4212-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4212.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4212-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4212.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4438-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4438.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4438-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4438.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4438-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4438.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4446-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4446.MP4",
+      "target_seconds": 6,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4446-fast6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4446.MP4",
+      "target_seconds": 6,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4446-slow6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4446.MP4",
+      "target_seconds": 6,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4437-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4437.MP4",
+      "target_seconds": 4,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4437-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4437.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4437-slow4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4437.MP4",
+      "target_seconds": 4,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4400-base5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4400.MP4",
+      "target_seconds": 5,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4400-fast5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4400.MP4",
+      "target_seconds": 5,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4400-slow5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4400.MP4",
+      "target_seconds": 5,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4451-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4451.MP4",
+      "target_seconds": 6,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4451-fast6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4451.MP4",
+      "target_seconds": 6,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4451-slow6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4451.MP4",
+      "target_seconds": 6,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4406-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4406.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4406-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4406.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4406-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4406.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4241-base4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4241.MP4",
+      "target_seconds": 4,
+      "intent": null,
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4241-fast4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4241.MP4",
+      "target_seconds": 4,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "dev-MVI_4241-slow4",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4241.MP4",
+      "target_seconds": 4,
+      "intent": "慢节奏，长镜头",
+      "split": "dev"
+    },
+    {
+      "tag": "holdout-MVI_4452-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4452.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4452-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4452.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4452-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4452.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4327-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4327.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4327-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4327.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4327-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4327.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4209-base5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4209.MP4",
+      "target_seconds": 5,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4209-fast5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4209.MP4",
+      "target_seconds": 5,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4209-slow5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4209.MP4",
+      "target_seconds": 5,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4341-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4341.MP4",
+      "target_seconds": 6,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4341-fast6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4341.MP4",
+      "target_seconds": 6,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4341-slow6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4341.MP4",
+      "target_seconds": 6,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4467-base6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_seconds": 6,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4467-fast6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_seconds": 6,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4467-slow6",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4467.MP4",
+      "target_seconds": 6,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4414-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4414.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4414-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4414.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4414-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4414.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4447-base9",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4447.MP4",
+      "target_seconds": 9,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4447-fast9",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4447.MP4",
+      "target_seconds": 9,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4447-slow9",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4447.MP4",
+      "target_seconds": 9,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4394-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4394.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4394-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4394.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4394-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4394.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4265-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4265.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4265-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4265.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4265-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4265.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4339-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4339.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4339-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4339.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4339-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4339.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4255-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4255.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4255-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4255.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4255-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4255.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4230-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4230.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4230-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4230.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4230-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4230.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4397-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4397.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4397-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4397.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4397-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4397.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4389-base5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4389.MP4",
+      "target_seconds": 5,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4389-fast5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4389.MP4",
+      "target_seconds": 5,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4389-slow5",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4389.MP4",
+      "target_seconds": 5,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4261-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4261.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4261-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4261.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4261-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4261.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4224-base2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4224.MP4",
+      "target_seconds": 2,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4224-fast2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4224.MP4",
+      "target_seconds": 2,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4224-slow2",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4224.MP4",
+      "target_seconds": 2,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4372-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4372.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4372-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4372.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4372-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4372.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4328-base1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4328.MP4",
+      "target_seconds": 1,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4328-fast1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4328.MP4",
+      "target_seconds": 1,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4328-slow1",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4328.MP4",
+      "target_seconds": 1,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4246-base3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_seconds": 3,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4246-fast3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_seconds": 3,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4246-slow3",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4246.MP4",
+      "target_seconds": 3,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4458-base7",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4458.MP4",
+      "target_seconds": 7,
+      "intent": null,
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4458-fast7",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4458.MP4",
+      "target_seconds": 7,
+      "intent": "快剪风格，避免模糊镜头",
+      "split": "holdout"
+    },
+    {
+      "tag": "holdout-MVI_4458-slow7",
+      "video": "D:\\新建豆包\\100CANON\\MVI_4458.MP4",
+      "target_seconds": 7,
+      "intent": "慢节奏，长镜头",
+      "split": "holdout"
+    }
+  ]
+}
