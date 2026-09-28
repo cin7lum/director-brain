@@ -20,7 +20,8 @@ from observation_service.keyframe import extract_keyframe
 from observation_service.ollama_vlm_adapter import OllamaVLMAdapter
 
 _PROVIDER = "ollama_qwen3_vl"
-_PROMPT_VERSION = "vlm_prompt_v1"
+# v2：prompt 增加 importance 字段（P3-2 打标数据集）；缓存键随版本失效
+_PROMPT_VERSION = "vlm_prompt_v2"
 _TIMEBASE_US = 1_000_000
 
 
@@ -33,6 +34,8 @@ def _claim_payload(vlm_result: dict) -> dict:
         "frame_description": vlm_result.get("frame_description", ""),
         "sensory_wet_heat": vlm_result.get("sensory_wet_heat"),
         "sensory_mood_intensity": vlm_result.get("sensory_mood_intensity"),
+        # 阶段 P3-2：TVSum 同构 importance 标注（1-5，打标数据集字段）
+        "importance": vlm_result.get("importance"),
     }
 
 
@@ -193,7 +196,7 @@ def batch_vlm_observations(
         shot_id = shot["shot_id"]
         fp = _cache_fingerprint(video_hash, model_version, shot)
 
-        cached = cache.get(fp)
+        cached = cache.get(f"{fp}|{_PROMPT_VERSION}")
         if cached is not None:
             print(f"[VLM {idx + 1}/{total}] cache hit  {shot_id}")
             observations.extend(cached)
@@ -221,7 +224,7 @@ def batch_vlm_observations(
             vlm_result, shot, video_path, model_version=model_version
         )
         observations.append(obs)
-        cache.put(fp, [obs])
+        cache.put(f"{fp}|{_PROMPT_VERSION}", [obs])
 
         status = "OK  " if obs.claim_kind == ClaimKind.MODEL_OBSERVATION else "FAIL"
         print(

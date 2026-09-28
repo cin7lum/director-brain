@@ -1,0 +1,23 @@
+[VLM 1/15] OK   shot_0a1b84bc27c2053f (35.8s) role=broll fn=ESTABLISHING
+[VLM 2/15] OK   shot_cdd0e442b56b14f7 (36.5s) role=hero fn=ESTABLISHING
+[VLM 3/15] OK   shot_3245852043084a00 (44.7s) role=transition fn=ESTABLISHING
+[VLM 4/15] OK   shot_563d8929b9969ab5 (21.0s) role=hero fn=REACTION
+[VLM 5/15] OK   shot_385d0e1bc5375209 (13.8s) role=hero fn=ACTION
+[VLM 6/15] OK   shot_d3bf1e03a4f33e8f (31.8s) role=hero fn=ACTION
+[VLM 7/15] OK   shot_53a7ad8411bbde4b (21.7s) role=broll fn=ESTABLISHING
+[VLM 8/15] OK   shot_577153ac1556da3a (19.8s) role=hero fn=ACTION
+[VLM 9/15] OK   shot_4827e1e4e0fbf6ed (18.8s) role=hero fn=REACTION
+[VLM 10/15] OK   shot_79bc0b63e0c9c606 (31.0s) role=hero fn=ACTION
+[VLM 11/15] OK   shot_672a3148e8d16e46 (32.3s) role=hero fn=ACTION
+[VLM 12/15] OK   shot_9a7d761e64524d53 (33.7s) role=hero fn=ESTABLISHING
+[VLM 13/15] OK   shot_7a75571b95f13f80 (47.5s) role=transition fn=ESTABLISHING
+[VLM 14/15] OK   shot_d002e5d74886baf2 (81.9s) role=hero fn=ESTABLISHING
+[VLM 15/15] OK   shot_f77bcf4b39d780a0 (34.1s) role=broll fn=TRANSITION
+=== 重要性对照 F1（QVHighlights 协议，标注员=VLM）===
+  真值（importance ≥ 4）: ['shot_0a1b84bc27c2053f', 'shot_3245852043084a00', 'shot_385d0e1bc5375209', 'shot_4827e1e4e0fbf6ed', 'shot_53a7ad8411bbde4b', 'shot_563d8929b9969ab5', 'shot_577153ac1556da3a', 'shot_672a3148e8d16e46', 'shot_79bc0b63e0c9c606', 'shot_7a75571b95f13f80', 'shot_9a7d761e64524d53', 'shot_cdd0e442b56b14f7', 'shot_d002e5d74886baf2', 'shot_d3bf1e03a4f33e8f', 'shot_f77bcf4b39d780a0']
+  成片选中: ['shot_385d0e1bc5375209', 'shot_53a7ad8411bbde4b', 'shot_577153ac1556da3a', 'shot_672a3148e8d16e46', 'shot_79bc0b63e0c9c606', 'shot_cdd0e442b56b14f7', 'shot_f77bcf4b39d780a0']
+  precision=1.0  recall=0.467  F1=0.636
+  明细: TP=7 FP=0 FN=8
+  全镜头标注: {"shot_0a1b84bc27c2053f": 5, "shot_cdd0e442b56b14f7": 5, "shot_3245852043084a00": 5, "shot_563d8929b9969ab5": 4, "shot_385d0e1bc5375209": 5, "shot_d3bf1e03a4f33e8f": 4, "shot_53a7ad8411bbde4b": 4, "shot_577153ac1556da3a": 5, "shot_4827e1e4e0fbf6ed": 4, "shot_79bc0b63e0c9c606": 4, "shot_672a3148e8d16e46": 5, "shot_9a7d761e64524d53": 5, "shot_7a75571b95f13f80": 5, "shot_d002e5d74886baf2": 5, "shot_f77bcf4b39d780a0": 4}
+已写入 evidence\GLM-HANDOVER\compound\compound_cut.mp4.edl.importance_f1.json
+exit=0

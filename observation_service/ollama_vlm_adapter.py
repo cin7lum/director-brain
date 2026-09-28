@@ -38,13 +38,17 @@ _PROMPT = """You are looking at one frame extracted from a short-video shot.
 Step 1: Describe the frame in one Chinese sentence (what do you actually see?
 Setting, subjects, action, lighting).
 
-Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 5 fields:
+Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 6 fields:
 {
   "shot_function": one of ESTABLISHING/ACTION/REACTION/DETAIL/TRANSITION/ATMOSPHERIC_EVIDENCE/SENSORY_INSERT,
   "sensory_wet_heat": number 0-1 or null,
   "sensory_mood_intensity": number 0-1 or null,
   "motion_amount": one of static/subtle/burst,
-  "proposed_role_v2": one of hero/support/transition/broll/discard
+  "proposed_role_v2": one of hero/support/transition/broll/discard,
+  "importance": integer 1-5 (how essential this shot is to a cut of this
+    material: 5=must keep, 4=valuable, 3=fine but replaceable, 2=weak,
+    1=nearly useless; judge by information value, visual quality and
+    narrative contribution)
 }
 
 Rules: pick the fallback value if you cannot tell; never invent numbers you
@@ -174,6 +178,11 @@ class OllamaVLMAdapter(VLMAdapter):
                 f"proposed_role_v2: got {role_raw!r}, fallback to 'broll'",
             )
 
+        # P3-2：TVSum 同构 importance（1-5 整数；缺/非法 → None=未标，
+        # 下游记 0 并按未标注处理——不捏造）
+        imp_raw = parsed.get("importance")
+        importance = imp_raw if isinstance(imp_raw, int) and 1 <= imp_raw <= 5 else None
+
         return {
             "shot_function": shot_function,
             "sensory_wet_heat": _norm_float(parsed.get("sensory_wet_heat")),
@@ -182,6 +191,7 @@ class OllamaVLMAdapter(VLMAdapter):
             ),
             "motion_amount": motion_amount,
             "proposed_role_v2": proposed_role_v2,
+            "importance": importance,
             "frame_description": desc,
             "status": OBSERVED,
             "degraded": bool(warnings),
