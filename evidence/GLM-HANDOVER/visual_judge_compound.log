@@ -1,0 +1,12 @@
+关键帧: 7 张（每镜头中点 1 帧）
+=== 像素级评审（本机 qwen3-vl，冻结五维量表）===
+  镜头1: tech=3 shots=3 pacing=3 narrative=3 visual=3 — 单帧画面技术质量尚可，镜头选择与视觉表现中规中矩，叙事信息有限
+  镜头2: tech=2 shots=1 pacing=3 narrative=1 visual=2 — 画面严重模糊且曝光不足，信息量匮乏，镜头选择缺乏代表性
+  镜头3: tech=5 shots=5 pacing=4 narrative=4 visual=5 — 画面构图层次分明，黄昏暖色调营造史诗感，废墟场景信息量充足但节奏略显平稳
+  镜头4: tech=5 shots=4 pacing=4 narrative=4 visual=5 — 画面清晰动态，构图展现飞行场景，色彩温暖，叙事信息明确
+  镜头5: tech=4 shots=5 pacing=5 narrative=4 visual=5 — 动态模糊强化动作张力，爪子与人物的互动构图精准，叙事信息明确
+  镜头6: tech=5 shots=5 pacing=4 narrative=4 visual=5 — 画面清晰无技术瑕疵，构图与色彩出色，叙事互动性强，节奏感佳
+  镜头7: tech=5 shots=4 pacing=4 narrative=5 visual=4 — 静态字幕信息量足但缺乏动态镜头，节奏平稳，叙事收尾清晰，视觉简洁
+均值: {'technical': 4.14, 'shots': 3.86, 'pacing': 3.86, 'narrative': 3.57, 'visual': 4.14}
+总评: 技术完美，镜头选择为静态字幕信息量足但缺乏动态，节奏平稳，叙事连贯，视觉简洁清晰
+已写入 evidence\GLM-HANDOVER\compound\compound_cut.mp4.visual_judge.json
