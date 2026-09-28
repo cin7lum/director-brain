@@ -1,0 +1,13 @@
+{
+  "sidecar": "D:\\新建豆包\\AI-Director\\evidence\\GLM-HANDOVER\\compound\\compound_cut.mp4.edl.json",
+  "intent": "快节奏剪辑，避免模糊镜头",
+  "rubric": "frozen five-dimension (same as L3)",
+  "scores": {
+    "intent": 3,
+    "narrative": 4,
+    "pacing": 3,
+    "shots": 4,
+    "technical": 5,
+    "comment": "本次剪辑四幕结构完整，选段分布合理且无低质模糊问题，但部分镜头时长偏长，未充分达成快节奏的剪辑意图。"
+  }
+}

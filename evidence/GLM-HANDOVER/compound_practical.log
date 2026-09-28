@@ -3,7 +3,7 @@ ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：Libra
 [2] EDL: 7 镜头
 [3] 转场 policy: 4 处 fade(0.3s)
 [4] 字幕: 2 条语音 → SRT
-[7] L1: 硬伤=True 黑帧=2 冻帧=0 时长偏差=['17.21s vs 目标 20.00s（偏差 14.0%）']
+[7] L1: 硬伤=True 黑帧=2 冻帧=0 时长偏差=['18.42s vs 目标 20.00s（偏差 7.9%）']
 
 [完成] 复合成片: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\compound\compound_cut.mp4
   流构成: 视频 + 音频(原声+配乐) + 字幕(mov_text)

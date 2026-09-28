@@ -87,11 +87,11 @@ def main() -> int:
             return 1
         edl, plan = outcome.edl, outcome.plan
     edl.subtitle_refs = edl.subtitle_refs  # 字幕引用保持
+    Path(out + '.edl.json').write_text(edl.model_dump_json(indent=2), encoding='utf-8')
     try:
         render_edl(edl, src, out)
     except RuntimeError:
         import execution.renderer as R
-        import re as _re
         fc = R._build_filter_complex(edl, True, "abase")
         print("=== filter_complex（诊断）===")
         for seg in fc.split(";"):

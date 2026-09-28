@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "project_id": "compound",
+  "created_at": 1790570035,
+  "producer": "plan_repair_v0.2",
+  "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "edl_id": "edl_compound_d30aa89ad726b0d6_repaired",
+  "version": "0.1",
+  "brief_version": "0.1",
+  "context_id": "graph_compound_45d5c24b9901f373",
+  "source_asset_hashes": [
+    "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254"
+  ],
+  "timebase": 1000000,
+  "ordered_edits": [
+    {
+      "source_asset_id": "shot_cdd0e442b56b14f7",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 4233333,
+      "out_frame": 8000000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "opening",
+      "rationale": "act=hook, heuristic:blur=180.87",
+      "act": "hook",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_385d0e1bc5375209",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 16500000,
+      "out_frame": 17500000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "pacing",
+      "rationale": "act=develop, heuristic:blur=101.77",
+      "act": "develop",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_53a7ad8411bbde4b",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 23791667,
+      "out_frame": 25875000,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "fade",
+        "duration_us": 300000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "pacing",
+      "rationale": "act=develop, heuristic:blur=270.58",
+      "act": "develop",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_577153ac1556da3a",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 25875000,
+      "out_frame": 27416667,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "fade",
+        "duration_us": 300000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "pacing",
+      "rationale": "act=develop, heuristic:blur=279.11",
+      "act": "develop",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_79bc0b63e0c9c606",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 29000000,
+      "out_frame": 32000000,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "fade",
+        "duration_us": 300000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "peak",
+      "rationale": "act=peak, heuristic:blur=185.21",
+      "act": "peak",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_672a3148e8d16e46",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 32000000,
+      "out_frame": 36000000,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "fade",
+        "duration_us": 300000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "peak",
+      "rationale": "act=peak, heuristic:blur=323.72",
+      "act": "peak",
+      "evidence_type": "heuristic"
+    },
+    {
+      "source_asset_id": "shot_f77bcf4b39d780a0",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 48000000,
+      "out_frame": 52208333,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "closing",
+      "rationale": "act=resolve, heuristic:blur=2508.85",
+      "act": "resolve",
+      "evidence_type": "heuristic"
+    }
+  ],
+  "decision_refs": [],
+  "audio_refs": [
+    "D:\\新建豆包\\AI-Director\\evidence\\GLM-HANDOVER\\compound\\compound_cut_music.wav|-14"
+  ],
+  "overlay_refs": [],
+  "subtitle_refs": [
+    "D:\\新建豆包\\AI-Director\\evidence\\GLM-HANDOVER\\compound\\compound_cut.mp4.srt|chi"
+  ],
+  "hard_rule_refs": [],
+  "artistic_choices": [],
+  "expected_duration": 19600000,
+  "plan_hash": null,
+  "approval_state": "draft",
+  "supersedes_edl_id": null
+}

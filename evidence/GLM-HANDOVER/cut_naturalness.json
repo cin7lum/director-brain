@@ -1,0 +1,8 @@
+{
+  "source": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "scene_boundaries": 12,
+  "cut_points": 7,
+  "aligned": 4,
+  "ratio": 0.571,
+  "tolerance_s": 0.5
+}
