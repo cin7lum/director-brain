@@ -210,29 +210,36 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
 
     has_audio = _has_audio_stream(source_video)
 
-    # 阶段 8a-1：软字幕（subtitle_refs 内的 SRT 路径，mov_text 流，可开关）
-    subtitle_inputs: list[tuple[str, str]] = []  # (srt_path, lang)
+    # 阶段 8a-1/8a-4：字幕（subtitle_refs 内的 SRT 路径）
+    # 约定："path|lang[|hard]"——hard=烧录进画面（libass），缺省软字幕流
+    subtitle_inputs: list[tuple[str, str]] = []  # 软字幕 (srt_path, lang)
+    hardsub_paths: list[str] = []               # 硬字幕（末端 subtitles 滤镜）
     for ref in edl.subtitle_refs:
-        # 约定：条目为 SRT 文件路径；可选 "path|lang" 形式指定语言
-        if "|" in ref:
-            path, lang = ref.split("|", 1)
-        else:
-            path, lang = ref, "chi"
-        if Path(path).is_file():
-            subtitle_inputs.append((path, lang))
-        else:
+        fields = ref.split("|")
+        path = fields[0]
+        lang = fields[1] if len(fields) > 1 else "chi"
+        hard = len(fields) > 2 and fields[2] == "hard"
+        if not Path(path).is_file():
             logger.warning("字幕文件不存在，跳过: %s", path)
+            continue
+        if hard:
+            hardsub_paths.append(path)
+        else:
+            subtitle_inputs.append((path, lang))
 
-    # 阶段 8a-2：配乐混音（audio_refs: "path|gain_db"，MVP=amix 固定增益）
-    # gain_db 缺省 -8；ducking（sidechaincompress）为二期
+    # 阶段 8a-2/9：配乐混音（audio_refs: "path|gain_db[|duck]"）
+    # duck=人声时自动压低配乐（sidechaincompress，参数取社区标准值）
     music_inputs: list[tuple[str, float]] = []
+    duck_requested = False
     for ref in edl.audio_refs:
         if "|" in ref:
-            path, gain_raw = ref.split("|", 1)
+            fields = ref.split("|")
+            path = fields[0]
             try:
-                gain = float(gain_raw)
+                gain = float(fields[1]) if len(fields) > 1 else -8.0
             except ValueError:
                 gain = -8.0
+            duck_requested = duck_requested or (len(fields) > 2 and fields[2] == "duck")
         else:
             path, gain = ref, -8.0
         if Path(path).is_file():
@@ -257,11 +264,32 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
             )
         music_labels = "".join(f"[bg{j}]" for j in range(len(music_inputs)))
         if has_audio:
-            n = 1 + len(music_inputs)
-            filter_complex += (
-                f";[abase]{music_labels}"
-                f"amix=inputs={n}:duration=first:normalize=0[a]"
-            )
+            if duck_requested:
+                # 侧链 ducking：原声（abase）触发压缩配乐（bg 总线）
+                filter_complex += (
+                    f";[abase]{music_labels}"
+                    f"amix=inputs={1 + len(music_inputs)}:duration=first:normalize=0[voicebus];"
+                    f"[bg0][voicebus]sidechaincompress=threshold=0.03:ratio=8:"
+                    f"attack=50:release=500[ducked]"
+                ) if len(music_inputs) == 1 else None
+                if len(music_inputs) == 1:
+                    filter_complex += (
+                        f";[ducked][voicebus]amix=inputs=2:duration=first:"
+                        f"normalize=0[a]"
+                    )
+                else:
+                    # 多配乐+duck：MVP 回退普通混音（响亮提示）
+                    logger.warning("多配乐 + duck 组合暂不支持，回退普通混音")
+                    filter_complex += (
+                        f";[abase]{music_labels}"
+                        f"amix=inputs={n}:duration=first:normalize=0[a]"
+                    )
+            else:
+                n = 1 + len(music_inputs)
+                filter_complex += (
+                    f";[abase]{music_labels}"
+                    f"amix=inputs={n}:duration=first:normalize=0[a]"
+                )
         else:
             n = len(music_inputs)
             filter_complex += (
@@ -274,21 +302,29 @@ def render_edl(edl: EditorialDecisionList, source_video: str, output_path: str) 
         len(music_inputs), len(subtitle_inputs),
     )
 
+    # 硬字幕（libass 烧录）：Windows 路径转义（反斜杠→正斜杠，冒号→\:）
+    # 在命令组装前完成 filter_complex 最终形态（_build_cmd 只读不写）
+    if hardsub_paths:
+        esc = hardsub_paths[0].replace("\\", "/").replace(":", "\\:")
+        filter_complex += f";[v]subtitles=filename='{esc}'[vsub]"
+
     out_dir = os.path.dirname(output_path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
     def _build_cmd(encoder: str) -> list[str]:
+        video_label = "vsub" if hardsub_paths else "v"
         cmd = ["ffmpeg", "-y", "-i", source_video]
         for srt_path, _lang in subtitle_inputs:
             cmd += ["-i", srt_path]
         for music_path, _gain in music_inputs:
             cmd += ["-i", music_path]
-        cmd += ["-filter_complex", filter_complex, "-map", "[v]"]
+        cmd += ["-filter_complex", filter_complex, "-map", f"[{video_label}]"]
         # 混音/原声都从 filter_complex 的 [a] 出；无音轨且无配乐则无音频流
         if has_audio or music_inputs:
             cmd += ["-map", "[a]"]
-        # 字幕流：第 i 个 SRT 是输入 i+1（源视频为输入 0），各取其 0 号流
+        # 字幕流：软字幕的 SRT 是输入 i+1（源视频为输入 0），各取其 0 号流；
+        # 硬字幕已烧录，不加流
         for idx, (_srt_path, lang) in enumerate(subtitle_inputs):
             cmd += [
                 "-map", f"{idx + 1}:0",

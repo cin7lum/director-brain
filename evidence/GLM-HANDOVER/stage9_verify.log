@@ -1,0 +1,4 @@
+成片流: ['audio', 'video']
+平均音量: -18.8dB
+
+[PASS] duck 混音（sidechaincompress）+ 硬字幕烧录（libass）真实渲染通过。
