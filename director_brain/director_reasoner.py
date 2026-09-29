@@ -140,6 +140,8 @@ def _build_candidates(
             "vlm_shot_function": vlm_claim.get("shot_function"),
             "vlm_role": vlm_claim.get("proposed_role_v2"),
             "vlm_motion": vlm_claim.get("motion_amount"),
+            # S4：TVSum 同构 importance（1-5；None=未标注）
+            "vlm_importance": vlm_claim.get("importance"),
         })
 
     # T2：原始（未放宽）判据结果单独留档——confidence 用它计算，

@@ -154,7 +154,10 @@ class HeuristicBaseline:
         def _score(c: dict) -> float:
             blur = c.get("blur_score") or 0
             mult, _ = _vlm_multiplier(c, target_duration_us)
-            return blur * mult
+            # S4：importance 权重（1-5 → 0.4~2.0 倍；未标注 → 1.0）
+            imp = c.get("_claim_metrics", {}).get("importance")
+            imp_mult = (0.4 + 0.4 * imp) if isinstance(imp, (int, float)) and 1 <= imp <= 5 else 1.0
+            return blur * mult * imp_mult
 
         usable.sort(key=lambda c: -_score(c))
 
