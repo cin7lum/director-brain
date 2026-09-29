@@ -1,0 +1,28 @@
+
+语义观测: 15/15 镜头
+  [0] 雪雾笼罩的险峻山峰远景，画面由黑屏渐显至雾气弥漫的山体轮廓  emotion=dark role=setup
+  [1] 雪雾弥漫的雪山场景中，人物手持长杖前行  emotion=tense role=development
+  [2] 雾中持武器的女性角色与黑底文字片头交替出现  emotion=tense role=transition
+  [3] 昏暗室内，老者与红发女子对峙，女子表情惊恐逐渐隐入黑暗  emotion=tense role=climax
+  [4] 雪地中持长矛的少女与持剑男子激烈对战  emotion=tense role=climax
+  [5] 昏暗破败的巷道中，红发女性角色从行走逐渐转向战斗姿态，最终面对燃烧的废墟战场  emotion=tense role=development
+  [6] 黄昏时分，古老石砌城堡废墟上，红色巨龙与白色飞龙在屋顶间穿梭飞行，远处高塔矗立  emotion=tense role=development
+  [7] 三帧动画展示《驯龙高手》中夜煞龙与光煞龙在黄昏天空的空中对峙场景  emotion=tense role=climax
+  [8] 动画角色在黄昏背景下表情惊恐的特写镜头  emotion=tense role=climax
+  [9] 红发少女与巨翼生物在黄昏沙漠中互动，远处飞鸟掠过  emotion=tense role=development
+  [10] 一只龙形生物被手托举着在空中飞行，背景是橙红色天空  emotion=tense role=development
+  [11] 沙漠中人物徒步前行的场景  emotion=calm role=development
+  [12] 沙漠中逐渐变暗的场景，人物与沙丘轮廓逐渐隐去，品牌标识SINTEL始终居中显现  emotion=dark role=transition
+  [13] 视频中展示了一个名为SINTEL的标志，标志包含一棵树的图案和文字，背景为黑色，随后标志逐渐淡出至全  emotion=neutral role=transition
+  [14] 视频片尾字幕展示《Sintel》电影制作信息，背景为纯黑  emotion=neutral role=resolution
+
+=== 跨镜头叙事理解（doubao-seed-2-1-lite）===
+  叙事弧: 该序列以雪雾笼罩的险峻山峰远景建立暗黑冒险基调，跟随持武器的红发主角先后经历雪山跋涉、雪地对战、巷道冲突、室内对峙、城堡上空龙类穿梭、龙类空中对峙、与巨翼生物互动等冲突段落，最终在沙漠徒步后展示《Sintel》品牌标识与片尾制作信息，完成奇幻冒险叙事的收尾。
+  情绪轨迹: ['dark', 'tense', 'tense', 'tense', 'tense', 'tense', 'tense', 'tense', 'tense', 'tense', 'tense', 'calm', 'dark', 'neutral', 'neutral']
+  配对: [{"a": 0, "b": 1, "relation": "continuity", "reason": "两者均为雪雾雪山场景，Shot0是远景建立整体环境，Shot1是该环境下的人物行动，属于场景与叙事的自然延续。"}, {"a": 1, "b": 2, "relation": "continuity", "reason": "Shot1中持长杖的人物与Shot2中雾中持武器的女性角色形象呼
+  关键节点: [{"shot_idx": 0, "why": "作为开场从黑屏渐显雪雾山峰，奠定整个序列暗黑冒险的基调，是叙事的起点。"}, {"shot_idx": 3, "why": "首次出现核心红发女子的冲突场景，女子惊恐隐入黑暗，引出核心人物的困境，是第一个冲突转折点。"}, {"shot_idx": 7, "why": "龙类空中对峙的奇幻高潮，将冒险的冲突强度推至顶点，是奇幻叙事的核心转折点。"}
+  幕边界: [{"act": "hook", "start": 0, "end": 2}, {"act": "develop", "start": 3, "end": 6}, {"act": "peak", "start": 7, "end": 10}, {"act": "resolve", "start": 11, "end": 14}]
+  推荐顺序: [0, 1, 2, 4, 5, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+  局限: ['无法确定Shot7中《驯龙高手》的内容是素材混入还是叙事的有意设计，无法明确其与《Sintel》主线的关联。', '无法确定各场景（雪山、室内、巷道、沙漠）之间的精确时间先后逻辑，仅能通过元素关联推断大致顺序。', '无法确定核心人物的身份关系（如红发女子与老者、巨翼生物的关系）及冲突的具体起因。', '无法获取Shot2中交替出现的片头文字的具体内容，无法明确片头传递的叙事信息。', '无法确定Shot8中惊恐特写的角色身份，无法明确其情绪反应的具体触发对象。', '缺少中间过渡镜头，无法还原完整的叙事逻辑，仅能基于现有片段推断大致的冒险脉络。']
+
+已写入 evidence/GLM-HANDOVER/narrative_arc.json
