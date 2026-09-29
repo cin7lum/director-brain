@@ -18,6 +18,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from director_brain.input_sanitizer import sanitize_untrusted
 from director_brain.models.director_decision import DirectorDecision
 
 OLLAMA_BASE = "http://localhost:11434"

@@ -13,6 +13,7 @@ import json
 import re
 import time
 
+from director_brain.input_sanitizer import sanitize_untrusted
 from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.film_observation import FilmObservation
@@ -41,7 +42,7 @@ def _parse_intent(intent_text: str) -> dict:
     纯关键词+正则匹配，不调用 LLM。无法匹配的字段保持 ``"not_determined"``
     或空列表（fail-soft）。
     """
-    text = intent_text or ""
+    text = sanitize_untrusted(intent_text or "")  # S5 消毒
 
     # ---- language：按中文字符占比 ----
     cjk = sum(1 for ch in text if "一" <= ch <= "鿿")
