@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import subprocess
 
-from director_brain.context_gateway import build_asset_index, get_asset_context
+from director_brain.context_gateway import build_asset_context as build_asset_index, get_asset_context
 from director_brain.models import ClaimKind, ContextLayer, FilmContextSnapshot, FilmObservation
 
 

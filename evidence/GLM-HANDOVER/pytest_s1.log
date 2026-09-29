@@ -1,0 +1,30 @@
+
+=================================== ERRORS ====================================
+_____________ ERROR collecting tests/unit/test_context_gateway.py _____________
+ImportError while importing test module 'D:\新建豆包\AI-Director\tests\unit\test_context_gateway.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python314\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_context_gateway.py:19: in <module>
+    from director_brain.context_gateway import build_asset_context as build_asset_index, get_asset_context
+E   ImportError: cannot import name 'get_asset_context' from 'director_brain.context_gateway' (D:\新建豆包\AI-Director\director_brain\context_gateway.py)
+============================== warnings summary ===============================
+tests\unit\test_media_import.py:42
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:42: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:62
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:62: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests\unit\test_media_import.py:97
+  D:\新建豆包\AI-Director\tests\unit\test_media_import.py:97: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/unit/test_context_gateway.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+3 warnings, 1 error in 1.47s
