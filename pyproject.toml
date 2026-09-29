@@ -15,6 +15,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+http = [
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+]
 # ASR（faster-whisper 拖带 ctranslate2/CUDA 二进制，重依赖，按需安装）
 asr = [
     "faster-whisper>=1.0",
