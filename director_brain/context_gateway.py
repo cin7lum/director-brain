@@ -265,6 +265,12 @@ def build_evidence_context(
     )
 
 
+def get_asset_context(context_id: str, repository) -> FilmContextSnapshot | None:
+    """从存储层读取指定 context_id 的快照；不存在返回 None。"""
+    from director_brain.models.film_context import FilmContextSnapshot as _FCS
+    return repository.get(_FCS, context_id)
+
+
 # ---------------------------------------------------------------------------
 # ContextGateway 管理器（渐进披露入口）
 # ---------------------------------------------------------------------------

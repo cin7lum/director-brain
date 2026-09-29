@@ -77,7 +77,7 @@ def test_build_asset_index_returns_snapshot_with_asset_layer(tmp_path):
     assert isinstance(snap, FilmContextSnapshot)
     assert ContextLayer.ASSET in snap.layers
     assert snap.provider == "context_gateway"
-    assert snap.model == "asset_index_v1"
+    assert snap.model == "asset_context_v1"
     assert snap.timebase == 1_000_000
     assert snap.coverage == "asset_level"
     assert snap.rights_scope == "internal"
