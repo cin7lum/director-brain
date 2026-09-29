@@ -1,0 +1,46 @@
+ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：Library cublas64_12.dll is not found or cannot be loaded
+============================================================
+第 1 层 · 多帧语义观测（P3-1 眼睛升级）
+============================================================
+技术观测: 15 镜头 ｜ 语音: 2 段
+语义观测: 15/15 镜头
+  shot_0a1b84bc27c: 雪雾笼罩的险峻山峰远景，画面由暗转亮逐渐清晰  emotion=dark role=setup imp=3
+  shot_cdd0e442b56: 雪雾弥漫的雪山场景中，人物手持长杖前行  emotion=tense role=development imp=4
+  shot_32458520430: 雾中持武器的女性角色特写，背景为雪山，后接黑底文字片头  emotion=tense role=setup imp=3
+  shot_563d8929b99: 昏暗室内，老者与红发女子对峙，女子表情惊恐，光线渐暗营造紧张氛围  emotion=tense role=climax imp=4
+  shot_385d0e1bc53: 雪地中持长矛的少女与持剑男子激烈对战的场景  emotion=tense role=climax imp=4
+
+============================================================
+第 2 层 · 跨镜头叙事弧（P3-3 灵魂升级）
+============================================================
+叙事弧: This sequence opens with a fog-shrouded snow mountain establishing shot, progres...
+幕边界: [{'act': 'hook', 'start': 0, 'end': 2}, {'act': 'develop', 'start': 3, 'end': 6}, {'act': 'peak', 'start': 7, 'end': 10}, {'act': 'resolve', 'start': 11, 'end': 14}]
+幕分配: 15 镜头按内容分入四幕
+
+============================================================
+第 3 层 · 语义感知选片 + 叙事弧排序（P3-2 大脑升级）
+============================================================
+  hook: shot_32458520430  score=56.8  imp=3(1.6x); narrative=setup→hook
+  develop: shot_7a75571b95f  score=1078.3  imp=4(2.0x)
+  develop: shot_672a3148e8d  score=647.4  imp=4(2.0x)
+  peak: shot_577153ac155  score=558.5  imp=4(2.0x); narrative=climax→peak
+  peak: shot_385d0e1bc53  score=203.5  imp=4(2.0x)
+  peak: shot_563d8929b99  score=103.6  imp=4(2.0x)
+  resolve: shot_f77bcf4b39d  score=6021.7  imp=5(2.4x); narrative=resolution→resolv
+转场: 3 处 dissolve（幕切换处）
+修复: 0 处物理调整
+
+============================================================
+L1 检核结果
+============================================================
+  硬伤: True
+  黑帧: 6 段
+  冻帧: 0 段
+  PASS: 目标时长偏差 — 18.83s vs 目标 20.00s（偏差 5.8%）
+  INFO: must_avoid 技术约束 — must_avoid:blur_score<50.0:模糊（生成期过滤 + validator Ru
+  节奏: shots=7 ASL=2.857s
+
+============================================================
+[完成] 语义驱动成片: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\p3_compound\semantic_cut.mp4
+  三层内核深化全部参与：多帧观测(15) + 叙事弧 + 语义选片
+  叠加能力：3 转场 + 字幕 + 配乐 + 账本 + L1

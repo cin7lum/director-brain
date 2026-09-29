@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0",
+  "project_id": "p3_compound",
+  "created_at": 1790654204,
+  "producer": "plan_repair_v0.2",
+  "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
+  "edl_id": "edl_p3_semantic_repaired",
+  "version": "1.0",
+  "brief_version": "0.1",
+  "context_id": "ctx_p3",
+  "source_asset_hashes": [
+    "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254"
+  ],
+  "timebase": 1000000,
+  "ordered_edits": [
+    {
+      "source_asset_id": "shot_3245852043084a00",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 8000000,
+      "out_frame": 11000000,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "dissolve",
+        "duration_us": 400000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "ATMOSPHERIC_EVIDENCE",
+      "rationale": "act=hook, semantic=imp=3(1.6x); narrative=setup→hook, desc=雾中持武器的女性角色特写，背景为雪山，后接黑底文字片头",
+      "act": "hook",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_7a75571b95f13f80",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 40000000,
+      "out_frame": 44000000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "TRANSITION",
+      "rationale": "act=develop, semantic=imp=4(2.0x), desc=沙漠中逐渐变暗的场景，人物与沙丘轮廓逐渐隐去，品牌标识SIN",
+      "act": "develop",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_672a3148e8d16e46",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 32000000,
+      "out_frame": 35000000,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "dissolve",
+        "duration_us": 400000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "ACTION",
+      "rationale": "act=develop, semantic=imp=4(2.0x), desc=一只龙形生物被手托举在空中，背景为暖色调天空",
+      "act": "develop",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_577153ac1556da3a",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 25875000,
+      "out_frame": 27416667,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "ACTION",
+      "rationale": "act=peak, semantic=imp=4(2.0x); narrative=climax→peak, desc=三帧动画展示《驯龙高手》中夜煞龙与光煞龙在黄昏天空的空中对峙",
+      "act": "peak",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_385d0e1bc5375209",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 16500000,
+      "out_frame": 17500000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "ACTION",
+      "rationale": "act=peak, semantic=imp=4(2.0x), desc=雪地中持长矛的少女与持剑男子激烈对战的场景",
+      "act": "peak",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_563d8929b9969ab5",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 12000000,
+      "out_frame": 15458333,
+      "timebase": 1000000,
+      "transition": {
+        "type": "xfade",
+        "name": "dissolve",
+        "duration_us": 400000,
+        "audio_duration_us": null
+      },
+      "effect_refs": [],
+      "shot_function": "REACTION",
+      "rationale": "act=peak, semantic=imp=4(2.0x), desc=昏暗室内，老者与红发女子对峙，女子表情惊恐，光线渐暗营造紧张",
+      "act": "peak",
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_f77bcf4b39d780a0",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 48000000,
+      "out_frame": 52000000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "ESTABLISHING",
+      "rationale": "act=resolve, semantic=imp=5(2.4x); narrative=resolution→resolve; emotion=neutral↔upbeat, desc=视频片尾字幕展示《Sintel》电影制作信息，背景为纯黑",
+      "act": "resolve",
+      "evidence_type": "vlm"
+    }
+  ],
+  "decision_refs": [],
+  "audio_refs": [
+    "D:\\新建豆包\\AI-Director\\evidence\\GLM-HANDOVER\\p3_compound\\music_bed.wav|-16"
+  ],
+  "overlay_refs": [],
+  "subtitle_refs": [
+    "D:\\新建豆包\\AI-Director\\evidence\\GLM-HANDOVER\\p3_compound\\semantic_cut.srt|chi"
+  ],
+  "hard_rule_refs": [],
+  "artistic_choices": [],
+  "expected_duration": 20000000,
+  "plan_hash": null,
+  "approval_state": "draft",
+  "supersedes_edl_id": null
+}
