@@ -153,19 +153,57 @@ def extract_chain_a_avoid_terms(constraints: list[str] | None) -> list[str]:
     return terms
 
 
-def _is_covered(token: str, chain_a_terms: list[str]) -> bool:
-    """链 B 负向令牌是否被链 A 术语覆盖（双向子串，小写）。
+#: 中英对账词表（P0 修复：链 B 英文枚举 ↔ 链 A 中文术语，双向映射）。
+#: 同义/近义对放同一组——对账时跨语言命中视为已覆盖。
+_BILINGUAL_GROUPS: list[set[str]] = [
+    {"模糊", "blurry", "blur", "out_of_focus", "虚焦", "失焦"},
+    {"黑屏", "黑帧", "black_frame", "black", "过暗", "too_dark"},
+    {"抖动", "shake", "shaky", "晃动"},
+    {"过曝", "过亮", "overexposed", "too_bright", "白屏"},
+    {"transition", "转场"},
+    {"slow_motion", "慢动作"},
+    {"reorder", "重排", "重排序"},
+    {"reorder_story_beat", "叙事重排"},
+    {"action_scene", "动作场景", "关键动作", "key_action"},
+    {"audio_lead", "声音提前"},
+    {"extend", "延长"},
+    {"shorten", "缩短"},
+]
 
-    保守口径：中文术语与英文枚举互不匹配时如实报"未覆盖"——宁可多报
-    人工抽检项，不可假装已执法。
+
+def _is_covered(token: str, chain_a_terms: list[str]) -> bool:
+    """链 B 负向令牌是否被链 A 术语覆盖。
+
+    两层匹配：
+    1. 双向子串（原有逻辑）；
+    2. 中英词表：token 与 chain_a_term 属同一同义组即视为覆盖
+       （P0 修复：链 B 英文枚举 blurry_shots ↔ 链 A 中文 模糊 不再漏配）。
     """
-    t = token.lower().strip()
+    t = token.lower().strip().replace("_", " ").strip()
     if not t:
-        return True  # 空令牌无可对账，不算未覆盖
+        return True
     for term in chain_a_terms:
-        s = term.lower().strip()
-        if s and (t in s or s in t):
+        st = term.lower().strip().replace("_", " ").strip()
+        if not st:
+            continue
+        # 直接子串
+        if t in st or st in t:
             return True
+        # 中英词表：token 与 term 是否属同义组
+        for group in _BILINGUAL_GROUPS:
+            g = {w.lower() for w in group}
+            t_words = set(t.split()) | {t}
+            s_words = set(st.split()) | {st}
+            if t_words & g and s_words & g:
+                return True
+            # 单词级：token 或 term 包含组内词汇
+            for w in g:
+                if (w in t or t in w) and any(
+                    sw in st or st in sw for sw in g if sw != w
+                ):
+                    return True
+                if w in t and any(sw in st or st in sw for sw in g):
+                    return True
     return False
 
 

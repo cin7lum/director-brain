@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "project_id": "compound",
-  "created_at": 1790572265,
+  "created_at": 1790645695,
   "producer": "plan_repair_v0.2",
   "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
   "edl_id": "edl_compound_d30aa89ad726b0d6_repaired",
@@ -22,7 +22,7 @@
       "transition": null,
       "effect_refs": [],
       "shot_function": "opening",
-      "rationale": "act=hook, heuristic:blur=180.87",
+      "rationale": "act=hook, heuristic:blur=167.94",
       "act": "hook",
       "evidence_type": "heuristic"
     },
@@ -89,7 +89,7 @@
       },
       "effect_refs": [],
       "shot_function": "peak",
-      "rationale": "act=peak, heuristic:blur=185.21",
+      "rationale": "act=peak, heuristic:blur=232.01",
       "act": "peak",
       "evidence_type": "heuristic"
     },

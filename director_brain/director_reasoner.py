@@ -147,9 +147,17 @@ def _build_candidates(
     # P1-b：无数据观测（claim 带 error，如读帧失败）永不可用——
     # "没有数据"不等于"质量最差"，放宽阶梯不得将其注水入选。
     for c in candidates:
-        c["_no_data"] = "error" in (c.get("_claim_metrics") or {})
+        metrics = c.get("_claim_metrics") or {}
+        c["_no_data"] = "error" in metrics
+        # P0：暗镜头（多点采样黑占比 >= 50%）永久排除——碎内容不属低质，
+        # 与 no_data 同等处理，放宽阶梯也不得注水入选
+        c["_dark_shot"] = (
+            isinstance(metrics.get("dark_sample_ratio"), (int, float))
+            and metrics["dark_sample_ratio"] >= 0.5
+        )
         c["technical_usable"] = (
-            c["exposure_ok"] and c["blur_score"] > threshold and not c["_no_data"]
+            c["exposure_ok"] and c["blur_score"] > threshold
+            and not c["_no_data"] and not c["_dark_shot"]
         )
         c["_primary_usable"] = c["technical_usable"]
 
@@ -158,12 +166,12 @@ def _build_candidates(
     relaxation_level = 0
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
-            if not c["_no_data"]:
+            if not c["_no_data"] and not c["_dark_shot"]:
                 c["technical_usable"] = c["exposure_ok"]
         relaxation_level = 1
     if sum(1 for c in candidates if c["technical_usable"]) < 2:
         for c in candidates:
-            if not c["_no_data"]:
+            if not c["_no_data"] and not c["_dark_shot"]:
                 c["technical_usable"] = True
         relaxation_level = 2
     for c in candidates:
@@ -304,6 +312,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     if c["source_shot_id"] not in selected_ids
                     and c.get("vlm_role") != "discard"
                     and not c.get("_no_data")
+                    and not c.get("_dark_shot")
                 ]
                 if pool:
                     sorted_cands = sorted(pool, key=lambda c: c["source_in_us"])
