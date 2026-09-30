@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 
+from director_brain.input_sanitizer import sanitize_untrusted
 from director_brain.llm_adapter import LLMResult, SYSTEM_PROMPT, PROMPT_VERSION
 from director_brain.models.director_decision import DirectorDecision
 
@@ -71,9 +72,12 @@ class ZhipuLLMAdapter:
         if decision_id is None:
             decision_id = f"sd_{int(time.time() * 1000)}"
 
-        user_message = user_input
-        if context:
-            user_message = f"Available context:\n{context}\n\nDirector request:\n{user_input}"
+        # S5 安全边界：用户请求与上下文（可能携带视频内容派生文本）均不可信
+        safe_request = sanitize_untrusted(user_input)
+        safe_context = sanitize_untrusted(context) if context else None
+        user_message = safe_request
+        if safe_context:
+            user_message = f"Available context:\n{safe_context}\n\nDirector request:\n{safe_request}"
 
         payload = {
             "model": self.model,

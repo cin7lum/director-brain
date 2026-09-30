@@ -20,6 +20,8 @@ import re
 import urllib.request
 from pathlib import Path
 
+from director_brain.input_sanitizer import sanitize_untrusted
+
 ROOT = Path(__file__).resolve().parent.parent
 
 _NARRATIVE_PROMPT = """You are a professional film editor analyzing the narrative structure of a sequence of shots.
@@ -48,12 +50,16 @@ Rules:
 
 
 def _build_sequence_prompt(semantics: list[dict]) -> str:
-    """把逐镜头语义观测序列格式化为 LLM 可读文本。"""
+    """把逐镜头语义观测序列格式化为 LLM 可读文本。
+
+    scene_description 为视频内容派生的不可信文本（画面中的标语/字幕可能
+    携带注入），按 S5 规范消毒；枚举字段来自受限词表无需处理。
+    """
     lines = []
     for i, sem in enumerate(semantics):
         parts = [f"Shot {i}:"]
         if sem.get("scene_description"):
-            parts.append(f"  content: {sem['scene_description']}")
+            parts.append(f"  content: {sanitize_untrusted(str(sem['scene_description']))}")
         if sem.get("action_type"):
             parts.append(f"  action: {sem['action_type']}")
         if sem.get("emotional_tone"):
