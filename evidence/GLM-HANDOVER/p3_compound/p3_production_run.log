@@ -1,0 +1,80 @@
+ASR GPU 不可用（缺 CUDA 运行库或显存不足？），回退 CPU：Library cublas64_12.dll is not found or cannot be loaded
+[1/7] 分析媒体: D:\新建豆包\gen1-roughcut\m5_real\sintel_trailer.mp4
+      技术观测: 15 条
+[2/7] 语音转写...
+      语音观测: 2 条（ASR 归因: 有音轨且有转写）
+[1.5] 多帧语义观测（vlm_semantic ACTIVE）...
+[VLM 1/15] cache hit  shot_0a1b84bc27c2053f
+[VLM 2/15] cache hit  shot_cdd0e442b56b14f7
+[VLM 3/15] cache hit  shot_3245852043084a00
+[VLM 4/15] cache hit  shot_563d8929b9969ab5
+[VLM 5/15] cache hit  shot_385d0e1bc5375209
+[VLM 6/15] cache hit  shot_d3bf1e03a4f33e8f
+[VLM 7/15] cache hit  shot_53a7ad8411bbde4b
+[VLM 8/15] cache hit  shot_577153ac1556da3a
+[VLM 9/15] cache hit  shot_4827e1e4e0fbf6ed
+[VLM 10/15] cache hit  shot_79bc0b63e0c9c606
+[VLM 11/15] cache hit  shot_672a3148e8d16e46
+[VLM 12/15] cache hit  shot_9a7d761e64524d53
+[VLM 13/15] cache hit  shot_7a75571b95f13f80
+[VLM 14/15] cache hit  shot_d002e5d74886baf2
+[VLM 15/15] cache hit  shot_f77bcf4b39d780a0
+      语义观测: 15/15 镜头有效
+[1.6] 跨镜头叙事弧（P3-3）...
+      叙事弧: 该序列为动画短片《Sintel》的剪辑素材集合，涵盖片头标识、雪山环境铺垫、主角引入、多场冲突战斗、奇幻巨龙遭遇、沙漠跋...
+      幕边界: 4 段 ｜ 推荐顺序: 有
+[3/7] 编译 Brief...
+      Brief ID: brief_sintel_trailer_45d5c24b9901f373, 目标时长: 20.0s
+      用户意图: 已接收（21 字，规则抽取入 Brief 约束）
+[4/7] 构建故事图...
+      图节点: 4, 边: 3
+[5/7] 推断关系...
+      推断关系边: 19 条（通路: EXPERIMENTAL——影子信号，不进决策）
+        - shot_0a1b84bc27c2053f → shot_cdd0e442b56b14f7 [visual_transition] conf=0.811
+        - shot_cdd0e442b56b14f7 → shot_3245852043084a00 [visual_transition] conf=0.53
+        - shot_3245852043084a00 → shot_563d8929b9969ab5 [causal_candidate] conf=0.834
+        - shot_563d8929b9969ab5 → shot_385d0e1bc5375209 [causal_candidate] conf=0.7
+        - shot_563d8929b9969ab5 → shot_385d0e1bc5375209 [visual_transition] conf=0.608
+        - shot_385d0e1bc5375209 → shot_d3bf1e03a4f33e8f [visual_transition] conf=0.628
+        - shot_53a7ad8411bbde4b → shot_577153ac1556da3a [causal_candidate] conf=0.866
+        - shot_577153ac1556da3a → shot_4827e1e4e0fbf6ed [visual_transition] conf=0.488
+        - shot_4827e1e4e0fbf6ed → shot_79bc0b63e0c9c606 [visual_transition] conf=0.617
+        - shot_672a3148e8d16e46 → shot_9a7d761e64524d53 [visual_transition] conf=0.704
+        - shot_9a7d761e64524d53 → shot_7a75571b95f13f80 [visual_transition] conf=0.729
+        - shot_7a75571b95f13f80 → shot_d002e5d74886baf2 [visual_transition] conf=0.85
+        - shot_d002e5d74886baf2 → shot_f77bcf4b39d780a0 [visual_transition] conf=0.95
+        - shot_cdd0e442b56b14f7 → shot_3245852043084a00 [causal_candidate] conf=0.7
+        - shot_385d0e1bc5375209 → shot_d3bf1e03a4f33e8f [causal_candidate] conf=0.85
+        - shot_d3bf1e03a4f33e8f → shot_53a7ad8411bbde4b [causal_candidate] conf=0.85
+        - shot_577153ac1556da3a → shot_4827e1e4e0fbf6ed [causal_candidate] conf=0.7
+        - shot_4827e1e4e0fbf6ed → shot_79bc0b63e0c9c606 [causal_candidate] conf=0.85
+        - shot_7a75571b95f13f80 → shot_d002e5d74886baf2 [causal_candidate] conf=0.7
+[6/7] 生成导演计划...
+[7/7] 验证计划...
+[shadow] 链 B 语义决策（影子对账，不驱动成片）...
+      影子语义决策（SHADOW）: 模型 doubao-seed-2-1-lite-260915 ｜ 延迟 4550ms ｜ 重试 1 次
+        链 B 状态: NEEDS_CONTEXT ｜ 正向意图: ['adjust_pacing']
+        负向对账: 已覆盖 1 条（链 A 确定性执法）；未覆盖 1 条（无确定性执法，人工抽检项）
+          - 未覆盖: key_action_scene_content
+        状态分歧: chain_a_proceeded_but_chain_b_status=NEEDS_CONTEXT
+============================================================
+EDL 摘要
+============================================================
+  镜头数:     8
+  总时长:     20.00s (20000000us)
+  四幕分配:   {'hook': 1, 'develop': 4, 'peak': 2, 'resolve': 1}
+  关系边数:   19（影子信号，逐条见上方）
+  验证状态:   PASS
+  降级:       是（1 项，见下）
+    - semantic_topup:act=develop:shot=shot_d3bf1e03a4f33e8f
+  通路状态（T4 shadow 协议）:
+    - vlm_semantic: ACTIVE —— VLM 逐镜头语义观测（shot_function/role/motion）
+    - relation_inference: EXPERIMENTAL —— 镜头间关系边（技术信号 + 可选 VLM 语义）
+    - asr_transcript: SHADOW —— ASR 语音转写观测
+    - semantic_reasoner: SHADOW —— 链 B 语义决策（LLM→DirectorDecision，影子对账）
+  EDL ID:     edl_sintel_trailer_22bbf5db6491d421
+  Plan ID:    plan_sintel_trailer_22bbf5db6491d421
+============================================================
+渲染中 -> D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\p3_compound\semantic_cut.mp4
+渲染完成: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\p3_compound\semantic_cut.mp4 (3102.9 KB)
+      剪辑清单: D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\p3_compound\semantic_cut.mp4.edl.json + D:\新建豆包\AI-Director\evidence\GLM-HANDOVER\p3_compound\semantic_cut.mp4.plan.json
