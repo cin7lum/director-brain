@@ -54,21 +54,12 @@ def _parse_claim(claim: str) -> dict:
 
 
 def _ffprobe_duration(video_path: str) -> float | None:
-    """用 ffprobe 获取视频时长（秒），失败返回 None。"""
-    try:
-        result = subprocess.run(
-            [
-                "ffprobe", "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                video_path,
-            ],
-            capture_output=True, text=True, timeout=30,
-        )
-        if result.returncode == 0:
-            return float(result.stdout.strip())
-    except (subprocess.TimeoutExpired, FileNotFoundError, ValueError):
-        pass
+    """获取视频时长（秒），失败返回 None（候选⑤：统一走 media_info）。"""
+    from observation_service.media_info import probe_media_meta
+
+    meta = probe_media_meta(video_path)
+    if meta.ok and meta.duration_us:
+        return meta.duration_us / 1_000_000
     return None
 
 

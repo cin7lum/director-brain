@@ -29,40 +29,32 @@ from director_brain.config import load_settings
 _TIMEBASE_US = 1_000_000
 
 
-def _probe_video_meta(video_path: str) -> dict[str, object]:
-    """ffprobe 读取时长/帧率/音轨；失败 degrade 零值。"""
-    cmd = [
-        "ffprobe", "-v", "error",
-        "-show_entries", "format=duration:stream=codec_type,r_frame_rate",
-        "-of", "json", video_path,
-    ]
+def _file_hash_or_empty(video_path: str) -> str:
+    """文件 sha256；不可读返回空串（四层 build_* 共用的样板收敛）。"""
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        data = json.loads(proc.stdout)
-    except Exception:
-        return {"duration_us": 0, "fps": 0.0, "has_audio": False}
+        return file_sha256(video_path)
+    except OSError:
+        return ""
 
-    duration_us = 0
-    fmt = data.get("format") or {}
-    raw = fmt.get("duration")
-    if raw is not None:
-        try:
-            duration_us = int(round(float(raw) * _TIMEBASE_US))
-        except (TypeError, ValueError):
-            pass
-    fps = 0.0
-    has_audio = False
-    for s in data.get("streams") or []:
-        if s.get("codec_type") == "audio":
-            has_audio = True
-        if s.get("codec_type") == "video" and fps == 0.0:
-            rate = s.get("r_frame_rate", "0/0")
-            try:
-                num, den = rate.split("/")
-                fps = round(int(num) / int(den), 3) if int(den) else 0.0
-            except (ValueError, ZeroDivisionError):
-                pass
-    return {"duration_us": duration_us, "fps": fps, "has_audio": has_audio}
+
+def _probe_video_meta(video_path: str) -> dict[str, object]:
+    """媒体元探测：统一走 media_info（候选⑤收编，带归因）。
+
+    返回含 ``probe_ok`` / ``probe_reason`` 归因字段——探测失败**不得**
+    被记成 fps=0 的"事实"（旧实现的归因裂缝，架构体检 ⑤ 指认）。
+    """
+    from observation_service.media_info import probe_media_meta
+
+    meta = probe_media_meta(video_path)
+    result: dict[str, object] = {
+        "duration_us": meta.duration_us,
+        "fps": meta.fps,
+        "has_audio": meta.has_audio,
+        "probe_ok": meta.ok,
+    }
+    if not meta.ok:
+        result["probe_reason"] = meta.reason
+    return result
 
 
 def _snapshot(
@@ -112,23 +104,24 @@ def build_asset_context(
 ) -> FilmContextSnapshot:
     """ASSET 层：资产物理属性 + 分析索引（原 build_asset_index 重命名）。"""
     obs_ids = sorted(o.observation_id for o in observations)
-    file_hash = ""
-    try:
-        file_hash = file_sha256(video_path)
-    except OSError:
-        pass
+    file_hash = _file_hash_or_empty(video_path)
     meta = _probe_video_meta(video_path)
+    asset_cfg: dict = {
+        "observation_count": len(observations),
+        "video_duration_us": meta["duration_us"],
+        "fps": meta["fps"],
+        "has_audio": meta["has_audio"],
+        "probe_ok": meta["probe_ok"],
+        "shot_count": len({o.media_asset_id for o in observations}),
+    }
+    if not meta["probe_ok"]:
+        # 归因裂缝修补：探测失败必须可见（旧实现静默记 fps=0 当"事实"）
+        asset_cfg["probe_reason"] = meta.get("probe_reason")
     return _snapshot(
         ContextLayer.ASSET,
         "ctx_asset_" + short_hash(video_path + "|" + "|".join(obs_ids)),
         video_path, file_hash, observations,
-        {
-            "observation_count": len(observations),
-            "video_duration_us": meta["duration_us"],
-            "fps": meta["fps"],
-            "has_audio": meta["has_audio"],
-            "shot_count": len({o.media_asset_id for o in observations}),
-        },
+        asset_cfg,
         [o.observation_id for o in observations],
         "asset_level",
     )
@@ -144,11 +137,7 @@ def build_project_context(
     observations: list[FilmObservation],
 ) -> FilmContextSnapshot:
     """PROJECT 层：Brief 概要 + 授权约束 + 素材覆盖概况。最高层摘要，最小披露。"""
-    file_hash = ""
-    try:
-        file_hash = file_sha256(video_path)
-    except OSError:
-        pass
+    file_hash = _file_hash_or_empty(video_path)
     ctx_id = "ctx_project_" + short_hash(brief.brief_id + video_path)
     return _snapshot(
         ContextLayer.PROJECT,
@@ -185,11 +174,7 @@ def build_scene_context(
 
     window_us: (start_us, end_us) 感兴趣的时间窗；None = 全片。
     """
-    file_hash = ""
-    try:
-        file_hash = file_sha256(video_path)
-    except OSError:
-        pass
+    file_hash = _file_hash_or_empty(video_path)
 
     in_scope = []
     for o in observations:
@@ -242,11 +227,7 @@ def build_evidence_context(
     if not reason or not reason.strip():
         raise ValueError("EVIDENCE 层展开必须提供 reason（审计留痕）")
 
-    file_hash = ""
-    try:
-        file_hash = file_sha256(video_path)
-    except OSError:
-        pass
+    file_hash = _file_hash_or_empty(video_path)
 
     target_obs = [o for o in observations if o.media_asset_id in target_shot_ids]
     ctx_id = "ctx_evidence_" + short_hash(

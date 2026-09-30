@@ -296,33 +296,37 @@ def film_context_snapshot_endpoint(req: FilmContextSnapshotRequest):
             else None
         )
 
-        if layer == "project":
-            snap = build_project_context(brief, req.video_path, observations)
-        elif layer == "asset":
-            snap = build_asset_context(req.video_path, observations)
-        elif layer == "scene":
+        # 候选⑤：ContextGateway 类是渐进披露的会话入口（此前休眠）——
+        # 端点经其取层快照，status() 汇报已展开层
+        if layer == "scene":
             graph = build_story_graph(brief, observations)
             edl, _plan = generate_plan(brief, graph, observations)
-            snap = build_scene_context(
-                req.video_path, observations, graph, edl, window)
-        else:  # evidence
-            if not req.reason.strip():
-                raise HTTPException(
-                    400,
-                    detail="EVIDENCE 层展开必须提供 reason（方案 §4.2 审计留痕）")
-            targets = list(req.shot_ids)
-            if not targets and window:
-                # 时间窗 → 相交镜头（与 build_scene_context 同一口径：
-                # 窗口对 start_frame/end_frame 区间比较）
-                targets = sorted({
-                    o.media_asset_id for o in observations
-                    if o.end_frame > window[0] and o.start_frame < window[1]
-                })
-            if not targets:
-                raise HTTPException(
-                    400, detail="EVIDENCE 层需要 shot_ids 或 window_us 定位目标镜头")
-            snap = build_evidence_context(
-                req.video_path, observations, targets, req.reason)
+            gw = ContextGateway(req.video_path, observations, brief=brief,
+                                graph=graph, edl=edl)
+            snap = gw.scene(window)
+        else:
+            gw = ContextGateway(req.video_path, observations, brief=brief)
+            if layer == "project":
+                snap = gw.project()
+            elif layer == "asset":
+                snap = gw.asset()
+            else:  # evidence
+                if not req.reason.strip():
+                    raise HTTPException(
+                        400,
+                        detail="EVIDENCE 层展开必须提供 reason（方案 §4.2 审计留痕）")
+                targets = list(req.shot_ids)
+                if not targets and window:
+                    # 时间窗 → 相交镜头（与 build_scene_context 同一口径：
+                    # 窗口对 start_frame/end_frame 区间比较）
+                    targets = sorted({
+                        o.media_asset_id for o in observations
+                        if o.end_frame > window[0] and o.start_frame < window[1]
+                    })
+                if not targets:
+                    raise HTTPException(
+                        400, detail="EVIDENCE 层需要 shot_ids 或 window_us 定位目标镜头")
+                snap = gw.evidence(targets, req.reason)
 
         cache_hit = snap.context_id in _CONTEXT_STORE
         payload = snap.model_dump(mode="json")
@@ -334,6 +338,7 @@ def film_context_snapshot_endpoint(req: FilmContextSnapshotRequest):
             "coverage": snap.coverage,
             "evidence_refs": snap.evidence_refs,
             "cache_hit": cache_hit,
+            "gateway_status": gw.status(),
         })
     except HTTPException:
         raise

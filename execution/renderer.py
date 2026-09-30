@@ -46,34 +46,17 @@ def _video_codec_args(encoder: str) -> list[str]:
 
 
 def _has_audio_stream(video_path: str) -> bool:
-    """探测视频文件是否包含音频流。
+    """探测视频文件是否包含音频流（候选⑤：统一走 media_info，带归因）。
 
-    通过 ffprobe 查询 code_type 为 audio 的流；有输出行即视为存在音轨。
+    探测失败按无音轨处理（不阻断渲染）但响亮记日志——归因可见。
     """
-    cmd = [
-        "ffprobe",
-        "-v",
-        "error",
-        "-select_streams",
-        "a",
-        "-show_entries",
-        "stream=codec_type",
-        "-of",
-        "csv=p=0",
-        video_path,
-    ]
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError as exc:  # pragma: no cover - ffprobe 缺失时按无音轨处理
-        logger.warning("ffprobe 调用失败，按无音轨处理: %s", exc)
+    from observation_service.media_info import probe_media_meta
+
+    meta = probe_media_meta(video_path)
+    if not meta.ok:
+        logger.warning("ffprobe 探测失败（%s），按无音轨处理", meta.reason)
         return False
-    output = (result.stdout or "").strip()
-    return bool(output)
+    return meta.has_audio
 
 
 def _build_filter_complex(
