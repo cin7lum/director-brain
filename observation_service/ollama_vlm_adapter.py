@@ -32,6 +32,10 @@ _VALID_FUNCTIONS = {
 }
 _VALID_MOTION = {"static", "subtle", "burst"}
 _VALID_ROLES = {"hero", "support", "transition", "broll", "discard"}
+#: P3-1 深度语义词表（analyze_frames 多帧模式）
+_VALID_NARRATIVE = {"setup", "development", "climax", "resolution", "transition"}
+_VALID_EMOTION = {"calm", "tense", "joyful", "dark", "neutral", "energetic"}
+_VALID_ACTION = {"dialogue", "action", "establishing", "transition", "emotional", "sensory"}
 
 _PROMPT = """You are looking at one frame extracted from a short-video shot.
 
@@ -54,6 +58,24 @@ Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 6 fi
 Rules: pick the fallback value if you cannot tell; never invent numbers you
 cannot support. Keep step 1 and step 2 on separate lines.
 """
+
+#: P3-1 多帧深度语义 prompt（原 observation_service/semantic_analyzer 收编：
+#: 私有 cv2 抽帧与 urllib 传输并入适配器层；实测 qwen3-vl 长 prompt +
+#: 多图会全输出进 thinking，故精简 + format:"json" + think:false）。
+_SEMANTIC_PROMPT = """Analyze these 3 frames from one video shot. Return ONLY JSON:
+{"desc": "中文一句话场景描述",
+ "subjects": ["主体列表"],
+ "action": "dialogue|action|establishing|transition|emotional|sensory",
+ "emotion": "calm|tense|joyful|dark|neutral|energetic",
+ "narrative": "setup|development|climax|resolution|transition",
+ "quality": 1-5,
+ "importance": 1-5,
+ "motion": "static|subtle|burst",
+ "motion_change": "帧间变化一句话",
+ "function": "ESTABLISHING|ACTION|REACTION|DETAIL|TRANSITION|ATMOSPHERIC_EVIDENCE|SENSORY_INSERT",
+ "role": "hero|support|transition|broll|discard",
+ "temporal": "首帧到尾帧的变化"}
+Rules: desc/temporal in Chinese. importance = information value + visual quality. Be conservative."""
 
 
 def _extract_json(text: str) -> dict | None:
@@ -215,3 +237,125 @@ class OllamaVLMAdapter(VLMAdapter):
             "degrade_reason": reason,
             "_warnings": [],
         }
+
+    # ------------------------------------------------------------------
+    # P3-1 多帧深度语义（observation_service/semantic_analyzer 收编）
+    # ------------------------------------------------------------------
+
+    def analyze_frames(self, image_paths: list[str]) -> dict:
+        """镜头内多帧一次 VLM 调用 → 深度语义扁平 dict。
+
+        返回 analyze_frame 的全部字段，另加：scene_description / subjects /
+        action_type / emotional_tone / narrative_role / visual_quality /
+        motion_progression / temporal_notes。fail-closed：任何错误返回
+        degraded dict，不抛异常。
+        """
+        if not image_paths:
+            return self._degraded("no frames provided", FT_DECODE)
+
+        try:
+            b64s = [
+                base64.b64encode(Path(p).read_bytes()).decode()
+                for p in image_paths
+            ]
+        except Exception as e:
+            return self._degraded(f"image read failed: {e}", FT_DECODE)
+
+        body = {
+            "model": self.model,
+            "stream": False,
+            "messages": [{
+                "role": "user",
+                "content": _SEMANTIC_PROMPT,
+                "images": b64s,
+            }],
+            "format": "json",
+            "options": {"temperature": 0.1, "num_predict": 1024},
+            "think": False,  # qwen3-vl 思考模式吞可见输出
+        }
+        raw_text, err = self._chat(body)
+        if err is not None and "format" in str(err).lower():
+            # 旧版 ollama 不认 format/think → 去掉重试一次
+            body.pop("think", None)
+            body.pop("format", None)
+            raw_text, err = self._chat(body)
+        if err is not None:
+            return self._degraded(str(err), FT_NETWORK)
+        if not raw_text:
+            # thinking 字段兜底（P3-1 实测：多图长 prompt 全输出进 thinking）
+            return self._degraded("empty reply", FT_EMPTY)
+
+        parsed = _extract_json(raw_text)
+        if parsed is None:
+            return self._degraded(
+                f"json parse failed; raw={raw_text[:120]}", FT_PARSE)
+
+        warnings: list[str] = []
+
+        def _vocab(value, valid, fallback, label):
+            if value in valid:
+                return value
+            warnings.append(f"{label}: got {value!r}, fallback to {fallback!r}")
+            return fallback
+
+        def _int5(value):
+            return value if isinstance(value, int) and 1 <= value <= 5 else None
+
+        shot_function = _vocab(
+            parsed.get("function"), _VALID_FUNCTIONS,
+            "SENSORY_INSERT", "shot_function")
+        role = _vocab(
+            parsed.get("role"), _VALID_ROLES, "broll", "proposed_role_v2")
+        motion = _vocab(parsed.get("motion"), _VALID_MOTION, "subtle", "motion_amount")
+        narrative = _vocab(
+            parsed.get("narrative"), _VALID_NARRATIVE,
+            "transition", "narrative_role")
+        emotion = _vocab(
+            parsed.get("emotion"), _VALID_EMOTION, "neutral", "emotional_tone")
+        action = _vocab(
+            parsed.get("action"), _VALID_ACTION, "sensory", "action_type")
+
+        return {
+            # 与 analyze_frame 同形的基础字段
+            "shot_function": shot_function,
+            "sensory_wet_heat": _norm_float(parsed.get("sensory_wet_heat")),
+            "sensory_mood_intensity": _norm_float(
+                parsed.get("sensory_mood_intensity")),
+            "motion_amount": motion,
+            "proposed_role_v2": role,
+            "importance": _int5(parsed.get("importance")),
+            "frame_description": str(parsed.get("desc", "")).strip(),
+            "status": OBSERVED,
+            "degraded": bool(warnings),
+            "confidence_type": "SELF_REPORTED",
+            "_warnings": warnings,
+            # P3-1 深度语义字段
+            "scene_description": str(parsed.get("desc", "")).strip(),
+            "subjects": parsed.get("subjects") or [],
+            "action_type": action,
+            "emotional_tone": emotion,
+            "narrative_role": narrative,
+            "visual_quality": _int5(parsed.get("quality")),
+            "motion_progression": str(parsed.get("motion_change", "")).strip(),
+            "temporal_notes": str(parsed.get("temporal", "")).strip(),
+        }
+
+    def _chat(self, body: dict) -> tuple[str, Exception | None]:
+        """POST /api/chat，返回 (content, error)；二者只会有一个非空。"""
+        try:
+            req = urllib.request.Request(
+                f"{self.base_url}/api/chat",
+                data=json.dumps(body).encode(),
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=self.timeout) as r:
+                data = json.loads(r.read())
+            content = (data.get("message") or {}).get("content", "")
+            if not content:
+                thinking = (data.get("message") or {}).get("thinking", "")
+                content = thinking or ""
+            return content, None
+        except urllib.error.HTTPError as e:
+            return "", RuntimeError(f"http {e.code}: {e.reason}")
+        except Exception as e:
+            return "", e

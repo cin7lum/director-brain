@@ -146,6 +146,9 @@ class _MockAdapter:
             return r
         return _vlm_success()
 
+    def analyze_frames(self, image_paths: list[str]) -> dict:
+        return self.analyze_frame(image_paths[0])
+
 
 class TestBatchVlmObservations:
     def test_returns_one_obs_per_shot(self, tmp_path):
@@ -156,14 +159,14 @@ class TestBatchVlmObservations:
         # 所以这里需要真实视频或 mock keyframe。用 monkeypatch。
         import observation_service.vlm_observation as mod
 
-        original = mod.extract_keyframe
+        original = mod.extract_keyframes
 
         @contextlib.contextmanager
-        def fake_kf(video_path, in_us, out_us, out_path=None):
-            yield "/tmp/fake_frame.jpg"
+        def fake_kfs(video_path, in_us, out_us, positions=(0.15, 0.50, 0.85)):
+            yield ["/tmp/fake_frame.jpg"]
 
         monkeypatch = pytest.MonkeyPatch()
-        monkeypatch.setattr(mod, "extract_keyframe", fake_kf)
+        monkeypatch.setattr(mod, "extract_keyframes", fake_kfs)
         try:
             cache = AnalysisCache()
             obs_list = batch_vlm_observations(
@@ -184,11 +187,11 @@ class TestBatchVlmObservations:
         adapter = _MockAdapter()
 
         @contextlib.contextmanager
-        def fake_kf(video_path, in_us, out_us, out_path=None):
-            yield "/tmp/fake_frame.jpg"
+        def fake_kfs(video_path, in_us, out_us, positions=(0.15, 0.50, 0.85)):
+            yield ["/tmp/fake_frame.jpg"]
 
         monkeypatch = pytest.MonkeyPatch()
-        monkeypatch.setattr(mod, "extract_keyframe", fake_kf)
+        monkeypatch.setattr(mod, "extract_keyframes", fake_kfs)
         try:
             cache = AnalysisCache()
             # 第一次：调用 adapter
@@ -217,11 +220,11 @@ class TestBatchVlmObservations:
         adapter = _MockAdapter(results=[_vlm_failure()])
 
         @contextlib.contextmanager
-        def fake_kf(video_path, in_us, out_us, out_path=None):
-            yield "/tmp/fake_frame.jpg"
+        def fake_kfs(video_path, in_us, out_us, positions=(0.15, 0.50, 0.85)):
+            yield ["/tmp/fake_frame.jpg"]
 
         monkeypatch = pytest.MonkeyPatch()
-        monkeypatch.setattr(mod, "extract_keyframe", fake_kf)
+        monkeypatch.setattr(mod, "extract_keyframes", fake_kfs)
         try:
             cache = AnalysisCache()
             obs_list = batch_vlm_observations(
@@ -242,11 +245,11 @@ class TestBatchVlmObservations:
         adapter = _MockAdapter()
 
         @contextlib.contextmanager
-        def fake_kf(video_path, in_us, out_us, out_path=None):
-            yield ""  # 模拟 ffmpeg 失败
+        def fake_kfs(video_path, in_us, out_us, positions=(0.15, 0.50, 0.85)):
+            yield []  # 模拟 ffmpeg 失败
 
         monkeypatch = pytest.MonkeyPatch()
-        monkeypatch.setattr(mod, "extract_keyframe", fake_kf)
+        monkeypatch.setattr(mod, "extract_keyframes", fake_kfs)
         try:
             cache = AnalysisCache()
             obs_list = batch_vlm_observations(

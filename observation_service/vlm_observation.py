@@ -16,12 +16,13 @@ from director_brain.utils import file_sha256, short_hash
 from director_brain.analysis_cache import AnalysisCache
 from director_brain.config import load_settings
 from director_brain.models.film_observation import ClaimKind, FilmObservation
-from observation_service.keyframe import extract_keyframe
+from observation_service.keyframe import extract_keyframes
 from observation_service.ollama_vlm_adapter import OllamaVLMAdapter
+from observation_service.vlm_adapter import VLMAdapter
 
 _PROVIDER = "ollama_qwen3_vl"
-# v2：prompt 增加 importance 字段（P3-2 打标数据集）；缓存键随版本失效
-_PROMPT_VERSION = "vlm_prompt_v2"
+# v3：P3-1 多帧深度语义（候选①收编——多帧分析并入生产通路）；缓存键随版本失效
+_PROMPT_VERSION = "vlm_prompt_v3_semantic"
 _TIMEBASE_US = 1_000_000
 
 
@@ -36,6 +37,16 @@ def _claim_payload(vlm_result: dict) -> dict:
         "sensory_mood_intensity": vlm_result.get("sensory_mood_intensity"),
         # 阶段 P3-2：TVSum 同构 importance 标注（1-5，打标数据集字段）
         "importance": vlm_result.get("importance"),
+        # P3-1 深度语义（内核语义融合消费：narrative_role 驱动幕分配、
+        # emotional_tone 匹配情绪弧、scene_description 供多样性降权）
+        "scene_description": vlm_result.get("scene_description", ""),
+        "subjects": vlm_result.get("subjects") or [],
+        "action_type": vlm_result.get("action_type"),
+        "emotional_tone": vlm_result.get("emotional_tone"),
+        "narrative_role": vlm_result.get("narrative_role"),
+        "visual_quality": vlm_result.get("visual_quality"),
+        "motion_progression": vlm_result.get("motion_progression", ""),
+        "temporal_notes": vlm_result.get("temporal_notes", ""),
     }
 
 
@@ -207,13 +218,21 @@ def batch_vlm_observations(
         out_us = int(shot["source_out_us"])
 
         try:
-            with extract_keyframe(video_path, in_us, out_us) as frame_path:
-                if not frame_path:
+            # P3-1（候选①收编）：镜头内 3 帧（15%/50%/85%）一次多图调用，
+            # 抽帧统一走 keyframe.extract_keyframes（私有 cv2 已删除）。
+            # 适配器未实现 analyze_frames 时退化为首帧单帧（响亮提示）。
+            with extract_keyframes(video_path, in_us, out_us) as frame_paths:
+                if not frame_paths:
                     vlm_result = _degraded_result(
                         "keyframe extraction failed", "DECODE"
                     )
                 else:
-                    vlm_result = adapter.analyze_frame(frame_path)
+                    if type(adapter).analyze_frames is VLMAdapter.analyze_frames:
+                        print(
+                            f"[VLM {idx + 1}/{total}] note: adapter 无多帧实现，"
+                            f"退化为首帧单帧模式"
+                        )
+                    vlm_result = adapter.analyze_frames(frame_paths)
         except Exception as exc:
             vlm_result = _degraded_result(
                 f"batch error: {type(exc).__name__}: {exc}", "UNKNOWN"

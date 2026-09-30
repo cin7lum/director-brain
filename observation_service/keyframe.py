@@ -77,3 +77,48 @@ def extract_keyframe(video_path: str, shot_in_us: int, shot_out_us: int,
         # with 块退出（含异常退出）时，自动清理临时文件
         if temp_created and os.path.exists(path):
             os.remove(path)
+
+
+@contextlib.contextmanager
+def extract_keyframes(video_path: str, shot_in_us: int, shot_out_us: int,
+                      positions: tuple[float, ...] = (0.15, 0.50, 0.85)):
+    """按镜头内相对位置抽多帧（P3 语义观测：一次多图 VLM 调用）。
+
+    与 :func:`extract_keyframe` 同一清理约定：临时帧 with 块退出自动删除。
+    个别位置抽取失败时该帧**不占位**（成功帧列表可能短于 positions）；
+    全部失败 yield 空列表（fail-soft，调用方按无帧降级）。
+    """
+    dur = shot_out_us - shot_in_us
+    paths: list[str] = []
+    fds = []
+    try:
+        for frac in positions:
+            fd, path = tempfile.mkstemp(suffix=".jpg")
+            os.close(fd)
+            fds.append(path)
+            pos_sec = (shot_in_us + int(dur * frac)) / 1_000_000
+            cmd = [
+                "ffmpeg",
+                "-ss", f"{pos_sec:.3f}",
+                "-i", video_path,
+                "-frames:v", "1",
+                "-q:v", "2",
+                path,
+                "-y",
+            ]
+            try:
+                result = subprocess.run(cmd, capture_output=True, timeout=30)
+                ok = (
+                    result.returncode == 0
+                    and os.path.exists(path)
+                    and os.path.getsize(path) > 0
+                )
+            except Exception:
+                ok = False
+            if ok:
+                paths.append(path)
+        yield paths
+    finally:
+        for path in fds:
+            if os.path.exists(path):
+                os.remove(path)

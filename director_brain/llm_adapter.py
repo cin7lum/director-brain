@@ -13,6 +13,7 @@ no retry labyrinth, no agent framework.
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -113,6 +114,91 @@ class LLMResult:
     raw_response: str = ""
     latency_ms: int = 0
     schema_constrained: bool = False
+
+
+class LLMTransportError(RuntimeError):
+    """统一传输层错误（网络/HTTP/空回复）；语义层错误不走此异常。"""
+
+
+def post_chat_json(
+    base_url: str,
+    api_key: str,
+    model: str,
+    system: str,
+    user: str,
+    *,
+    timeout: int = 300,
+    max_tokens: int = 2048,
+    temperature: float = 0.1,
+) -> str:
+    """OpenAI 兼容 /chat/completions 统一传输缝（架构体检候选④收编）。
+
+    自由 JSON 消费者（叙事分析等）经此调用，不再各自手写 urllib +
+    围栏剥离。约束生成用 response_format=json_object；服务端 400 时
+    去掉该参数重试一次（传输级协商，非语义改动）。返回 content 字符串；
+    网络/HTTP/空回复抛 :class:`LLMTransportError`（fail-closed）。
+    """
+    def _post(payload: dict) -> str:
+        req = urllib.request.Request(
+            base_url.rstrip("/") + "/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read())
+        return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    try:
+        content = _post(payload)
+    except urllib.error.HTTPError as e:
+        if e.code != 400:
+            raise LLMTransportError(f"chat http {e.code}") from e
+        payload.pop("response_format", None)
+        try:
+            content = _post(payload)
+        except urllib.error.HTTPError as e2:
+            raise LLMTransportError(f"chat http {e2.code}") from e2
+        except urllib.error.URLError as e2:
+            raise LLMTransportError(f"chat connection failed: {e2}") from e2
+    except urllib.error.URLError as e:
+        raise LLMTransportError(f"chat connection failed: {e}") from e
+    except LLMTransportError:
+        raise
+    except Exception as e:
+        raise LLMTransportError(f"{type(e).__name__}: {e}") from e
+
+    if not content.strip():
+        raise LLMTransportError("chat returned empty content")
+    return content
+
+
+def extract_json_object(text: str) -> dict:
+    """从模型回复提取 JSON 对象（剥 ``` 围栏 + 首{末}截取）。
+
+    收编各消费者自带的 _extract_json 变体（候选④）；解析失败抛 ValueError。
+    """
+    text = text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```[a-zA-Z]*\s*", "", text)
+        text = re.sub(r"```\s*$", "", text).strip()
+    lo, hi = text.find("{"), text.rfind("}")
+    if lo < 0 or hi <= lo:
+        raise ValueError(f"no JSON object in: {text[:100]}")
+    return json.loads(text[lo:hi + 1])
 
 
 class LLMAdapter:

@@ -46,3 +46,14 @@ class VLMAdapter(ABC):
             confidence_type: SELF_REPORTED 或 UNAVAILABLE
         """
         ...
+
+    def analyze_frames(self, image_paths: list[str]) -> dict:
+        """分析多帧（P3 语义观测：镜头内 3 帧一次调用）。
+
+        基类默认实现退化为**首帧单帧分析**——未实现多帧的后端（如 zhipu）
+        经此保持协议兼容，调用方按返回值正常消费；多帧深度语义由后端
+        自行实现（见 OllamaVLMAdapter.analyze_frames）。
+        """
+        if not image_paths:
+            raise ValueError("analyze_frames 需要至少一帧图片")
+        return self.analyze_frame(image_paths[0])
