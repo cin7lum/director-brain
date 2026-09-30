@@ -1,6 +1,9 @@
 """SemanticDirectorReasoner — natural language → DirectorDecision.
 
 Responsibility: user direction + available context → DirectorDecision.
+**链 B 唯一的"一句话→决策"路径**（架构体检候选②合并）：生产消费侧
+（semantic_shadow 影子对账）与组合入口（service，03 交接参数化）都必须
+经此 reasoner；ollama/ark 等传输以可注入 adapter 换入。
 
 NOT responsible for:
 - Shot ranking (HeuristicDirectorReasoner = SHOT_SELECTION_SPECIALIST)
@@ -28,6 +31,7 @@ class SemanticReasonerResult:
     error: str | None = None
     model: str = ""
     prompt_version: str = "1.0"
+    schema_version: str = ""
     latency_ms: int = 0
     trace_id: str = ""
 
@@ -39,7 +43,9 @@ class SemanticDirectorReasoner:
     HeuristicDirectorReasoner remains as SHOT_SELECTION_SPECIALIST.
     """
 
-    def __init__(self, llm_adapter: LLMAdapter | None = None):
+    def __init__(self, llm_adapter=None):
+        # llm_adapter: 任何暴露 generate_decision(user_input, context=...,
+        # decision_id=...) -> LLMResult 的传输（ollama/ark 可换；候选②）。
         self.llm = llm_adapter or LLMAdapter()
 
     def reason(
@@ -87,6 +93,7 @@ class SemanticDirectorReasoner:
             decision=result.decision,
             model=result.model,
             prompt_version=result.prompt_version,
+            schema_version=result.schema_version,
             latency_ms=result.latency_ms,
             trace_id=trace_id,
         )

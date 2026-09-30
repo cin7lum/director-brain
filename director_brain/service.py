@@ -1,7 +1,12 @@
-"""Thin application entrypoint for Semantic Director Reasoning.
+"""Application composition entrypoint for Semantic Director Reasoning.
 
-This is the formal 02 runtime wiring:
-  user direction → SemanticDirectorService → SemanticDirectorReasoner → LLMAdapter → DirectorDecision
+身份声明（架构体检候选②修正）：本模块**不是**生产运行时入口——生产
+链 B 消费侧是 :mod:`director_brain.semantic_shadow`（影子对账）。本模块
+是面向 03 交接的**组合层**：在唯一 reasoner 路径
+（SemanticDirectorReasoner，ollama/ark 传输可换）之上叠加语义后校验、
+可选参数化与执行就绪度合成：
+
+  user direction → SemanticDirectorReasoner → DirectorDecision
   → (optional) ParameterizationContext → JCutParameterizer → ParameterizationDecision
 
 Three independent status concepts:
@@ -58,9 +63,9 @@ class DirectorRequestResult:
 
 
 class SemanticDirectorService:
-    """Formal 02 application entrypoint for semantic director reasoning.
+    """面向 03 交接的组合层入口（非生产运行时入口，见模块 docstring）。
 
-    Wires: user input → SemanticDirectorReasoner → LLMAdapter → DirectorDecision
+    Wires: user input → SemanticDirectorReasoner（唯一 reasoner 路径）
            → post-validation (semantic only) → (optional) parameterizer → ParameterizationDecision
            → execution readiness composition
 

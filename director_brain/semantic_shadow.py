@@ -37,7 +37,7 @@ from pathlib import Path
 
 from director_brain.ark_adapter import ArkLLMAdapter
 from director_brain.audit_trail import log_decision
-from director_brain.llm_adapter import LLMResult
+from director_brain.semantic_reasoner import SemanticDirectorReasoner, SemanticReasonerResult
 from director_brain.pathway_protocol import (
     PathwayStatus,
     get_pathway_status,
@@ -283,19 +283,24 @@ def run_shadow_semantic(
              base.to_dict())
         return base
 
-    result: LLMResult | None = None
+    # 候选②合并：影子消费必须经 SemanticDirectorReasoner（链 B 唯一的
+    # "一句话→决策"路径），不再直调传输适配器——此前两条不相交实现
+    # （reasoner 路径 vs 影子直调）各自维护重试/解析/fail-closed。
+    reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+    result = None
     attempts = 0
     for attempt in range(1, max_attempts + 1):
         attempts = attempt
         try:
-            result = adapter.generate_decision(
+            result = reasoner.reason(
                 intent_text, decision_id=decision_id or "shadow_decision"
             )
         except Exception as exc:  # noqa: BLE001
-            # 影子故障不得阻断主链：适配器抛出的意外异常按传输失败处理
-            # （响亮降级）。适配器自身应返回 LLMResult(error=...)，这里是
-            # 防御层——任何从影子通路逃逸的异常都等于阻断成片。
-            result = LLMResult(
+            # 影子故障不得阻断主链：reasoner/适配器逃逸的意外异常按传输
+            # 失败处理（响亮降级）。防扩散层——任何从影子通路逃逸的异常
+            # 都等于阻断成片。
+            result = SemanticReasonerResult(
                 decision=None,
                 error=f"shadow adapter raised: {type(exc).__name__}: {exc}",
             )
@@ -305,7 +310,7 @@ def run_shadow_semantic(
             time.sleep(backoff_s[min(attempt - 1, len(backoff_s) - 1)])
 
     if result is None or result.decision is None:
-        error = (result.error if result else "adapter returned no result") or "unknown"
+        error = (result.error if result else "reasoner returned no result") or "unknown"
         base.status = "failed"
         base.attempts = attempts
         base.reason = f"链 B 调用失败（已重试 {attempts} 次）: {error}"

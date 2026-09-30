@@ -267,3 +267,67 @@ def test_extract_chain_a_avoid_terms():
     # 宽泛解析：畸形条目把剩余部分整体当术语（对覆盖率记账安全——
     # 只会多报覆盖候选，不会漏报未覆盖项）
     assert ss.extract_chain_a_avoid_terms(["must_avoid:broken"]) == ["broken"]
+
+
+# ---------------------------------------------------------------------------
+# 候选②：链 B 单一路径合并
+# ---------------------------------------------------------------------------
+
+def test_shadow_routes_through_semantic_reasoner(monkeypatch):
+    """影子消费必须经 SemanticDirectorReasoner（链 B 唯一决策路径）。
+
+    此前影子直调传输适配器——两条不相交实现。合并后替换 reasoner 并
+    断言：适配器不再被直调、reasoner.reason 被调用且产出正常对账。
+    """
+    import json
+    from unittest.mock import MagicMock
+
+    from director_brain.models.director_decision import DirectorDecision
+    from director_brain import semantic_shadow as mod
+    from director_brain.semantic_reasoner import (
+        SemanticDirectorReasoner,
+        SemanticReasonerResult,
+    )
+
+    decision = DirectorDecision.model_validate({
+        "decision_id": "shadow_decision",
+        "status": "READY",
+        "user_terminology": [],
+        "desired_relation_or_change": ["adjust_pacing"],
+        "must_avoid": [],
+        "must_preserve": [],
+        "creative_intent": "节奏更快",
+    })
+
+    called = {"reasoner": 0, "adapter": 0}
+
+    class _SpyAdapter:
+        model = "ark-test"
+
+        def generate_decision(self, user_input, context=None, decision_id=None):
+            called["adapter"] += 1
+            from director_brain.llm_adapter import LLMResult
+            return LLMResult(decision=decision, model="ark-test")
+
+    fake_reasoner = MagicMock(spec=SemanticDirectorReasoner)
+
+    def fake_reason(self, user_direction, context=None, decision_id=None):
+        called["reasoner"] += 1
+        return SemanticReasonerResult(
+            decision=decision, model="ark-test",
+            prompt_version="1.1", schema_version="pydantic_x", latency_ms=5)
+
+    adapter = _SpyAdapter()
+    monkeypatch.setattr(
+        mod.SemanticDirectorReasoner, "reason", fake_reason)
+
+    report = mod.run_shadow_semantic(
+        "节奏快一点",
+        adapter_factory=lambda: (adapter, None),
+    )
+
+    assert report.status == "completed"
+    assert called["reasoner"] == 1
+    assert called["adapter"] == 0  # 影子不再直调传输层
+    assert report.model == "ark-test"
+    assert report.schema_version == "pydantic_x"
