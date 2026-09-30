@@ -548,6 +548,88 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 paired.append((act_name, edit, decision))
                 selected_ids.add(edit.source_asset_id)
 
+        # ---- 候选①：目标时长补齐（仅语义路径；全局兜底，逐条响亮留痕）----
+        # 语义幕分配可能使某些幕无内容可填（如素材没有 setup 镜头、hook 空）
+        # ——若总时长低于目标下界（validator ±10%），按剩余配额从全局候选
+        # 补齐（语义分/技术分排序）。不补则 validator 必 FAIL → fail-closed
+        # 拒绝出片：诚实但语义路径可用性倒退。补齐镜头 requires_approval。
+        if semantic_moves:
+            from director_brain.providers.heuristic import compute_clip_window
+            target_low = int(brief.target_duration * 0.9)
+            act_filled: dict[str, int] = {}
+            for a_name, a_edit, _d in paired:
+                act_filled[a_name] = act_filled.get(a_name, 0) + (
+                    a_edit.out_frame - a_edit.in_frame)
+            topup_idx = 0
+            while sum(act_filled.values()) < target_low:
+                placed = False
+                for act_name in ACT_ORDER:
+                    if sum(act_filled.values()) >= target_low:
+                        break
+                    remaining_q = max(
+                        int(ACT_RATIO[act_name] * brief.target_duration),
+                        MIN_CLIP_US,
+                    ) - act_filled.get(act_name, 0)
+                    if remaining_q < MIN_CLIP_US:
+                        continue
+                    pool = [
+                        c for c in candidates
+                        if c["source_shot_id"] not in selected_ids
+                        and not c.get("_no_data") and not c.get("_dark_shot")
+                        and c.get("vlm_role") != "discard"
+                    ]
+                    if not pool:
+                        break
+                    pool.sort(
+                        key=lambda c: c.get(
+                            "selection_score", c.get("blur_score", 0)),
+                        reverse=True,
+                    )
+                    take = pool[0]
+                    clip_dur = min(
+                        take["duration_us"], max_clip_us, remaining_q)
+                    if clip_dur < min_clip_us:
+                        continue
+                    in_us, out_us = compute_clip_window(
+                        take["source_in_us"], take["source_out_us"],
+                        clip_dur, align="head")
+                    topup_idx += 1
+                    edit = EditItem(
+                        source_asset_id=take["source_shot_id"],
+                        source_media_hash=take["source_media_hash"],
+                        in_frame=int(in_us),
+                        out_frame=int(out_us),
+                        timebase=TIMEBASE_US,
+                        shot_function=ACT_FUNCTION.get(act_name),
+                        rationale=(
+                            f"act={act_name}, topup, "
+                            f"heuristic:blur={take['blur_score']}"),
+                        evidence_type=(
+                            "vlm" if take.get("vlm_shot_function")
+                            else "heuristic"),
+                    )
+                    decision = Decision(
+                        decision_id=f"dec_{act_name}_topup_{topup_idx:02d}",
+                        purpose="select_shot",
+                        shot_refs=[take["source_shot_id"]],
+                        evidence_refs=[
+                            shot_to_obs.get(take["source_shot_id"], "")],
+                        rationale=edit.rationale,
+                        alternatives=[],
+                        confidence=0.3,
+                        requires_approval=True,
+                    )
+                    paired.append((act_name, edit, decision))
+                    selected_ids.add(take["source_shot_id"])
+                    act_filled[act_name] = (
+                        act_filled.get(act_name, 0) + out_us - in_us)
+                    degradation_events.append(
+                        f"semantic_topup:act={act_name}"
+                        f":shot={take['source_shot_id']}")
+                    placed = True
+                if not placed:
+                    break  # 无幕可放且无进展：物理上限，交 validator 判定
+
         # ---- 按幕顺序（hook→develop→peak→resolve）----
         # 幕内排序：有叙事推荐顺序（P3-3 suggested_order）时按其位次，
         # 未覆盖的镜头排在其后；否则按 in_frame 升序（旧行为）。

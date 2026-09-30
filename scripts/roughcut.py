@@ -221,10 +221,11 @@ def run_roughcut(
                 for o in sorted(tech_obs, key=lambda x: x.start_frame)
             ]
             from observation_service.vlm_observation import batch_vlm_observations
+            from director_brain.models.film_observation import ClaimKind
             vlm_obs = batch_vlm_observations(input_path, shots)
             all_obs = all_obs + vlm_obs
             ok_obs = [o for o in vlm_obs
-                      if o.claim_kind.value == "MODEL_OBSERVATION"]
+                      if o.claim_kind is ClaimKind.MODEL_OBSERVATION]
             print(f"      语义观测: {len(ok_obs)}/{len(vlm_obs)} 镜头有效")
 
             ark_key = os.environ.get("ARK_API_KEY", "")

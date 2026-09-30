@@ -197,10 +197,16 @@ def test_kernel_semantic_score_drives_selection_under_quota():
         ]
         brief = _brief(target_s=6)
         graph = build_story_graph(brief, obs[:2])
-        edl, _plan = get_director_reasoner("heuristic").generate_plan(
+        edl, plan = get_director_reasoner("heuristic").generate_plan(
             brief, graph, obs)
-        seq = [e.source_asset_id for e in edl.ordered_edits]
-        assert seq == ["shot_00000002"]  # importance=5 胜出，imp=1 出局
+        by_shot = {e.source_asset_id: e.rationale
+                   for e in edl.ordered_edits}
+        # 语义分决定主槽位：imp=5 赢得 develop 主槽（无 topup 标记）；
+        # imp=1 只能经 topup 响亮补入（幕结构允许时排在时间顺序位）
+        assert "topup" not in by_shot["shot_00000002"]
+        assert "topup" in by_shot["shot_00000001"]
+        assert any(ev.startswith("semantic_topup:")
+                   for ev in plan.degradation_events)
     finally:
         set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
 
