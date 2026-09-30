@@ -58,23 +58,10 @@ _BACKOFF_S = (2.0, 6.0)
 
 
 def _read_env(key: str) -> str | None:
-    """读环境变量，回落项目根 .env（与 config.py 同纪律，不入库）。"""
-    import os
+    """env 读取走 config 单一源（架构体检④收编；保留名兼容测试注入点）。"""
+    from director_brain.config import read_env_key
 
-    val = os.environ.get(key)
-    if val:
-        return val
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    if not env_path.is_file():
-        return None
-    for line in env_path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        if k.strip() == key and v.strip():
-            return v.strip()
-    return None
+    return read_env_key(key)
 
 
 def build_chain_b_adapter() -> tuple[object | None, str | None]:

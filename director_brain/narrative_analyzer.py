@@ -150,10 +150,7 @@ def analyze_narrative(
 
 
 def load_env() -> None:
-    env = ROOT / ".env"
-    if env.is_file():
-        for line in env.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                k, v = line.split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip())
+    """.env 注入走 config 单一源（架构体检④收编）。"""
+    from director_brain.config import load_env_file
+
+    load_env_file()

@@ -54,26 +54,22 @@ def extract_shot_keyframes(video: str, shot_mids_s: list[float],
 
 def _zhipu_vision_call(frames: list[Path], prompt: str,
                        model: str, api_key: str) -> str:
-    """智谱 GLM-4V 系调用（OpenAI 兼容，免费档 GLM-4V-Flash）。"""
-    import urllib.request
-    content = [{"type": "text", "text": prompt}]
+    """智谱 GLM-4V 系调用（OpenAI 兼容，免费档 GLM-4V-Flash）。
+
+    传输统一走 llm_adapter.post_chat_json（架构体检④收编；多模态 content
+    数组经 user 参数透传）。
+    """
+    from director_brain.llm_adapter import post_chat_json
+
+    content: list = [{"type": "text", "text": prompt}]
     for f in frames:
         b64 = base64.b64encode(f.read_bytes()).decode()
         content.append({"type": "image_url",
                         "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
-    payload = {"model": model,
-               "messages": [{"role": "user", "content": content}],
-               "temperature": 0.1}
     base = os.environ.get("ZHIPU_BASE_URL",
-                          "https://open.bigmodel.cn/api/paas/v4").rstrip("/")
-    req = urllib.request.Request(
-        base + "/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"Bearer {api_key}"}, method="POST")
-    with urllib.request.urlopen(req, timeout=180) as r:
-        resp = json.loads(r.read())
-    return resp["choices"][0]["message"]["content"]
+                          "https://open.bigmodel.cn/api/paas/v4")
+    return post_chat_json(
+        base, api_key, model, "", content, timeout=180, max_tokens=4096)
 
 
 def ollama_vision_judge(frames: list[Path], model: str = "qwen3-vl:latest",
@@ -114,14 +110,10 @@ def ollama_vision_judge(frames: list[Path], model: str = "qwen3-vl:latest",
             else:
                 raise
         content = resp["message"]["content"].strip()
-        if content.startswith("```"):
-            content = re.sub(r"^```[a-zA-Z]*\s*", "", content)
-            content = re.sub(r"```\s*$", "", content).strip()
-        # 加固解析：取第一个 { 到最后一个 }（qwen3-vl 偶发 think 前缀/后缀）
-        lo, hi = content.find("{"), content.rfind("}")
-        if lo < 0 or hi <= lo:
-            raise ValueError(f"judge 输出无 JSON: {content[:120]}")
-        verdict = json.loads(content[lo:hi + 1])
+        # 解析统一走共享 extract_json_object（架构体检④收编；原生 ollama
+        # 传输保留——非 OpenAI 兼容形状，共享传输不覆盖）
+        from director_brain.llm_adapter import extract_json_object
+        verdict = extract_json_object(content)
         for s in verdict.get("shots", []):
             per_shot.append(s)
     overall = verdict.get("overall", {})

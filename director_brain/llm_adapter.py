@@ -125,7 +125,7 @@ def post_chat_json(
     api_key: str,
     model: str,
     system: str,
-    user: str,
+    user: str | list,
     *,
     timeout: int = 300,
     max_tokens: int = 2048,
@@ -133,9 +133,10 @@ def post_chat_json(
 ) -> str:
     """OpenAI 兼容 /chat/completions 统一传输缝（架构体检候选④收编）。
 
-    自由 JSON 消费者（叙事分析等）经此调用，不再各自手写 urllib +
-    围栏剥离。约束生成用 response_format=json_object；服务端 400 时
-    去掉该参数重试一次（传输级协商，非语义改动）。返回 content 字符串；
+    自由 JSON 消费者（叙事分析/评审脚本等）经此调用，不再各自手写 urllib +
+    围栏剥离。``user`` 传 list 时按 OpenAI 多模态 content 数组透传
+    （像素评审的图片输入）。约束生成用 response_format=json_object；服务端
+    400 时去掉该参数重试一次（传输级协商，非语义改动）。返回 content 字符串；
     网络/HTTP/空回复抛 :class:`LLMTransportError`（fail-closed）。
     """
     def _post(payload: dict) -> str:

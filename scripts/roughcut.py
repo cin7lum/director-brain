@@ -241,13 +241,8 @@ def run_roughcut(
                       if o.claim_kind is ClaimKind.MODEL_OBSERVATION]
             print(f"      语义观测: {len(ok_obs)}/{len(vlm_obs)} 镜头有效")
 
-            ark_key = os.environ.get("ARK_API_KEY", "")
-            if not ark_key and Path(".env").is_file():
-                for line in Path(".env").read_text(encoding="utf-8").splitlines():
-                    line = line.strip()
-                    if line.startswith("ARK_API_KEY=") and "=" in line:
-                        os.environ.setdefault("ARK_API_KEY", line.split("=", 1)[1])
-                        ark_key = os.environ["ARK_API_KEY"]
+            from director_brain.config import read_env_key
+            ark_key = read_env_key("ARK_API_KEY") or ""
             if ark_key:
                 print("[1.6] 跨镜头叙事弧（P3-3）...")
                 from director_brain.narrative_analyzer import analyze_narrative

@@ -6,6 +6,39 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+def read_env_key(key: str, default: str | None = None) -> str | None:
+    """单一 env 读取源（架构体检④收编）：环境变量优先，回落项目根 .env。
+
+    此前 semantic_shadow._read_env / narrative_analyzer.load_env /
+    roughcut 内联解析三处各自手写——env 语义漂移的温床。
+    """
+    val = os.environ.get(key)
+    if val:
+        return val
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            if k.strip() == key and v.strip():
+                return v.strip().strip('"').strip("'")
+    return default
+
+
+def load_env_file() -> None:
+    """把项目根 .env 注入 os.environ（setdefault 语义，幂等）。"""
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if not env_path.is_file():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+
 def _env(key: str, default: str | None = None) -> str | None:
     val = os.environ.get(key)
     if val is not None:

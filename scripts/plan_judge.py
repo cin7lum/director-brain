@@ -40,9 +40,11 @@ def load_env() -> None:
 
 
 def judge_plan(edl: dict, intent_text: str) -> dict:
-    """独立评审调用：同一已准入模型，但走评审专用 prompt（非 DirectorDecision 管道）。"""
-    import urllib.error
-    import urllib.request
+    """独立评审调用：同一已准入模型，但走评审专用 prompt（非 DirectorDecision 管道）。
+
+    传输统一走 llm_adapter.post_chat_json（架构体检④收编，私有 urllib 已删）。
+    """
+    from director_brain.llm_adapter import extract_json_object, post_chat_json
 
     shots = [
         {
@@ -55,32 +57,20 @@ def judge_plan(edl: dict, intent_text: str) -> dict:
         }
         for e in edl["ordered_edits"]
     ]
-    payload = {
-        "model": os.environ.get("ARK_MODEL", "doubao-seed-2-1-lite-260915"),
-        "messages": [
-            {"role": "system", "content": JUDGE_RUBRIC},
-            {"role": "user", "content": (
-                f"用户意图: {intent_text or '（未声明，默认自动粗剪）'}\n"
-                f"成片总时长: {edl['expected_duration'] / 1e6:.1f}s\n"
-                f"镜头清单: {json.dumps(shots, ensure_ascii=False)}"
-            )},
-        ],
-        "response_format": {"type": "json_object"},
-        "temperature": 0.1,
-    }
-    req = urllib.request.Request(
-        os.environ["ARK_BASE_URL"].rstrip("/") + "/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json",
-                 "Authorization": f"Bearer {os.environ['ARK_API_KEY']}"},
-        method="POST")
-    with urllib.request.urlopen(req, timeout=90) as r:
-        resp = json.loads(r.read())
-    content = resp["choices"][0]["message"]["content"].strip()
-    if content.startswith("```"):
-        content = re.sub(r"^```[a-zA-Z]*\s*", "", content)
-        content = re.sub(r"```\s*$", "", content).strip()
-    return json.loads(content)
+    user_text = (
+        f"用户意图: {intent_text or '（未声明，默认自动粗剪）'}\n"
+        f"成片总时长: {edl['expected_duration'] / 1e6:.1f}s\n"
+        f"镜头清单: {json.dumps(shots, ensure_ascii=False)}"
+    )
+    content = post_chat_json(
+        os.environ["ARK_BASE_URL"],
+        os.environ["ARK_API_KEY"],
+        os.environ.get("ARK_MODEL", "doubao-seed-2-1-lite-260915"),
+        JUDGE_RUBRIC,
+        user_text,
+        timeout=90,
+    )
+    return extract_json_object(content)
 
 
 def main() -> int:
