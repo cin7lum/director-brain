@@ -26,6 +26,8 @@ def _env(key: str, default: str | None = None) -> str | None:
 @dataclass(frozen=True)
 class Settings:
     # 文本 LLM
+    #: 链 B 文本 LLM：provider 选择传输（ark=已准入路径，默认）；
+    #: text_llm_model 仅 zhipu/ollama 传输消费（ark 用 ARK_MODEL 钉扎）
     text_llm_provider: str
     text_llm_model: str
     # VLM
@@ -37,7 +39,6 @@ class Settings:
     # 存储
     storage_backend: str
     sqlite_path: str
-    object_store_path: str
     # ASR（faster-whisper 本地权重目录或模型名）
     asr_model_path: str
     # 日志
@@ -46,7 +47,7 @@ class Settings:
 
 def load_settings() -> Settings:
     return Settings(
-        text_llm_provider=_env("TEXT_LLM_PROVIDER", "zhipu"),
+        text_llm_provider=_env("TEXT_LLM_PROVIDER", "ark"),
         text_llm_model=_env("TEXT_LLM_MODEL", "glm-4-flash"),
         vlm_provider=_env("VLM_PROVIDER", "ollama"),
         vlm_model=_env("VLM_MODEL", "glm-4.6v-flash"),
@@ -55,7 +56,6 @@ def load_settings() -> Settings:
         zhipu_base_url=_env("ZHIPU_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
         storage_backend=_env("STORAGE_BACKEND", "sqlite"),
         sqlite_path=_env("SQLITE_PATH", "./data/director_brain.db"),
-        object_store_path=_env("OBJECT_STORE_PATH", "./data/objects"),
         asr_model_path=_env(
             "ASR_MODEL_PATH",
             r"D:\新建豆包\gen1-roughcut\assets\asr\large-v3-turbo",

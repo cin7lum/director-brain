@@ -77,13 +77,45 @@ def _read_env(key: str) -> str | None:
     return None
 
 
-def build_ark_adapter() -> tuple[ArkLLMAdapter | None, str | None]:
-    """从环境构建 Ark 适配器。
+def build_chain_b_adapter() -> tuple[object | None, str | None]:
+    """按 TEXT_LLM_PROVIDER 构建链 B 传输适配器（成品级扫荡：接通死配置）。
 
-    返回 (adapter, None) 或 (None, 原因)。模型不设默认：ARK_MODEL 未钉扎
-    时拒绝构造——默认值曾是被拒模型（doubao-seed-2.0-lite 别名），静默
-    回退等于绕过准入。
+    provider：
+    - ``ark``（默认）：ARK_API_KEY + ARK_MODEL。模型不设默认：ARK_MODEL
+      未钉扎时拒绝构造——默认值曾是被拒模型（doubao-seed-2.0-lite 别名），
+      静默回退等于绕过准入。
+    - ``zhipu``：ZHIPU_API_KEY + TEXT_LLM_MODEL（此前 text_llm_* 配置
+      零消费；影子对账不驱动成片，model 全量记录进对账报告）。
+    - ``ollama``：TEXT_LLM_MODEL + OLLAMA_BASE_URL（本地传输）。
+
+    返回 (adapter, None) 或 (None, 原因)。
     """
+    from director_brain.config import load_settings
+
+    settings = load_settings()
+    provider = (settings.text_llm_provider or "ark").strip().lower()
+
+    if provider == "zhipu":
+        from director_brain.zhipu_adapter import ZhipuLLMAdapter
+
+        api_key = _read_env("ZHIPU_API_KEY") or settings.zhipu_api_key
+        if not api_key:
+            return None, "未设置 ZHIPU_API_KEY——链 B 影子跳过（不阻断主链）"
+        return ZhipuLLMAdapter(
+            api_key=api_key,
+            model=_read_env("TEXT_LLM_MODEL") or settings.text_llm_model,
+            base_url=settings.zhipu_base_url,
+        ), None
+
+    if provider == "ollama":
+        from director_brain.llm_adapter import LLMAdapter
+
+        return LLMAdapter(
+            model=_read_env("TEXT_LLM_MODEL") or settings.text_llm_model,
+            base_url=settings.ollama_base_url,
+        ), None
+
+    # ark（默认）
     api_key = _read_env(_ENV_API_KEY)
     if not api_key:
         return None, f"未设置 {_ENV_API_KEY}——链 B 影子跳过（不阻断主链）"
@@ -94,6 +126,14 @@ def build_ark_adapter() -> tuple[ArkLLMAdapter | None, str | None]:
             f"doubao-seed-2-1-lite-260915），拒绝默认到未准入模型"
         )
     return ArkLLMAdapter(api_key=api_key, model=model), None
+
+
+def build_ark_adapter() -> tuple[ArkLLMAdapter | None, str | None]:
+    """向后兼容别名（ark 分支语义不变）；新代码用 :func:`build_chain_b_adapter`。"""
+    adapter, reason = build_chain_b_adapter()
+    if adapter is not None and not isinstance(adapter, ArkLLMAdapter):
+        return None, f"TEXT_LLM_PROVIDER 非 ark（当前 {type(adapter).__name__}）"
+    return adapter, reason
 
 
 @dataclass
@@ -275,7 +315,7 @@ def run_shadow_semantic(
         return base
 
     if adapter_factory is None:
-        adapter_factory = build_ark_adapter
+        adapter_factory = build_chain_b_adapter
     adapter, reason = adapter_factory()
     if adapter is None:
         base.reason = reason or "适配器不可用"

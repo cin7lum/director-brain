@@ -44,6 +44,15 @@ app = FastAPI(
     description="02 导演脑 · 可解释可追溯可修订的导演决策 REST 接口",
 )
 
+# log_level 配置接线（成品级扫荡：此前 LOG_LEVEL 配置零消费）
+import logging as _logging  # noqa: E402
+
+try:
+    from director_brain.config import load_settings as _load_settings
+    _logging.basicConfig(level=_load_settings().log_level)
+except Exception:  # noqa: BLE001
+    pass
+
 
 # ---------------------------------------------------------------------------
 # 信封

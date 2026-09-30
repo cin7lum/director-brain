@@ -41,6 +41,7 @@ def generate_variants(
     graph: StoryGraph,
     observations: list[FilmObservation],
     configs: list[dict],
+    narrative: dict | None = None,
 ) -> list[tuple[EditorialDecisionList, DirectorDecisionPlan]]:
     """对每个 config 生成一个 EDL 变体。
 
@@ -59,7 +60,8 @@ def generate_variants(
         threshold = float(cfg.get("blur_threshold", 10.0))
         reasoner = HeuristicDirectorReasoner(blur_threshold=threshold)
         brief_copy = brief.model_copy(update={"target_duration": target})
-        edl, plan = reasoner.generate_plan(brief_copy, graph, observations)
+        edl, plan = reasoner.generate_plan(brief_copy, graph, observations,
+                                           narrative=narrative)
         variants.append((edl, plan))
     return variants
 

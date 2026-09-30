@@ -158,7 +158,7 @@ class _FakeReasoner:
     def __init__(self) -> None:
         self.received_targets: list[int] = []
 
-    def generate_plan(self, brief, graph, observations):
+    def generate_plan(self, brief, graph, observations, *, narrative=None):
         self.received_targets.append(brief.target_duration)
         edl = _edl([_edit("shot_a", 0, 1_000_000)])
         return edl, _plan()

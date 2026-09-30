@@ -161,6 +161,7 @@ def run_roughcut(
     intent_text: str | None = None,
     semantic: bool = False,
     confirm_strategy: bool = False,
+    variants: int = 1,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -313,12 +314,53 @@ def run_roughcut(
                 f"[{edge.edge_type.value}] conf={edge.confidence}"
             )
 
-        # ---- 5. 生成计划 ----
+        # ---- 5. 生成计划（--variants>1 时多方案对比择优）----
+        ledger = _open_ledger()
         print("[6/7] 生成导演计划...")
         reasoner = get_director_reasoner("heuristic")
         try:
-            edl, plan = reasoner.generate_plan(brief, graph, all_obs,
-                                               narrative=narrative)
+            if variants > 1:
+                # 成品级扫荡：strategy_selector（此前休眠）接线为生产入口——
+                # 围绕目标时长 ±10% 步进 × 不同 blur 阈值生成 N 个变体，
+                # 评分卡择优（对齐 OpusClip"多候选选最优"实践），全量落账本
+                from director_brain.strategy_selector import (
+                    compare_plans,
+                    generate_variants,
+                    select_best,
+                )
+                print(f"      多方案对比: {variants} 个变体...")
+                configs = [
+                    {
+                        "target_duration_us": int(
+                            target_duration_us
+                            * (1.0 + (i - (variants - 1) / 2) * 0.1)
+                        ),
+                        "blur_threshold": 10.0 + i * 2.5,
+                    }
+                    for i in range(variants)
+                ]
+                variant_pairs = generate_variants(
+                    brief, graph, all_obs, configs, narrative=narrative)
+                scorecards = compare_plans(variant_pairs, all_obs)
+                best = select_best(
+                    scorecards, priority="duration",
+                    target_duration_us=target_duration_us)
+                edl, plan = variant_pairs[best]
+                _safe_log(ledger, plan.plan_id, "variants_compared", {
+                    "variant_count": variants,
+                    "configs": configs,
+                    "scorecards": scorecards,
+                    "chosen_index": best,
+                    "priority": "duration",
+                })
+                for i, sc in enumerate(scorecards):
+                    mark = " ← 选优" if i == best else ""
+                    print(f"      变体{i + 1}: {sc['shot_count']} 镜头 "
+                          f"{sc['duration_us'] / 1e6:.2f}s "
+                          f"avg_blur={sc.get('avg_blur', 0):.1f}{mark}")
+            else:
+                edl, plan = reasoner.generate_plan(brief, graph, all_obs,
+                                                   narrative=narrative)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -326,7 +368,6 @@ def run_roughcut(
         # 候选③：状态机接线（DRAFT → CONTEXT_READY → VALIDATING）
         transition_plan(plan, PlanState.CONTEXT_READY)
         transition_plan(plan, PlanState.VALIDATING)
-        ledger = _open_ledger()
         _safe_log(ledger, plan.plan_id, "plan_generated", {
             "edl_id": edl.edl_id,
             "shot_count": len(edl.ordered_edits),
@@ -482,6 +523,12 @@ def run_roughcut(
 
 
 def main():
+    # log_level 配置接线（成品级扫荡：此前 LOG_LEVEL 配置零消费）
+    try:
+        import logging
+        logging.basicConfig(level=load_settings().log_level)
+    except Exception:
+        pass
     parser = argparse.ArgumentParser(
         description="端到端粗剪：从原始素材产出粗剪视频",
     )
@@ -519,6 +566,12 @@ def main():
              "硬前置 vlm_semantic 通路 ACTIVE，否则 fail-closed 拒绝",
     )
     parser.add_argument(
+        "--variants",
+        type=int,
+        default=1,
+        help="多方案对比：生成 N 个变体（时长±10%%步进×不同模糊阈值）评分择优",
+    )
+    parser.add_argument(
         "--confirm-strategy",
         action="store_true",
         help="策略确认（候选③）：绑定 plan_hash+edl_hash 并授权渲染"
@@ -533,6 +586,7 @@ def main():
         intent_text=args.intent,
         semantic=args.semantic,
         confirm_strategy=args.confirm_strategy,
+        variants=args.variants,
     ))
 
 
