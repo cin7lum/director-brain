@@ -10,6 +10,7 @@ render_edl。
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -152,11 +153,16 @@ def run_roughcut(
     target_duration: int = _DEFAULT_TARGET_DURATION,
     dry_run: bool = False,
     intent_text: str | None = None,
+    semantic: bool = False,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
     intent_text: 用户创作意图的自然语言原文，透传给 brief_compiler
     （规则抽取 must_include / must_avoid 约束）；None 表示未提供。
+    semantic: 语义驱动选片（候选①生产入口）——多帧 VLM 语义观测 +
+    跨镜头叙事弧进入选片内核。**硬前置**：vlm_semantic 通路必须
+    ACTIVE（治理决策，set_pathway_status 留痕）；非 ACTIVE 时
+    fail-closed 拒绝启动（禁止半消费——影子信号只记录不驱动）。
     """
     # ---- 输入检查 ----
     if not os.path.isfile(input_path):
@@ -195,6 +201,73 @@ def run_roughcut(
 
         all_obs = tech_obs + speech_obs
 
+        # ---- 1.5 语义观测（候选①生产入口；通路 ACTIVE 硬前置）----
+        narrative = None
+        if semantic:
+            from director_brain.pathway_protocol import PathwayStatus
+            pw = get_pathway_status("vlm_semantic")
+            if pw is not PathwayStatus.ACTIVE:
+                print(
+                    f"[fail-closed] --semantic 要求 vlm_semantic 通路 ACTIVE，"
+                    f"当前 {pw.value}——影子期信号只记录不驱动（禁止半消费）。"
+                    f"转正属治理决策：以影子期证据经主控批准后 "
+                    f"set_pathway_status('vlm_semantic', ACTIVE)。"
+                )
+                return 1
+            print("[1.5] 多帧语义观测（vlm_semantic ACTIVE）...")
+            shots = [
+                {"shot_id": o.media_asset_id, "source_in_us": o.start_frame,
+                 "source_out_us": o.end_frame, "source_media_hash": o.media_hash}
+                for o in sorted(tech_obs, key=lambda x: x.start_frame)
+            ]
+            from observation_service.vlm_observation import batch_vlm_observations
+            vlm_obs = batch_vlm_observations(input_path, shots)
+            all_obs = all_obs + vlm_obs
+            ok_obs = [o for o in vlm_obs
+                      if o.claim_kind.value == "MODEL_OBSERVATION"]
+            print(f"      语义观测: {len(ok_obs)}/{len(vlm_obs)} 镜头有效")
+
+            ark_key = os.environ.get("ARK_API_KEY", "")
+            if not ark_key and Path(".env").is_file():
+                for line in Path(".env").read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if line.startswith("ARK_API_KEY=") and "=" in line:
+                        os.environ.setdefault("ARK_API_KEY", line.split("=", 1)[1])
+                        ark_key = os.environ["ARK_API_KEY"]
+            if ark_key:
+                print("[1.6] 跨镜头叙事弧（P3-3）...")
+                from director_brain.narrative_analyzer import analyze_narrative
+                ordered = sorted(tech_obs, key=lambda x: x.start_frame)
+                shot_ids = [o.media_asset_id for o in ordered]
+                sems = []
+                claims = {
+                    o.media_asset_id: json.loads(o.claim)
+                    for o in ok_obs
+                }
+                for sid in shot_ids:
+                    c = claims.get(sid)
+                    if c:
+                        sems.append({
+                            "scene_description": c.get("scene_description", ""),
+                            "action_type": c.get("action_type"),
+                            "emotional_tone": c.get("emotional_tone"),
+                            "narrative_role": c.get("narrative_role"),
+                            "importance": c.get("importance"),
+                        })
+                try:
+                    narrative = analyze_narrative(
+                        sems, shot_ids=shot_ids, api_key=ark_key)
+                    print(f"      叙事弧: {narrative.get('story_arc', '')[:60]}...")
+                    print(f"      幕边界: {len(narrative.get('act_boundaries_resolved', []))} 段"
+                          f" ｜ 推荐顺序: "
+                          f"{'有' if narrative.get('suggested_order_resolved') else '无'}")
+                except Exception as exc:  # noqa: BLE001
+                    # 响亮降级：叙事层失败不阻断（语义逐镜头观测仍生效）
+                    print(f"      叙事分析失败（响亮跳过）: "
+                          f"{type(exc).__name__}: {str(exc)[:80]}")
+            else:
+                print("      叙事分析跳过（无 ARK_API_KEY——逐镜头语义仍生效）")
+
         # ---- 2. Brief ----
         print("[3/7] 编译 Brief...")
         brief = compile_brief(
@@ -231,7 +304,8 @@ def run_roughcut(
         print("[6/7] 生成导演计划...")
         reasoner = get_director_reasoner("heuristic")
         try:
-            edl, plan = reasoner.generate_plan(brief, graph, all_obs)
+            edl, plan = reasoner.generate_plan(brief, graph, all_obs,
+                                               narrative=narrative)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -380,6 +454,12 @@ def main():
         default=None,
         help="用户创作意图（自然语言），编译进 Brief 约束（P0-4 入口）",
     )
+    parser.add_argument(
+        "--semantic",
+        action="store_true",
+        help="语义驱动选片（候选①）：多帧语义观测+叙事弧进入选片内核；"
+             "硬前置 vlm_semantic 通路 ACTIVE，否则 fail-closed 拒绝",
+    )
     args = parser.parse_args()
     sys.exit(run_roughcut(
         input_path=args.input,
@@ -387,6 +467,7 @@ def main():
         target_duration=args.target_duration,
         dry_run=args.dry_run,
         intent_text=args.intent,
+        semantic=args.semantic,
     ))
 
 

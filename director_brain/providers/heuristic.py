@@ -87,10 +87,13 @@ def compute_clip_window(
 # VLM 权重
 # ---------------------------------------------------------------------------
 
-def _vlm_multiplier(
+def vlm_multiplier(
     candidate: dict, target_duration_us: int
 ) -> tuple[float, list[str]]:
-    """返回 ``(multiplier, 命中规则名列表)``；无 VLM 标签时返回 ``(1.0, [])``。"""
+    """返回 ``(multiplier, 命中规则名列表)``；无 VLM 标签时返回 ``(1.0, [])``。
+
+    公开为内核可导入（候选①融合评分需乘结构性 VLM 权重）。
+    """
     fn = candidate.get("vlm_shot_function")
     motion = candidate.get("vlm_motion")
     role = candidate.get("vlm_role")
@@ -135,6 +138,7 @@ class HeuristicBaseline:
         min_clip_us: int = MIN_CLIP_US,
         max_clip_us: int = MAX_CLIP_US,
         align: str = "center",
+        score_key: str | None = None,
     ) -> dict:
         """生成 V0.1 格式的 proposal dict。
 
@@ -152,10 +156,19 @@ class HeuristicBaseline:
         usable = [c for c in candidates if c.get("technical_usable")]
 
         def _score(c: dict) -> float:
+            # 候选①：内核融合分（语义评分 × 结构权重）优先
+            if score_key is not None:
+                fused = c.get(score_key)
+                if isinstance(fused, (int, float)):
+                    return float(fused)
             blur = c.get("blur_score") or 0
-            mult, _ = _vlm_multiplier(c, target_duration_us)
-            # S4：importance 权重（1-5 → 0.4~2.0 倍；未标注 → 1.0）
-            imp = c.get("_claim_metrics", {}).get("importance")
+            mult, _ = vlm_multiplier(c, target_duration_us)
+            # S4：importance 权重（1-5 → 0.4~2.0 倍；未标注 → 1.0）。
+            # 来源修正：读 VLM 语义观测字段 vlm_importance——此前误读
+            # _claim_metrics（技术观测 claim，永无 importance），权重实为死代码。
+            imp = c.get("vlm_importance")
+            if imp is None:
+                imp = c.get("_claim_metrics", {}).get("importance")
             imp_mult = (0.4 + 0.4 * imp) if isinstance(imp, (int, float)) and 1 <= imp <= 5 else 1.0
             return blur * mult * imp_mult
 
@@ -182,7 +195,7 @@ class HeuristicBaseline:
                 shot_in, shot_out, clip_dur, align=align
             )
 
-            mult, hits = _vlm_multiplier(c, target_duration_us)
+            mult, hits = vlm_multiplier(c, target_duration_us)
             score = (c.get("blur_score") or 0) * mult
             if hits:
                 reason = (
@@ -234,8 +247,12 @@ def generate_edl(
     min_clip_us: int = MIN_CLIP_US,
     max_clip_us: int = MAX_CLIP_US,
     align: str = "center",
+    score_key: str | None = None,
 ) -> EditorialDecisionList:
     """生成 EDL：产出 V0.1 proposal slots 后直接构造 EDL。
+
+    score_key: 候选①——内核融合分（selection_score）优先排序；None 时
+    用内置 ``blur × vlm_mult × imp_mult`` 公式（旧行为）。
 
     注意：heuristic 的 slot 不含 ``proposed_role``，因此
     :attr:`EditItem.shot_function` 为 None，由调用方（director_reasoner）
@@ -250,6 +267,7 @@ def generate_edl(
         min_clip_us=min_clip_us,
         max_clip_us=max_clip_us,
         align=align,
+        score_key=score_key,
     )
 
     edits = [

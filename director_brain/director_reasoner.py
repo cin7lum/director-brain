@@ -23,7 +23,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 
-from director_brain.acts import ACT_FUNCTION, ACT_ORDER, ACT_RATIO
+from director_brain.acts import ACT_FUNCTION, ACT_ORDER, ACT_RATIO, ROLE_TO_ACT
 from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
@@ -31,7 +31,13 @@ from director_brain.models.edl import EditItem, EditorialDecisionList
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
 from director_brain.pathway_protocol import ensure_decision_use_allowed
-from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US, generate_edl
+from director_brain.providers.heuristic import (
+    MAX_CLIP_US,
+    MIN_CLIP_US,
+    generate_edl,
+    vlm_multiplier,
+)
+from director_brain.semantic_scorer import SemanticScore, compute_semantic_score
 from director_brain.intent_constraints import (
     TechnicalAvoidRule,
     candidate_violated_rules,
@@ -93,9 +99,10 @@ def _build_candidates(
 
     若传入 ``vlm_obs``，从中筛选 ``claim_kind == MODEL_OBSERVATION`` 的 VLM
     语义观测，按 ``media_asset_id`` 建立 claim 映射，把
-    ``shot_function / proposed_role_v2 / motion_amount`` 作为
-    ``vlm_shot_function / vlm_role / vlm_motion`` 写入 candidate；无对应
-    VLM 观测时这三个字段为 ``None``（``_vlm_multiplier`` 返回 1.0，行为不变）。
+    ``shot_function / proposed_role_v2 / motion_amount / importance`` 与
+    P3-1 深度语义（``narrative_role / emotional_tone / action_type /
+    scene_description``）写入 candidate；无对应 VLM 观测时这些字段为
+    ``None``（按无语义处理，行为与技术路径一致）。
     """
     if vlm_obs:
         ensure_decision_use_allowed("vlm_semantic")
@@ -128,8 +135,15 @@ def _build_candidates(
             "vlm_shot_function": vlm_claim.get("shot_function"),
             "vlm_role": vlm_claim.get("proposed_role_v2"),
             "vlm_motion": vlm_claim.get("motion_amount"),
-            # S4：TVSum 同构 importance（1-5；None=未标注）
+            # S4：TVSum 同构 importance（1-5；None=未标注）——来源是 VLM
+            # 语义观测 claim（修正：此前 generate._score 误读技术观测 claim，
+            # 该处永无 importance，S4 权重在生产内核实为死代码）
             "vlm_importance": vlm_claim.get("importance"),
+            # P3-1 深度语义（内核语义融合消费，须过通路闸门）
+            "vlm_narrative_role": vlm_claim.get("narrative_role"),
+            "vlm_emotional_tone": vlm_claim.get("emotional_tone"),
+            "vlm_action_type": vlm_claim.get("action_type"),
+            "vlm_scene_description": vlm_claim.get("scene_description", ""),
         })
 
     # T2：原始（未放宽）判据结果单独留档——confidence 用它计算，
@@ -178,13 +192,27 @@ class DirectorReasoner(ABC):
         brief: DirectorBrief,
         graph: StoryGraph,
         observations: list[FilmObservation],
+        *,
+        narrative: dict | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
-        """从简报/故事图/观测产出 (EDL, 决策计划)。"""
+        """从简报/故事图/观测产出 (EDL, 决策计划)。
+
+        narrative: 跨镜头叙事理解（narrative_analyzer 产物，P3-3）。传入时
+        act_boundaries_resolved 驱动幕分配、suggested_order_resolved 驱动
+        幕内排序——属于 vlm_semantic 通路的决策消费，调用方须已确保通路
+        ACTIVE（消费侧闸门在 _build_candidates 统一执法）。
+        """
         raise NotImplementedError
 
 
 class HeuristicDirectorReasoner(DirectorReasoner):
-    """基于 HeuristicBaseline 的确定性导演推理器（无 LLM）。"""
+    """基于 HeuristicBaseline 的确定性导演推理器（无 LLM）。
+
+    候选①内核融合：VLM 语义观测（vlm_semantic 通路，闸门内）驱动
+    三层语义选片——narrative_role/叙事幕边界决定幕分配（替代纯时间
+    比例）、emotional_tone/action_type/importance/内容多样性参与评分、
+    叙事推荐顺序决定幕内排序。无语义观测时逐位回退纯技术路径。
+    """
 
     def __init__(self, blur_threshold: float = 10.0) -> None:
         self.blur_threshold = float(blur_threshold)
@@ -194,6 +222,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         brief: DirectorBrief,
         graph: StoryGraph,
         observations: list[FilmObservation],
+        *,
+        narrative: dict | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -264,6 +294,34 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         clip_bounds = editing_language_bounds(brief, (MIN_CLIP_US, MAX_CLIP_US))
         min_clip_us, max_clip_us = clip_bounds
 
+        # ---- 候选①：语义幕分配表（vlm_semantic 闸门已在上游执法）----
+        # 优先级：叙事弧幕边界（P3-3 序列级理解）> 逐镜头 narrative_role
+        # （P3-2）> 时间比例（story_graph 默认）。无任何语义时表为空，
+        # 逐位走旧路径（回归安全）。
+        semantic_act: dict[str, str] = {}
+        if narrative:
+            for b in narrative.get("act_boundaries_resolved", []):
+                act_name = b.get("act")
+                if act_name in ACT_ORDER:
+                    for sid in b.get("shot_ids", []):
+                        semantic_act[sid] = act_name
+        for c in candidates:
+            if c["source_shot_id"] in semantic_act:
+                continue
+            role = c.get("vlm_narrative_role")
+            if role in ROLE_TO_ACT:
+                semantic_act[c["source_shot_id"]] = ROLE_TO_ACT[role]
+        # 注意：语义幕分配是能力升级而非降级——不写 degradation_events
+        # （否则会误置 plan.degraded=True），消费留痕走 open_questions。
+        semantic_moves = bool(semantic_act)
+
+        # ---- 候选①：叙事推荐顺序 → 幕内排序位次（P3-3）----
+        order_rank: dict[str, int] = {}
+        if narrative:
+            resolved_order = narrative.get("suggested_order_resolved") or []
+            for rank, sid in enumerate(resolved_order):
+                order_rank[sid] = rank
+
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
         act_nodes = [
             n for n in graph.nodes
@@ -274,6 +332,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         paired: list[tuple[str, EditItem, Decision]] = []
         borrowed_any = False
         fallback_any = False
+        #: 候选①：本 plan 内的语义评分明细（rationale 留痕用）
+        sem_scores: dict[str, SemanticScore] = {}
+        #: 候选①：内容多样性——已评分镜头的归一化描述（跨幕累积）
+        seen_descs: list[str] = []
         #: 已被选入 plan 的镜头 id（T1 修复：一份 plan 内同一镜头只选一次）
         selected_ids: set[str] = set()
 
@@ -285,11 +347,24 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             # 删镜头"兜底"——按"Plan=导演依据"裁定，缺陷必须在导演层消除。
             # 注意：有意的镜头复用（reprise）未来需以"不重叠子区间"显式表达，
             # 当前 schema 不支持，先按保守规则排除。
-            act_cands = [
-                c for c in candidates
-                if c["source_shot_id"] in shot_ids
-                and c["source_shot_id"] not in selected_ids
-            ]
+            if semantic_moves:
+                # 候选①：语义幕分配接管（叙事边界 > narrative_role）；
+                # 无语义归属的候选仍按时间图分幕，两种来源并存。
+                def _belongs(c: dict) -> bool:
+                    sid = c["source_shot_id"]
+                    if sid in selected_ids:
+                        return False
+                    if sid in semantic_act:
+                        return semantic_act[sid] == act_name
+                    return sid in shot_ids
+
+                act_cands = [c for c in candidates if _belongs(c)]
+            else:
+                act_cands = [
+                    c for c in candidates
+                    if c["source_shot_id"] in shot_ids
+                    and c["source_shot_id"] not in selected_ids
+                ]
 
             # 空幕兜底：本幕时间范围内无镜头时，从**未被选用**的全局候选借用。
             # VLM 判为 discard 的镜头视为导演层已否决，不参与借用；无数据
@@ -303,6 +378,10 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     and c.get("vlm_role") != "discard"
                     and not c.get("_no_data")
                     and not c.get("_dark_shot")
+                    # 候选①：语义归属其他幕的镜头不得借入本幕
+                    # （无语义归属者保持时间兜底行为）
+                    and semantic_act.get(c["source_shot_id"], act_name)
+                    == act_name
                 ]
                 if pool:
                     sorted_cands = sorted(pool, key=lambda c: c["source_in_us"])
@@ -326,6 +405,33 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 MIN_CLIP_US,
             )
 
+            # ---- 候选①：语义评分（P3-2 数学收编进内核）----
+            # importance 基础加权 + 情绪弧/剪辑语言匹配 + 内容多样性降权；
+            # 再乘结构性 VLM 权重（hero/discard/长静态等，保留旧权重语义）。
+            # 有任一语义分 → generate_edl 改按 selection_score 贪心排序。
+            score_key: str | None = None
+            for c in act_cands:
+                sem = {
+                    "importance": c.get("vlm_importance"),
+                    "emotional_tone": c.get("vlm_emotional_tone"),
+                    "action_type": c.get("vlm_action_type"),
+                    "narrative_role": c.get("vlm_narrative_role"),
+                    "scene_description": c.get("vlm_scene_description", ""),
+                }
+                if not any(
+                    v is not None
+                    for k, v in sem.items() if k != "scene_description"
+                ):
+                    continue
+                s = compute_semantic_score(c, sem, brief, act_name, seen_descs)
+                desc = (sem.get("scene_description") or "")[:30].lower().strip()
+                if desc:
+                    seen_descs.append(desc)
+                structural_mult, _hits = vlm_multiplier(c, brief.target_duration)
+                c["selection_score"] = round(s.total * structural_mult, 2)
+                sem_scores[c["source_shot_id"]] = s
+                score_key = "selection_score"
+
             # route-9 导演层 policy：切点吸附场景边界（head 对齐）——
             # 片段起点 = 源镜头起点（discover_shots 分段依据 = 场景边界）
             edl = generate_edl(
@@ -335,6 +441,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 min_clip_us=min_clip_us,
                 max_clip_us=max_clip_us,
                 align="head",
+                score_key=score_key,
             )
             act_edits: list[EditItem] = list(edl.ordered_edits)
             used_fallback = False
@@ -354,6 +461,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         min_clip_us=min_clip_us,
                         max_clip_us=max_clip_us,
                         align="head",
+                        score_key=score_key,
                     )
                     relaxed_edits = list(edl_relaxed.ordered_edits)
                     if relaxed_edits:
@@ -401,7 +509,13 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 edit.shot_function = ACT_FUNCTION.get(act_name)
                 edit.act = act_name
                 reason = edit.rationale or ""
-                edit.rationale = f"act={act_name}, {reason}"
+                sem = sem_scores.get(edit.source_asset_id)
+                if sem is not None:
+                    edit.rationale = (
+                        f"act={act_name}, sem[{sem.reason}], {reason}"
+                    )
+                else:
+                    edit.rationale = f"act={act_name}, {reason}"
                 slot_label = "fallback" if used_fallback else f"slot_{idx + 1:02d}"
 
                 selected_blur = next(
@@ -434,8 +548,14 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 paired.append((act_name, edit, decision))
                 selected_ids.add(edit.source_asset_id)
 
-        # ---- 按幕顺序（hook→develop→peak→resolve），同幕内按 in_frame 升序 ----
-        paired.sort(key=lambda p: (ACT_ORDER.get(p[0], 99), p[1].in_frame))
+        # ---- 按幕顺序（hook→develop→peak→resolve）----
+        # 幕内排序：有叙事推荐顺序（P3-3 suggested_order）时按其位次，
+        # 未覆盖的镜头排在其后；否则按 in_frame 升序（旧行为）。
+        paired.sort(key=lambda p: (
+            ACT_ORDER.get(p[0], 99),
+            order_rank.get(p[1].source_asset_id, 10 ** 9),
+            p[1].in_frame,
+        ))
 
         edits: list[EditItem] = [p[1] for p in paired]
         decisions: list[Decision] = [p[2] for p in paired]
@@ -449,6 +569,12 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             open_questions.append("fallback_selection_used")
         if degradation_events:
             open_questions.append("degraded_selection_used")
+        if sem_scores:
+            open_questions.append(
+                f"semantic_selection:applied:shots={len(sem_scores)}")
+        if order_rank:
+            open_questions.append(
+                f"narrative_reorder:applied:shots={len(order_rank)}")
         open_questions.extend(constraint_questions)
 
         source_hashes: list[str] = []
@@ -517,6 +643,8 @@ class LLMDirectorReasoner(DirectorReasoner):
         brief: DirectorBrief,
         graph: StoryGraph,
         observations: list[FilmObservation],
+        *,
+        narrative: dict | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "
