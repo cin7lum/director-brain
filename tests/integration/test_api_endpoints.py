@@ -240,11 +240,19 @@ def _plan_and_edl(video_path) -> tuple[dict, dict]:
 
 def test_confirm_strategy_endpoint(video_path):
     plan, edl = _plan_and_edl(video_path)
+    # 候选③执法：确认前 plan 须先到 ready_for_strategy_confirmation
+    # （生成端点产出的 plan 处于 draft，直接确认会被 409 拒绝）
+    pre = client.post(
+        f"/v1/director-plans/{plan['plan_id']}:confirm-strategy",
+        json={"plan_id": plan["plan_id"], "edl_id": edl["edl_id"],
+              "plan_json": plan, "edl_json": edl, "confirmed_by": "owner"})
+    assert pre.status_code == 409
+    plan["state"] = "ready_for_strategy_confirmation"
     data = _envelope_data(client.post(
         f"/v1/director-plans/{plan['plan_id']}:confirm-strategy",
         json={"plan_id": plan["plan_id"], "edl_id": edl["edl_id"],
               "plan_json": plan, "edl_json": edl, "confirmed_by": "owner"}))
-    assert data["state"] == "strategy_confirmed"
+    assert data["state"] == "dispatch_eligible"
     assert data["confirmation"]["plan_hash"]
 
 

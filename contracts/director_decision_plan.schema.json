@@ -173,6 +173,11 @@
         ],
         "default": null,
         "title": "Supersedes Plan Id"
+      },
+      "state": {
+        "default": "draft",
+        "title": "State",
+        "type": "string"
       }
     },
     "required": [

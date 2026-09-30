@@ -33,6 +33,7 @@ def main() -> int:
         return run_roughcut(
             input_path=src, output_path=out, target_duration=20,
             intent_text=intent, semantic=True,
+            confirm_strategy=True,  # 候选③：pilot 即确认动作（hash 绑定留账本）
         )
     finally:
         set_pathway_status("vlm_semantic", PathwayStatus.SHADOW)

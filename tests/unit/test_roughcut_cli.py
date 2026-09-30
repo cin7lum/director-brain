@@ -245,10 +245,36 @@ class TestRoughcutCLI:
             output_path=str(output_file),
             target_duration=15,
             dry_run=False,
+            confirm_strategy=True,  # 候选③：渲染须策略确认
         )
 
         assert rc == 0
         mocks["render"].assert_called_once()
+
+    def test_unconfirmed_plan_refuses_render(self, monkeypatch, tmp_path):
+        """候选③执法：验证 PASS 但未确认 → exit 2，不渲染（红线有牙）。"""
+        mod = _load_roughcut()
+        mocks = _patch_pipeline(monkeypatch, mod)
+
+        input_file = tmp_path / "input.mp4"
+        input_file.write_bytes(b"fake")
+        output_file = tmp_path / "output.mp4"
+
+        plan = _make_plan()
+        mocks["reasoner"].generate_plan.return_value = (_make_edl(), plan)
+
+        rc = mod.run_roughcut(
+            input_path=str(input_file),
+            output_path=str(output_file),
+            target_duration=15,
+            dry_run=False,
+            confirm_strategy=False,
+        )
+
+        assert rc == 2
+        mocks["render"].assert_not_called()
+        # plan 停在确认就绪态（工件保留，可经 API/再次调用确认）
+        assert plan.state == "ready_for_strategy_confirmation"
 
     def test_summary_reports_pathway_status_and_asr_attribution(
         self, monkeypatch, tmp_path, capsys
@@ -299,6 +325,7 @@ class TestRoughcutCLI:
             input_path=str(input_file),
             output_path=str(output_file),
             dry_run=False,
+            confirm_strategy=True,
         )
 
         assert rc == 1
@@ -392,6 +419,7 @@ class TestRoughcutCLI:
             input_path=str(input_file),
             output_path=str(output_file),
             dry_run=False,
+            confirm_strategy=True,
         )
 
         assert rc == 0
@@ -423,6 +451,7 @@ class TestRoughcutCLI:
             input_path=str(input_file),
             output_path=str(output_file),
             dry_run=False,
+            confirm_strategy=True,
         )
 
         assert rc == 1
@@ -448,6 +477,7 @@ class TestRoughcutCLI:
             input_path=str(input_file),
             output_path=str(output_file),
             dry_run=False,
+            confirm_strategy=True,
         )
 
         assert rc == 1
@@ -471,6 +501,7 @@ class TestRoughcutCLI:
             input_path=str(input_file),
             output_path=str(output_file),
             dry_run=False,
+            confirm_strategy=True,
         )
         assert rc == 1
 

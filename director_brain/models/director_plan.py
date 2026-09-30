@@ -40,3 +40,6 @@ class DirectorDecisionPlan(BaseRecord):
     validation_status: str
     approval_state: str
     supersedes_plan_id: str | None = None
+    #: Plan 状态机当前态（候选③执法点：plan_state.PlanState 的值；
+    #: 渲染/执行闸门据此执法——未 STRATEGY_CONFIRMED 不得渲染）。
+    state: str = "draft"

@@ -27,6 +27,12 @@ from director_brain.director_reasoner import EvidenceTooPoorError, get_director_
 from director_brain.pathway_protocol import describe as describe_pathways
 from director_brain.pathway_protocol import get_pathway_status
 from director_brain.plan_repair import repair_plan
+from director_brain.plan_state import (
+    PlanState,
+    confirm_strategy as _bind_strategy_confirmation,
+    is_confirmation_valid,
+    transition_plan,
+)
 from director_brain.plan_validator import validate_plan
 from director_brain.relation_inference import infer_relations
 from director_brain.semantic_shadow import ShadowReport, run_shadow_semantic
@@ -154,6 +160,7 @@ def run_roughcut(
     dry_run: bool = False,
     intent_text: str | None = None,
     semantic: bool = False,
+    confirm_strategy: bool = False,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -163,6 +170,11 @@ def run_roughcut(
     跨镜头叙事弧进入选片内核。**硬前置**：vlm_semantic 通路必须
     ACTIVE（治理决策，set_pathway_status 留痕）；非 ACTIVE 时
     fail-closed 拒绝启动（禁止半消费——影子信号只记录不驱动）。
+    confirm_strategy: 策略确认（候选③执法点）——渲染属写操作，红线
+    "未 STRATEGY_CONFIRMED 不得渲染"由此生效：验证 PASS 后 plan 停在
+    READY_FOR_STRATEGY_CONFIRMATION，传 True 才绑定 plan_hash+edl_hash
+    推进到 DISPATCH_ELIGIBLE 并放行渲染；不传则只出 EDL/plan 工件
+    （exit 2 = 策略未确认）。dry_run 不受影响。
     """
     # ---- 输入检查 ----
     if not os.path.isfile(input_path):
@@ -311,6 +323,9 @@ def run_roughcut(
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
             return 1
+        # 候选③：状态机接线（DRAFT → CONTEXT_READY → VALIDATING）
+        transition_plan(plan, PlanState.CONTEXT_READY)
+        transition_plan(plan, PlanState.VALIDATING)
         ledger = _open_ledger()
         _safe_log(ledger, plan.plan_id, "plan_generated", {
             "edl_id": edl.edl_id,
@@ -319,6 +334,7 @@ def run_roughcut(
             "degradation_events": plan.degradation_events,
             "open_questions": plan.open_questions,
             "constraints": plan.constraints,
+            "state": plan.state,
         })
 
         # ---- 链 B 影子语义决策辅助（阶段 7.5，SHADOW）----
@@ -360,6 +376,7 @@ def run_roughcut(
                 # Plan=导演依据：修复器无权增删镜头，物理修复不可行时 fail-closed 上抛
                 print(f"      修复放弃（repair_requires_director）: {outcome.reason_code}")
                 print(f"      原因: {outcome.reason}")
+                transition_plan(plan, PlanState.FAILED_VALIDATION)
                 _run_semantic_shadow(chain_a_proceeded=False)
                 _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
                 return 1
@@ -377,6 +394,36 @@ def run_roughcut(
         if not repaired or is_valid:
             plan.validation_status = "valid" if is_valid else "invalid"
 
+        # ---- 候选③：终态回写状态机（VALIDATING → 确认就绪 / 验证失败）----
+        confirmation = None
+        if is_valid:
+            if plan.state == PlanState.DRAFT.value:
+                # 修复器重建的 plan 从 DRAFT 重新进入管线（真实 repair_plan
+                # 经 model_copy 保留 state，此处兼容重建实现）
+                transition_plan(plan, PlanState.CONTEXT_READY)
+                transition_plan(plan, PlanState.VALIDATING)
+            transition_plan(plan, PlanState.READY_FOR_STRATEGY_CONFIRMATION)
+            if confirm_strategy:
+                # 用户显式批准（CLI flag = 确认动作）：绑定 plan_hash+edl_hash，
+                # 任何内容变化使确认失效（渲染前还会复验）
+                confirmation = _bind_strategy_confirmation(
+                    plan, edl, confirmed_by="cli_user",
+                    output_target="preview",
+                )
+                transition_plan(plan, PlanState.STRATEGY_CONFIRMED)
+                transition_plan(plan, PlanState.DISPATCH_ELIGIBLE)
+                _safe_log(ledger, plan.plan_id, "strategy_confirmed", {
+                    "plan_hash": confirmation.plan_hash,
+                    "edl_hash": confirmation.edl_hash,
+                    "confirmed_by": confirmation.confirmed_by,
+                    "output_target": confirmation.output_target,
+                    "state": plan.state,
+                })
+                print(f"      策略已确认: plan_hash={confirmation.plan_hash} "
+                      f"edl_hash={confirmation.edl_hash} → {plan.state}")
+        else:
+            transition_plan(plan, PlanState.FAILED_VALIDATION)
+
         # ---- 6.5 链 B 影子语义决策：正常验证路径（修复放弃路径已在本函数
         # 内提前覆盖）——禁止半消费 ----
         _run_semantic_shadow(chain_a_proceeded=is_valid)
@@ -384,16 +431,26 @@ def run_roughcut(
         # ---- 打印摘要 ----
         _print_edl_summary(edl, plan, validation_result, relations, describe_pathways())
 
-        # ---- 7. 渲染闸门（P1-c：FAIL 的成片不出片）----
+        # ---- 7. 渲染闸门（P1-c：FAIL 不出片；候选③：未确认不渲染）----
         if not is_valid:
             print("      [fail-closed] 最终验证未通过，拒绝渲染不合格成片。")
             return 1
-
-        # ---- 8. 渲染 ----
         if dry_run:
+            # dry-run = 只产工件不渲染（方案：未确认可生成本地草案）
             print("[dry-run] 跳过渲染，不创建输出文件。")
             return 0
+        if plan.state != PlanState.DISPATCH_ELIGIBLE.value:
+            print(
+                "      [fail-closed] 策略未确认（红线：未 STRATEGY_CONFIRMED "
+                "不得渲染）——已产出 EDL/plan 工件；加 --confirm-strategy 授权"
+                "渲染本 plan（plan_hash 绑定，内容变化即失效）。"
+            )
+            return 2
+        if confirmation is not None and not is_confirmation_valid(confirmation, plan, edl):
+            print("      [fail-closed] 确认后 plan/EDL 发生变化（hash 不符），拒绝渲染。")
+            return 1
 
+        # ---- 8. 渲染 ----
         print(f"渲染中 -> {output_path}")
         result_path = render_edl(edl, input_path, output_path)
         file_size = os.path.getsize(result_path)
@@ -461,6 +518,12 @@ def main():
         help="语义驱动选片（候选①）：多帧语义观测+叙事弧进入选片内核；"
              "硬前置 vlm_semantic 通路 ACTIVE，否则 fail-closed 拒绝",
     )
+    parser.add_argument(
+        "--confirm-strategy",
+        action="store_true",
+        help="策略确认（候选③）：绑定 plan_hash+edl_hash 并授权渲染"
+             "（红线：未确认不渲染）；不传只出 EDL/plan 工件",
+    )
     args = parser.parse_args()
     sys.exit(run_roughcut(
         input_path=args.input,
@@ -469,6 +532,7 @@ def main():
         dry_run=args.dry_run,
         intent_text=args.intent,
         semantic=args.semantic,
+        confirm_strategy=args.confirm_strategy,
     ))
 
 

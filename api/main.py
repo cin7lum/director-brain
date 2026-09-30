@@ -185,17 +185,45 @@ def confirm_strategy_endpoint(plan_id: str, req: ConfirmStrategyRequest):
     try:
         from director_brain.models.director_plan import DirectorDecisionPlan
         from director_brain.models.edl import EditorialDecisionList
+        from director_brain.plan_state import transition_plan
         plan = DirectorDecisionPlan(**req.plan_json)
         edl = EditorialDecisionList(**req.edl_json)
+        # 候选③执法：确认前 plan 必须已到 READY_FOR_STRATEGY_CONFIRMATION
+        # （非法转换在此抛 InvalidTransition），确认绑定真实 hash 并落账本。
+        if plan.state != PlanState.READY_FOR_STRATEGY_CONFIRMATION.value:
+            raise HTTPException(
+                409,
+                detail=f"plan 状态为 {plan.state}，须先验证通过到达 "
+                       f"ready_for_strategy_confirmation 才能确认",
+            )
         confirmation = confirm_strategy(
             plan, edl, confirmed_by=req.confirmed_by,
             output_target=req.output_target, notes=req.notes,
         )
+        transition_plan(plan, PlanState.STRATEGY_CONFIRMED)
+        transition_plan(plan, PlanState.DISPATCH_ELIGIBLE)
+        # 持久化：决策账本（此前端点返回硬编码状态、不落任何记录）
+        from storage.sqlite_repository import SqliteRepository
+        from director_brain.audit_trail import log_decision
+        try:
+            repo = SqliteRepository("./data/director_brain.db")
+            log_decision(repo, plan.plan_id, "strategy_confirmed", {
+                "plan_hash": confirmation.plan_hash,
+                "edl_hash": confirmation.edl_hash,
+                "confirmed_by": confirmation.confirmed_by,
+                "output_target": confirmation.output_target,
+                "state": plan.state,
+                "correlation_id": corr,
+            })
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(500, detail=f"确认记录落账本失败: {exc}") from exc
         return _envelope(corr, {
             "plan_id": plan_id,
             "confirmation": confirmation.to_dict(),
-            "state": PlanState.STRATEGY_CONFIRMED.value,
+            "state": plan.state,
         })
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(500, detail=str(exc)[:300])
 
