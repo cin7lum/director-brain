@@ -1,4 +1,4 @@
-"""02 导演脑 REST API（方案 §6 · 7 端点）。
+"""02 导演脑 REST API（方案 §6 · 8 端点全量对齐）。
 
 FastAPI 实现；每个请求携带 correlation_id + schema_version 信封；
 有副作用端点接受 idempotency_key。
@@ -22,7 +22,13 @@ from director_brain import (
     repair_plan,
     validate_plan,
 )
-from director_brain.context_gateway import ContextGateway
+from director_brain.context_gateway import (
+    ContextGateway,
+    build_asset_context,
+    build_evidence_context,
+    build_project_context,
+    build_scene_context,
+)
 from director_brain.plan_state import (
     PlanState,
     confirm_strategy,
@@ -97,6 +103,20 @@ class RevisionRequest(BaseModel):
     finding_ids: list[str] = Field(default_factory=list)
     target_decision_ids: list[str] = Field(default_factory=list)
     change_summary: str = ""
+
+
+class FilmContextSnapshotRequest(BaseModel):
+    """方案 §6 第一条：POST /v1/film-context:snapshot 的请求体。"""
+
+    project_id: str
+    video_path: str
+    layer: str = "asset"  # project | asset | scene | evidence
+    intent_text: str | None = None  # project/scene 层编译 Brief 用
+    target_duration_us: int = 15_000_000
+    observations_json: list[dict] | None = None  # 缺省时走 analyze_media
+    shot_ids: list[str] = Field(default_factory=list)  # evidence 层显式镜头
+    window_us: list[int] | None = None  # scene/evidence 层时间窗 [start, end]
+    reason: str = ""  # evidence 层必须（审计留痕）
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +226,119 @@ def propose_revision_endpoint(req: RevisionRequest):
         "change_summary": req.change_summary,
         "status": "DRAFT",
         "note": "FQL 闭环需 05 模块产出 finding IDs 后才能填实",
+    })
+
+
+# ---------------------------------------------------------------------------
+# Film Context 端点（方案 §6 前两条：快照 + 按层查询）
+# ---------------------------------------------------------------------------
+
+# 进程内快照存储：POST 写入、GET 读取；键为 context_id（输入确定性哈希，
+# 同输入同 id → 天然去重复用）。服务重启即失（快照可由 POST 重建）。
+_CONTEXT_STORE: dict[str, dict] = {}
+
+
+def _load_observations(req: FilmContextSnapshotRequest) -> list:
+    if req.observations_json:
+        from director_brain.models.film_observation import FilmObservation
+        return [FilmObservation(**o) for o in req.observations_json]
+    from observation_service.pipeline import analyze_media
+    return analyze_media(req.video_path)
+
+
+@app.post("/v1/film-context:snapshot")
+def film_context_snapshot_endpoint(req: FilmContextSnapshotRequest):
+    corr = _new_correlation_id()
+    try:
+        layer = (req.layer or "").lower()
+        if layer not in ("project", "asset", "scene", "evidence"):
+            raise HTTPException(400, detail="layer 须为 project|asset|scene|evidence")
+        observations = _load_observations(req)
+
+        brief = None
+        if layer in ("project", "scene"):
+            brief = compile_brief(
+                req.project_id, req.video_path, observations,
+                target_duration_us=req.target_duration_us,
+                intent_text=req.intent_text,
+            )
+        window = (
+            tuple(req.window_us)
+            if req.window_us and len(req.window_us) == 2
+            else None
+        )
+
+        if layer == "project":
+            snap = build_project_context(brief, req.video_path, observations)
+        elif layer == "asset":
+            snap = build_asset_context(req.video_path, observations)
+        elif layer == "scene":
+            graph = build_story_graph(brief, observations)
+            edl, _plan = generate_plan(brief, graph, observations)
+            snap = build_scene_context(
+                req.video_path, observations, graph, edl, window)
+        else:  # evidence
+            if not req.reason.strip():
+                raise HTTPException(
+                    400,
+                    detail="EVIDENCE 层展开必须提供 reason（方案 §4.2 审计留痕）")
+            targets = list(req.shot_ids)
+            if not targets and window:
+                # 时间窗 → 相交镜头（与 build_scene_context 同一口径：
+                # 窗口对 start_frame/end_frame 区间比较）
+                targets = sorted({
+                    o.media_asset_id for o in observations
+                    if o.end_frame > window[0] and o.start_frame < window[1]
+                })
+            if not targets:
+                raise HTTPException(
+                    400, detail="EVIDENCE 层需要 shot_ids 或 window_us 定位目标镜头")
+            snap = build_evidence_context(
+                req.video_path, observations, targets, req.reason)
+
+        cache_hit = snap.context_id in _CONTEXT_STORE
+        payload = snap.model_dump(mode="json")
+        _CONTEXT_STORE[snap.context_id] = payload
+        return _envelope(corr, {
+            "snapshot": payload,
+            "context_id": snap.context_id,
+            "analysis_fingerprint": snap.analysis_fingerprint,
+            "coverage": snap.coverage,
+            "evidence_refs": snap.evidence_refs,
+            "cache_hit": cache_hit,
+        })
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, detail=str(exc)[:300])
+
+
+@app.get("/v1/film-context/{context_id}")
+def film_context_get_endpoint(
+    context_id: str,
+    layer: str | None = Query(
+        default=None, description="按需请求的层：project|asset|scene|evidence"),
+    reason: str = Query(
+        default="", description="EVIDENCE 层用途理由（方案 §6：必须）"),
+):
+    corr = _new_correlation_id()
+    snap = _CONTEXT_STORE.get(context_id)
+    if snap is None:
+        raise HTTPException(
+            404, detail="context 不存在（进程内存储，服务重启后需重建快照）")
+    if layer:
+        want = layer.lower()
+        have = [str(v) for v in snap.get("layers", [])]
+        if want not in have:
+            raise HTTPException(
+                400, detail=f"快照层 {have} 不包含请求层 {want}")
+        if want == "evidence" and not reason.strip():
+            raise HTTPException(
+                400, detail="EVIDENCE 层按需展开必须提供 reason（方案 §6）")
+    return _envelope(corr, {
+        "snapshot": snap,
+        "requested_layer": layer,
+        "expansion_reason": reason or None,
     })
 
 
