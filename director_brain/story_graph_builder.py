@@ -24,13 +24,9 @@ from director_brain.models.story_graph import (
 
 PRODUCER = "story_graph_v0.1"
 
-#: 四幕时间比例区间（起点比例，终点比例，中文标签）。
-_ACTS: list[tuple[str, float, float, str]] = [
-    ("hook", 0.00, 0.15, "开场"),
-    ("develop", 0.15, 0.50, "发展"),
-    ("peak", 0.50, 0.80, "高潮"),
-    ("resolve", 0.80, 1.00, "收尾"),
-]
+#: 四幕时间比例区间：单一事实源 acts.ACT_INTERVALS（由 ACT_RATIO 累积派生，
+#: 架构体检候选⑥收编——此前本模块自带一份区间表靠注释与 reasoner 对齐）。
+from director_brain.acts import ACT_INTERVALS as _ACTS  # noqa: E402
 
 
 def _assign_acts(tech_obs: list[FilmObservation], total_us: int):

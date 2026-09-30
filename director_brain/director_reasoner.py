@@ -23,6 +23,7 @@ import time
 import warnings
 from abc import ABC, abstractmethod
 
+from director_brain.acts import ACT_FUNCTION, ACT_ORDER, ACT_RATIO
 from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
@@ -59,21 +60,8 @@ class EvidenceTooPoorError(RuntimeError):
     素材仍可工作，且用户看得见每一处放宽。
     """
 
-#: 四幕顺序（用于 EDL 排序）与 shot_function 映射。
-_ACT_ORDER: dict[str, int] = {"hook": 0, "develop": 1, "peak": 2, "resolve": 3}
-_ACT_FUNCTION: dict[str, str] = {
-    "hook": "opening",
-    "develop": "pacing",
-    "peak": "peak",
-    "resolve": "closing",
-}
-#: 四幕时长比例（与 story_graph_builder._ACTS 一致）。
-_ACT_RATIO: dict[str, float] = {
-    "hook": 0.15,
-    "develop": 0.35,
-    "peak": 0.30,
-    "resolve": 0.20,
-}
+#: 四幕顺序 / shot_function / 时长配额：单一事实源见 :mod:`director_brain.acts`
+#: （架构体检候选⑥收编——此前本模块自带一份，靠注释与 story_graph 对齐）。
 
 
 def _parse_claim(claim: str) -> dict:
@@ -279,9 +267,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         # ---- 从 graph.nodes 获取四幕 shot_ids，每幕单独选片 ----
         act_nodes = [
             n for n in graph.nodes
-            if n.attributes.get("act") in _ACT_ORDER
+            if n.attributes.get("act") in ACT_ORDER
         ]
-        act_nodes.sort(key=lambda n: _ACT_ORDER[n.attributes["act"]])
+        act_nodes.sort(key=lambda n: ACT_ORDER[n.attributes["act"]])
 
         paired: list[tuple[str, EditItem, Decision]] = []
         borrowed_any = False
@@ -334,7 +322,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 # pool 为空：可用镜头已全被前幕选用（或仅剩 discard/无数据），本幕保持空
 
             per_act_target = max(
-                int(_ACT_RATIO[act_name] * brief.target_duration),
+                int(ACT_RATIO[act_name] * brief.target_duration),
                 MIN_CLIP_US,
             )
 
@@ -389,7 +377,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                         in_frame=int(best["source_in_us"]),
                         out_frame=int(best["source_out_us"]),
                         timebase=TIMEBASE_US,
-                        shot_function=_ACT_FUNCTION.get(act_name),
+                        shot_function=ACT_FUNCTION.get(act_name),
                         rationale=f"heuristic:blur={best['blur_score']}",
                         evidence_type="heuristic",
                     )]
@@ -410,7 +398,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             usable_ratio = act_usable / act_total if act_total else 0.0
             max_blur = max((c["blur_score"] for c in act_cands), default=1.0) or 1.0
             for idx, edit in enumerate(act_edits):
-                edit.shot_function = _ACT_FUNCTION.get(act_name)
+                edit.shot_function = ACT_FUNCTION.get(act_name)
                 edit.act = act_name
                 reason = edit.rationale or ""
                 edit.rationale = f"act={act_name}, {reason}"
@@ -447,7 +435,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 selected_ids.add(edit.source_asset_id)
 
         # ---- 按幕顺序（hook→develop→peak→resolve），同幕内按 in_frame 升序 ----
-        paired.sort(key=lambda p: (_ACT_ORDER.get(p[0], 99), p[1].in_frame))
+        paired.sort(key=lambda p: (ACT_ORDER.get(p[0], 99), p[1].in_frame))
 
         edits: list[EditItem] = [p[1] for p in paired]
         decisions: list[Decision] = [p[2] for p in paired]

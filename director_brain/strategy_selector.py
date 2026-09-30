@@ -17,16 +17,14 @@ from director_brain.models.edl import EditorialDecisionList
 from director_brain.models.film_observation import FilmObservation
 from director_brain.models.story_graph import StoryGraph
 
-#: 四幕时间比例（与 story_graph_builder._ACTS 保持一致）。
-#: (act_name, low_ratio, high_ratio)
-_ACTS: tuple[tuple[str, float, float], ...] = (
-    ("hook", 0.00, 0.15),
-    ("develop", 0.15, 0.50),
-    ("peak", 0.50, 0.80),
-    ("resolve", 0.80, 1.00),
+#: 四幕时间比例：单一事实源 acts.ACT_INTERVALS 派生（候选⑥收编）。
+from director_brain.acts import ACT_INTERVALS  # noqa: E402
+
+_ACTS: tuple[tuple[str, float, float], ...] = tuple(
+    (name, lo, hi) for name, lo, hi, _label in ACT_INTERVALS
 )
-_AC_ORDER: tuple[str, ...] = ("hook", "develop", "peak", "resolve")
-_RESOLVE_RATIO = _ACTS[3][1]  # 0.80
+_AC_ORDER: tuple[str, ...] = tuple(name for name, _lo, _hi, _l in ACT_INTERVALS)
+_RESOLVE_RATIO = _ACTS[3][1]
 
 
 def _parse_claim(claim: str) -> dict:

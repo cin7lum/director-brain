@@ -36,14 +36,8 @@ class SemanticScore:
     reason: str  # 评分依据
 
 
-#: narrative_role → 四幕映射（语义驱动，非时间比例）
-_ROLE_TO_ACT: dict[str, str] = {
-    "setup": "hook",
-    "development": "develop",
-    "climax": "peak",
-    "resolution": "resolve",
-    "transition": "develop",  # 过渡镜头归 develop
-}
+#: narrative_role → 四幕映射：单一事实源 acts.ROLE_TO_ACT（候选⑥收编）。
+from director_brain.acts import ROLE_TO_ACT as _ROLE_TO_ACT  # noqa: E402
 
 #: emotional_tone ↔ emotional_arc 匹配矩阵
 _EMOTION_MATCH: dict[str, set[str]] = {
