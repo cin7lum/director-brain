@@ -175,7 +175,7 @@ def test_produce_valid_proposal_for_all_types(revision_type, reason):
     # BaseRecord 字段
     assert proposal.schema_version == "1.0"
     assert proposal.project_id == edl.project_id
-    assert proposal.producer == "revision_engine_v0.1"
+    assert proposal.producer == "revision_engine_v1.0"  # 候选⑦：类型化后升版
     assert proposal.source_ref == edl.source_ref
 
 
@@ -283,7 +283,11 @@ def test_apply_remove_low_quality_removes_edit_and_decision():
     assert new_plan.sequence == ["shot_b", "shot_c"]
     # expected_duration 重新计算 = 3M + 3M = 6M
     assert new_edl.expected_duration == 6_000_000
-    assert new_plan.validation_status == "revised_pending_validation"
+    # 候选⑦：应用产物为取代性新草案，重走管线（状态机词汇）
+    assert new_plan.validation_status == "pending"
+    assert new_plan.state == "draft"
+    assert new_plan.supersedes_plan_id == plan.plan_id
+    assert new_edl.supersedes_edl_id == edl.edl_id
 
 
 def test_apply_remove_low_quality_empty_target_leaves_edl_unchanged():

@@ -265,11 +265,24 @@ def test_validate_endpoint(video_path):
     assert "valid" in data and "errors" in data
 
 
-def test_propose_revision_endpoint():
+def test_propose_revision_endpoint(video_path):
+    """候选⑦：端点产出真实修订提案（不再硬编码 DRAFT）。"""
+    plan, edl = _plan_and_edl(video_path)
+    obs = _observations()
     data = _envelope_data(client.post("/v1/revisions:propose", json={
-        "finding_ids": ["fql_001"], "change_summary": "黑帧段剔除"}))
-    assert data["status"] == "DRAFT"
+        "finding_ids": ["fql_001"],
+        "revision_type": "adjust_duration",
+        "change_summary": "黑帧段调整",
+        "plan_json": plan,
+        "edl_json": edl,
+        "observations_json": obs,
+    }))
+    assert data["status"] == "pending"
+    assert data["revision_type"] == "adjust_duration"
     assert data["source_finding_ids"] == ["fql_001"]
+    assert data["proposal"]["proposal_id"].startswith("rev_")
+    # 不直接执行：只返回提案（spec §6）
+    assert "直接执行" in data["note"] or "未执行" in data["note"]
 
 
 def test_decision_ledger_endpoint():

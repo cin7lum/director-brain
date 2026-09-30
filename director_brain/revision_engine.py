@@ -1,24 +1,17 @@
-"""M3.2 Revision Engine：基于观测/计划生成修订提案并应用到 EDL / Plan。
+"""M3.2 Revision Engine：基于 FQL findings / 观测生成修订提案。
 
-支持四种修订类型（``revision_type``）：
+权限模型（架构体检⑦拆雷，与 T1 裁定分层）：
 
-1. ``extend_peak``：延长落在总时长 50%~80% 区间（高潮幕）的镜头时长；
-2. ``remove_low_quality``：移除 ``blur_score < 阈值`` 的镜头；
-3. ``adjust_duration``：按 ``plan.constraints`` 中的 ``target_duration_us`` 调整总时长；
-4. ``reorder``：按 ``in_frame`` 升序重排全部镜头，恢复叙事弧。
+- **修复器**（plan_repair，管线内自动执行）：物理-only 白名单
+  （已选镜头内裁时间/交换），无权增删镜头；
+- **修订**（本模块，finding 驱动的显式提案）：允许导演级操作
+  （删除低质镜头/重排/延长高潮/调时长），但应用产物是**取代性
+  新草案**——``supersedes_plan_id/edl_id`` 指向旧版、``state=draft``、
+  验证与确认全部重走；绝不原地修改已确认的 plan/EDL。
 
-注意：现有 :class:`~director_brain.models.revision.RevisionProposal` 模型没有
-``revision_type`` / ``reason`` / ``affected_edit_ids`` / ``expected_outcome`` 字段，
-映射关系如下：
+修订类型为 :class:`RevisionType` 枚举（白名单内字符串兼容），
+取代旧版"类型拼在 change_summary 前缀"的字符串协议。
 
-- ``revision_id``       → ``proposal_id``（``rev_<8位hex>``）
-- ``revision_type``      → 承载在 ``change_summary`` 前缀，格式 ``f"{revision_type}: {reason}"``
-- ``reason``             → ``change_summary`` 冒号后的描述
-- ``affected_edit_ids``  → ``target_decision_ids``（用 EditItem.source_asset_id 标识）
-- ``expected_outcome``   → ``expected_effect``
-- ``approval_state``     → 固定 ``"pending"``
-
-解析 ``revision_type`` 时用 ``proposal.change_summary.split(":")[0]``。
 """
 from __future__ import annotations
 
@@ -26,6 +19,8 @@ import json
 import time
 import uuid
 from typing import Any
+
+import enum
 
 from director_brain.models.director_plan import DirectorDecisionPlan
 from director_brain.models.edl import EditorialDecisionList
@@ -38,8 +33,27 @@ _PEAK_EXTEND_US = 2_000_000
 _DEFAULT_BLUR_THRESHOLD = 50.0
 # adjust_duration 截断时为最后一个镜头保留的最小微秒数
 _MIN_TAIL_US = 1
-# 合法 revision_type 白名单
+# 合法 revision_type 白名单（字符串兼容旧调用方）
 _REVISION_TYPES = ("extend_peak", "remove_low_quality", "adjust_duration", "reorder")
+
+
+class RevisionType(str, enum.Enum):
+    """修订类型（导演级，应用产物为取代性新草案）。"""
+
+    EXTEND_PEAK = "extend_peak"
+    REMOVE_LOW_QUALITY = "remove_low_quality"
+    ADJUST_DURATION = "adjust_duration"
+    REORDER = "reorder"
+
+    @classmethod
+    def coerce(cls, value: "RevisionType | str") -> "RevisionType":
+        if isinstance(value, cls):
+            return value
+        if value in _REVISION_TYPES:
+            return cls(value)
+        raise ValueError(
+            f"unknown revision_type: {value!r}; expected one of {_REVISION_TYPES}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -89,17 +103,20 @@ def _total_duration_us(edl: EditorialDecisionList) -> int:
 
 def _new_proposal(
     edl: EditorialDecisionList,
-    revision_type: str,
+    revision_type: RevisionType,
     reason: str,
     target_ids: list[str],
     expected_effect: str,
+    finding_ids: list[str] | None = None,
 ) -> RevisionProposal:
-    """构造一份 RevisionProposal，统一填充 BaseRecord 公共字段。"""
+    """构造一份 RevisionProposal（类型化字段 + 旧 change_summary 兼容）。"""
     return RevisionProposal(
         proposal_id=f"rev_{uuid.uuid4().hex[:8]}",
-        source_finding_ids=[],
+        source_finding_ids=list(finding_ids or []),
         target_decision_ids=list(target_ids),
-        change_summary=f"{revision_type}: {reason}",
+        change_summary=f"{revision_type.value}: {reason}",
+        revision_type=revision_type.value,
+        reason=reason,
         expected_effect=expected_effect,
         regression_risks=[],
         approval_state="pending",
@@ -108,7 +125,7 @@ def _new_proposal(
         schema_version="1.0",
         project_id=edl.project_id,
         created_at=int(time.time()),
-        producer="revision_engine_v0.1",
+        producer="revision_engine_v1.0",
         source_ref=edl.source_ref,
     )
 
@@ -121,8 +138,9 @@ def propose_revision(
     edl: EditorialDecisionList,
     plan: DirectorDecisionPlan,
     observations: list[FilmObservation],
-    revision_type: str,
+    revision_type: RevisionType | str,
     reason: str,
+    finding_ids: list[str] | None = None,
 ) -> RevisionProposal:
     """根据修订类型生成一份 RevisionProposal（不修改任何入参）。
 
@@ -130,22 +148,18 @@ def propose_revision(
         edl: 当前编辑决策表。
         plan: 当前导演决策计划。
         observations: 素材观测列表，用于解析 blur_score 等技术指标。
-        revision_type: 四种之一（``extend_peak`` / ``remove_low_quality`` /
-            ``adjust_duration`` / ``reorder``）。
-        reason: 修订原因，会拼接到 ``change_summary``。
+        revision_type: :class:`RevisionType` 或白名单字符串。
+        reason: 修订原因。
+        finding_ids: FQL findings 来源（spec §6：finding 驱动修订）。
 
     Raises:
         ValueError: ``revision_type`` 不在白名单内。
     """
-    if revision_type not in _REVISION_TYPES:
-        raise ValueError(
-            f"unknown revision_type: {revision_type!r}; "
-            f"expected one of {_REVISION_TYPES}"
-        )
+    rtype = RevisionType.coerce(revision_type)
 
     edits = edl.ordered_edits
 
-    if revision_type == "extend_peak":
+    if rtype is RevisionType.EXTEND_PEAK:
         # 总时长用 max(out_frame) 作为素材时间轴长度；peak 幕落在 [50%, 80%]
         total = max((e.out_frame for e in edits), default=0)
         low = 0.5 * total
@@ -157,7 +171,7 @@ def propose_revision(
         ]
         expected_effect = "延长高潮幕镜头时长，增强叙事张力"
 
-    elif revision_type == "remove_low_quality":
+    elif rtype is RevisionType.REMOVE_LOW_QUALITY:
         blur_map = _parse_blur_map(observations)
         target_ids = [
             e.source_asset_id
@@ -166,17 +180,17 @@ def propose_revision(
         ]
         expected_effect = "移除低质量镜头，提升整体技术质量"
 
-    elif revision_type == "adjust_duration":
+    elif rtype is RevisionType.ADJUST_DURATION:
         target_us = _parse_target_duration_us(plan.constraints)
         last_id = edits[-1].source_asset_id if edits else ""
         target_ids = [last_id]
         expected_effect = f"调整总时长到目标值 {target_us}us"
 
-    else:  # reorder
+    else:  # REORDER
         target_ids = [e.source_asset_id for e in edits]
         expected_effect = "按时间顺序重排镜头，恢复叙事弧"
 
-    return _new_proposal(edl, revision_type, reason, target_ids, expected_effect)
+    return _new_proposal(edl, rtype, reason, target_ids, expected_effect, finding_ids)
 
 
 # ---------------------------------------------------------------------------
@@ -187,20 +201,34 @@ def apply_revision(
     edl: EditorialDecisionList,
     plan: DirectorDecisionPlan,
     proposal: RevisionProposal,
+    observations: list[FilmObservation] | None = None,
 ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
-    """把 proposal 应用到 EDL / Plan，返回新的深拷贝副本（不修改入参）。
+    """把 proposal 应用为**取代性新草案**（候选⑦拆雷；不修改任何入参）。
 
-    应用后 ``new_plan.validation_status`` 被置为 ``"revised_pending_validation"``，
-    由调用方决定是否再调 :func:`~director_brain.plan_validator.validate_plan` 校验。
+    权限模型：修订是导演级重规划，产物是新 plan/EDL——
+    ``supersedes_plan_id/supersedes_edl_id`` 指向旧版、``state=draft``、
+    ``validation_status="pending"``、``approval_state="draft"``，必须重走
+    验证 + 策略确认（渲染闸门会拒绝未确认 plan）。旧版由调用方经
+    :func:`supersede_plan` 标记 SUPERSEDED。绝不原地修改入参。
+
+    observations: 源镜头观测（extend_peak 的延长钳制到源镜头出点——
+    防止读到下一镜头画面；与修复器的边界余量修复同源教训）。
     """
-    revision_type = proposal.change_summary.split(":", 1)[0].strip()
+    revision_type = RevisionType.coerce(
+        proposal.revision_type
+        or proposal.change_summary.split(":", 1)[0].strip()
+    )
 
     new_edl = edl.model_copy(deep=True)
     new_plan = plan.model_copy(deep=True)
+    new_edl.edl_id = f"{edl.edl_id}_rev"
+    new_edl.supersedes_edl_id = edl.edl_id
+    new_plan.plan_id = f"{plan.plan_id}_rev"
+    new_plan.supersedes_plan_id = plan.plan_id
 
     target_ids = set(proposal.target_decision_ids)
 
-    if revision_type == "remove_low_quality":
+    if revision_type is RevisionType.REMOVE_LOW_QUALITY:
         # 从 EDL 中删除低质量镜头
         new_edl.ordered_edits = [
             e for e in new_edl.ordered_edits
@@ -217,16 +245,25 @@ def apply_revision(
             if sid not in target_ids
         ]
 
-    elif revision_type == "extend_peak":
+    elif revision_type is RevisionType.EXTEND_PEAK:
+        source_ends = {
+            o.media_asset_id: o.end_frame
+            for o in (observations or [])
+            if o.observation_type == "deterministic_technical"
+        }
         for e in new_edl.ordered_edits:
             if e.source_asset_id in target_ids:
                 new_out = e.out_frame + _PEAK_EXTEND_US
+                # 源边界钳制：延长不得越过源镜头出点（读到下一镜头画面）
+                source_end = source_ends.get(e.source_asset_id)
+                if source_end is not None:
+                    new_out = min(new_out, int(source_end))
                 # 保险：保证 out > in（延长操作天然满足，仍防御性处理）
                 if new_out <= e.in_frame:
                     new_out = e.in_frame + 1
                 e.out_frame = new_out
 
-    elif revision_type == "adjust_duration":
+    elif revision_type is RevisionType.ADJUST_DURATION:
         target_us = _parse_target_duration_us(new_plan.constraints)
         if target_us is not None and new_edl.ordered_edits:
             current = _total_duration_us(new_edl)
@@ -241,7 +278,7 @@ def apply_revision(
                     new_out = last.in_frame + _MIN_TAIL_US
                 last.out_frame = new_out
 
-    elif revision_type == "reorder":
+    elif revision_type is RevisionType.REORDER:
         # 按 in_frame 升序重排 EDL
         new_edl.ordered_edits.sort(key=lambda e: e.in_frame)
         # 用 source_asset_id 索引 decisions，按重排后的 EDL 顺序重建 decisions
@@ -256,11 +293,24 @@ def apply_revision(
         ]
         new_plan.sequence = [e.source_asset_id for e in new_edl.ordered_edits]
 
-    # 统一更新派生字段
+    # 统一更新派生字段：新草案重走管线（state 词汇表见 plan_state）
     new_edl.expected_duration = _total_duration_us(new_edl)
-    new_plan.validation_status = "revised_pending_validation"
+    new_plan.state = "draft"
+    new_plan.validation_status = "pending"
+    new_plan.approval_state = "draft"
 
     return new_edl, new_plan
+
+
+def supersede_plan(plan: DirectorDecisionPlan) -> DirectorDecisionPlan:
+    """把被取代的旧 plan 标记为 SUPERSEDED（经状态机合法转换）。
+
+    转换合法性由 :func:`plan_state.transition_plan` 执法——终态
+    （EXECUTION_VERIFIED 之后）不可再被取代时抛 InvalidTransition。
+    """
+    from director_brain.plan_state import PlanState, transition_plan
+
+    return transition_plan(plan, PlanState.SUPERSEDED)
 
 
 # ---------------------------------------------------------------------------

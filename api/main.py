@@ -100,9 +100,16 @@ class ValidateRequest(BaseModel):
 
 
 class RevisionRequest(BaseModel):
+    """spec §6：POST /v1/revisions:propose——输入 findings，输出新的
+    EDL/策略候选，**不直接执行**（候选⑦：端点此前返回硬编码 DRAFT）。"""
+
     finding_ids: list[str] = Field(default_factory=list)
     target_decision_ids: list[str] = Field(default_factory=list)
     change_summary: str = ""
+    revision_type: str = "adjust_duration"
+    plan_json: dict | None = None
+    edl_json: dict | None = None
+    observations_json: list[dict] | None = None
 
 
 class FilmContextSnapshotRequest(BaseModel):
@@ -247,14 +254,40 @@ def validate_endpoint(plan_id: str, req: ValidateRequest):
 @app.post("/v1/revisions:propose")
 def propose_revision_endpoint(req: RevisionRequest):
     corr = _new_correlation_id()
-    return _envelope(corr, {
-        "proposal_id": f"rev_{uuid.uuid4().hex[:8]}",
-        "source_finding_ids": req.finding_ids,
-        "target_decision_ids": req.target_decision_ids,
-        "change_summary": req.change_summary,
-        "status": "DRAFT",
-        "note": "FQL 闭环需 05 模块产出 finding IDs 后才能填实",
-    })
+    try:
+        if not req.plan_json or not req.edl_json:
+            raise HTTPException(
+                400, detail="revisions:propose 需要 plan_json 与 edl_json"
+                            "（端点生成真实修订候选，不直接执行）")
+        from director_brain.models.director_plan import DirectorDecisionPlan
+        from director_brain.models.edl import EditorialDecisionList
+        from director_brain.models.film_observation import FilmObservation
+        from director_brain.revision_engine import propose_revision
+
+        plan = DirectorDecisionPlan(**req.plan_json)
+        edl = EditorialDecisionList(**req.edl_json)
+        observations = [
+            FilmObservation(**o) for o in (req.observations_json or [])
+        ]
+        proposal = propose_revision(
+            edl, plan, observations,
+            revision_type=req.revision_type,
+            reason=req.change_summary or "api revision request",
+            finding_ids=req.finding_ids,
+        )
+        return _envelope(corr, {
+            "proposal": proposal.model_dump(mode="json"),
+            "proposal_id": proposal.proposal_id,
+            "revision_type": proposal.revision_type,
+            "source_finding_ids": proposal.source_finding_ids,
+            "target_decision_ids": proposal.target_decision_ids,
+            "status": proposal.approval_state,
+            "note": "提案未执行；应用产物为取代性新草案，须重走验证+策略确认",
+        })
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(500, detail=str(exc)[:300])
 
 
 # ---------------------------------------------------------------------------
