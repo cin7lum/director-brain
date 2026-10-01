@@ -451,7 +451,12 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             if act_edits:
                 act_dur = sum(e.out_frame - e.in_frame for e in act_edits)
                 if act_dur < per_act_target * 0.5 and not borrowed:
-                    relaxed = [copy.deepcopy(c) for c in act_cands]
+                    # P0 不变量：放宽阶梯不得注水 no_data/暗镜头——
+                    # 此前本通道漏查 _dark_shot（语义 pilot 黑帧 4s 根因）
+                    relaxed = [
+                        copy.deepcopy(c) for c in act_cands
+                        if not c.get("_no_data") and not c.get("_dark_shot")
+                    ]
                     for c in relaxed:
                         c["technical_usable"] = True
                     edl_relaxed = generate_edl(
@@ -475,8 +480,12 @@ class HeuristicDirectorReasoner(DirectorReasoner):
 
             # 兜底：本幕选不出镜头时，直接取 blur_score 最高的完整镜头
             if not act_edits and act_cands:
-                # 兜底选片同样排除无数据观测（读帧失败 ≠ 质量最差）
-                usable_pool = [c for c in act_cands if not c.get("_no_data")]
+                # 兜底选片同样排除无数据观测与暗镜头（P0 不变量：
+                # "读帧失败/黑屏"≠"质量最差"，放宽阶梯不得注水入选）
+                usable_pool = [
+                    c for c in act_cands
+                    if not c.get("_no_data") and not c.get("_dark_shot")
+                ]
                 if usable_pool:
                     best = max(usable_pool, key=lambda c: c["blur_score"])
                     act_edits = [EditItem(

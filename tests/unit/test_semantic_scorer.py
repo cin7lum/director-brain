@@ -257,3 +257,53 @@ def test_kernel_no_vlm_obs_regression():
                    for q in plan.open_questions)
     assert not any(q.startswith("narrative_reorder")
                    for q in plan.open_questions)
+
+
+def test_dark_shot_never_enters_via_relaxation_or_fallback():
+    """P0 不变量回归（语义 pilot 黑帧 4s 根因）：
+
+    全暗镜头（dark_sample_ratio=1.0）被永久排除后，幕级时长放宽与
+    blur 兜底两条通道都不得把它注水入选——实测中这两处只查了
+    _no_data 漏了 _dark_shot，100% 黑的片尾字幕被选为 resolve。
+    """
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    try:
+        # resolve 幕时间窗（80%-100%）里只有一个全暗镜头
+        obs = [
+            _tech_obs(1, 0, 2_000_000, blur=150.0),
+            _tech_obs(2, 2_000_000, 4_000_000, blur=150.0),
+            _tech_obs(3, 6_000_000, 8_000_000, blur=150.0),
+            # 暗镜头：brightness≈0、dark_ratio=1.0
+            _tech_obs(4, 6_400_000, 8_000_000, blur=200.0),
+        ]
+        # 把 shot_4 的 claim 改成全暗
+        dark_claim = json.dumps({
+            "blur_score": 200.0, "brightness_mean": 1.7,
+            "exposure_ok": False, "dark_sample_ratio": 1.0,
+            "shake_score": 5.0,
+        })
+        obs[3] = FilmObservation(
+            observation_id="det_4", media_asset_id="shot_00000004",
+            media_hash="hash_4", start_frame=6_400_000, end_frame=8_000_000,
+            timebase=1_000_000, observation_type="deterministic_technical",
+            claim=dark_claim, provider="deterministic_opencv",
+            model_version="opencv", prompt_version="n/a", confidence=1.0,
+            review_state="auto_verified", claim_kind=ClaimKind.MEASURED,
+            schema_version="1.0", project_id="t", created_at=int(time.time()),
+            producer="deterministic_opencv", source_ref="t.mp4")
+        # 语义把暗镜头分到 resolve 幕
+        obs.append(_vlm_obs(4, 6_400_000, 8_000_000,
+                            narrative_role="resolution",
+                            scene_description="全黑片尾"))
+
+        brief = _brief()
+        graph = build_story_graph(brief, obs[:3])
+        edl, plan = get_director_reasoner("heuristic").generate_plan(
+            brief, graph, obs)
+
+        seq = [e.source_asset_id for e in edl.ordered_edits]
+        assert "shot_00000004" not in seq  # 全暗镜头绝不入选
+        # resolve 幕保持空（借用/兜底池也排除暗镜头）——
+        # 宁可空幕/时长欠足（validator 判定），不进黑帧
+    finally:
+        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)

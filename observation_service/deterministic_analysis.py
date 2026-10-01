@@ -82,8 +82,11 @@ def analyze_shot(video_path: str, shot: dict) -> FilmObservation:
     in_us = int(shot["source_in_us"])
     out_us = int(shot["source_out_us"])
     dur = out_us - in_us
+    # route-10（部分落地）：五点采样——P0 三点（25/50/75%）的实测教训是
+    # fade 尾巴逃过测量（语义 pilot 黑帧 3 段）；五点把首尾 fade 纳入
+    # dark_ratio/brightness 的度量范围（排除阈值 ≥0.5 不变，策略待拍板）。
     sample_times = [
-        in_us + int(dur * f) for f in (0.25, 0.50, 0.75)
+        in_us + int(dur * f) for f in (0.10, 0.30, 0.50, 0.70, 0.90)
     ]
 
     try:
