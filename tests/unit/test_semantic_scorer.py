@@ -131,7 +131,7 @@ def _vlm_obs(idx: int, start_us: int, end_us: int, **claim_fields) -> FilmObserv
 def vlm_active():
     set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
     yield
-    set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def _three_shots():
@@ -173,7 +173,7 @@ def test_kernel_semantic_role_moves_act():
             not ev.startswith("semantic_act_assignment")
             for ev in plan.degradation_events)
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def test_kernel_semantic_score_drives_selection_under_quota():
@@ -208,7 +208,7 @@ def test_kernel_semantic_score_drives_selection_under_quota():
         assert any(ev.startswith("semantic_topup:")
                    for ev in plan.degradation_events)
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def test_kernel_narrative_boundaries_and_order():
@@ -234,16 +234,23 @@ def test_kernel_narrative_boundaries_and_order():
         assert any(q.startswith("narrative_reorder:applied")
                    for q in plan.open_questions)
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def test_kernel_gate_blocks_vlm_obs_when_not_active():
-    """vlm 观测存在而通路非 ACTIVE → PathwayNotActiveError（内核执法）。"""
-    obs = _three_shots() + [_vlm_obs(1, 0, 3_000_000)]
-    brief = _brief()
-    graph = build_story_graph(brief, obs[:3])
-    with pytest.raises(PathwayNotActiveError):
-        get_director_reasoner("heuristic").generate_plan(brief, graph, obs)
+    """vlm 观测存在而通路非 ACTIVE → PathwayNotActiveError（内核执法）。
+
+    默认态已灰度转 ACTIVE（2026-09-30）；本测试显式设 EXPERIMENTAL
+    验证闸门本体，验证后恢复默认。"""
+    set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+    try:
+        obs = _three_shots() + [_vlm_obs(1, 0, 3_000_000)]
+        brief = _brief()
+        graph = build_story_graph(brief, obs[:3])
+        with pytest.raises(PathwayNotActiveError):
+            get_director_reasoner("heuristic").generate_plan(brief, graph, obs)
+    finally:
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def test_kernel_no_vlm_obs_regression():
@@ -306,4 +313,4 @@ def test_dark_shot_never_enters_via_relaxation_or_fallback():
         # resolve 幕保持空（借用/兜底池也排除暗镜头）——
         # 宁可空幕/时长欠足（validator 判定），不进黑帧
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)

@@ -59,7 +59,7 @@ def test_semantic_flag_refused_when_pathway_not_active(real_video, tmp_path, cap
         assert "fail-closed" in out
         assert "vlm_semantic" in out
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
 
 
 def test_semantic_flag_wires_vlm_batch_when_active(real_video, tmp_path, capsys, monkeypatch):
@@ -108,4 +108,4 @@ def test_semantic_flag_wires_vlm_batch_when_active(real_video, tmp_path, capsys,
         assert "语义观测" in out
         assert "EDL 摘要" in out
     finally:
-        set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)

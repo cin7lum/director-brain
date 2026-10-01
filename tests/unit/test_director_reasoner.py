@@ -38,7 +38,7 @@ from director_brain.story_graph_builder import build_story_graph
 
 @pytest.fixture()
 def vlm_pathway_active():
-    """把 vlm_semantic 通路临时置为 ACTIVE（T4 闸门：默认 EXPERIMENTAL 不可进决策）。"""
+    """把 vlm_semantic 通路临时置为 ACTIVE（2026-09-30 灰度转正后即默认态；闸门本体由显式设 EXPERIMENTAL 的用例验证）。"""
     set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
     yield
     set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)

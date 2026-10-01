@@ -44,7 +44,13 @@ class UnknownPathwayError(ValueError):
 
 #: 通路登记表：通路名 → 当前状态（默认 EXPERIMENTAL，止血态）。
 _STATUS: dict[str, PathwayStatus] = {
-    "vlm_semantic": PathwayStatus.EXPERIMENTAL,
+    # vlm_semantic 置 ACTIVE（2026-09-30，灰度验证通过后按批准计划转正）：
+    # 证据链 = 多轮真机 ACTIVE 出片（sintel 语义 pilot 20.00s 整/PASS、
+    # plan_judge narrative 4-5、demo 素材 L1 零硬伤）+ 影子对账无吊销事件
+    # + P0 暗镜头排除不变量补漏后黑尾消失。生产入口仍需 --semantic 显式
+    # 开启（默认 CLI 行为不变）；EXPERIMENTAL/SHADOW 回退 =
+    # set_pathway_status("vlm_semantic", PathwayStatus.SHADOW)。
+    "vlm_semantic": PathwayStatus.ACTIVE,
     "relation_inference": PathwayStatus.EXPERIMENTAL,
     #: ASR 已随主链计算并全量归因上报（T4），其 Brief 消费不驱动选片——
     #: 现实角色即影子，故默认 SHADOW 而非 EXPERIMENTAL。
