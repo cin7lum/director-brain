@@ -42,6 +42,7 @@ from director_brain.providers.heuristic import (
     vlm_multiplier,
 )
 from director_brain.semantic_scorer import SemanticScore, compute_semantic_score
+from director_brain.models.shot_card import ShotCard
 from director_brain.intent_constraints import (
     TechnicalAvoidRule,
     candidate_violated_rules,
@@ -199,6 +200,7 @@ class DirectorReasoner(ABC):
         *,
         narrative: dict | None = None,
         transition_policy: str = "none",
+        card: ShotCard | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -230,6 +232,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         *,
         narrative: dict | None = None,
         transition_policy: str = "none",
+        card: ShotCard | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -299,6 +302,21 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         # ---- P1-b：剪辑语言意图 → 片段时长上下界（"快剪/慢剪"不再一个味）----
         clip_bounds = editing_language_bounds(brief, (MIN_CLIP_US, MAX_CLIP_US))
         min_clip_us, max_clip_us = clip_bounds
+        if card is not None:
+            # D1 镜头卡：节奏边界覆盖（卡是导演创作选择包）
+            po = card.pacing_override or {}
+            if "min_clip_us" in po:
+                min_clip_us = int(po["min_clip_us"])
+            if "max_clip_us" in po:
+                max_clip_us = int(po["max_clip_us"])
+            if min_clip_us >= max_clip_us:
+                raise ValueError(
+                    f"镜头卡 {card.card_id} 节奏边界非法: "
+                    f"min {min_clip_us} >= max {max_clip_us}")
+            clip_bounds = (min_clip_us, max_clip_us)
+            # 卡声明转场策略且调用方未显式指定时，卡生效（显式参数优先）
+            if transition_policy == "none":
+                transition_policy = card.transition_policy
 
         # ---- 候选①：语义幕分配表（vlm_semantic 闸门已在上游执法）----
         # 优先级：叙事弧幕边界（P3-3 序列级理解）> 逐镜头 narrative_role
@@ -712,6 +730,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             ordered_edits=edits,
             expected_duration=expected_duration,
             approval_state="draft",
+            artistic_choices=(
+                [f"shot_card:{card.card_id}@{card.version}"] if card else []
+            ),
         )
 
         plan = DirectorDecisionPlan(
@@ -730,7 +751,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             + [rule.encode() for rule in applied_rules]
             + encode_bounds(clip_bounds)
             + ([f"transition_policy=dissolve_act_boundary:applied={n_transitions}"]
-               if n_transitions else []),
+               if n_transitions else [])
+            + ([f"shot_card={card.card_id}@{card.version}"] if card else []),
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,
@@ -759,6 +781,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         *,
         narrative: dict | None = None,
         transition_policy: str = "none",
+        card: ShotCard | None = None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "

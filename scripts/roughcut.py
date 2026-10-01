@@ -163,6 +163,7 @@ def run_roughcut(
     confirm_strategy: bool = False,
     variants: int = 1,
     transitions: bool = False,
+    card_id: str | None = None,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -291,6 +292,14 @@ def run_roughcut(
         if intent_text:
             print(f"      用户意图: 已接收（{len(intent_text)} 字，规则抽取入 Brief 约束）")
 
+        # ---- D1 镜头卡：显式 --card 选择（自动匹配待矩阵验证后默认开启）----
+        card = None
+        if card_id:
+            from director_brain.shot_cards import select_card
+            card = select_card(brief, len(tech_obs), card_id=card_id)
+            print(f"      镜头卡: {card.name}（{card.card_id}@{card.version}）"
+                  f" energy={card.energy}")
+
         # ---- 3. Story Graph ----
         print("[4/7] 构建故事图...")
         graph = build_story_graph(brief, all_obs)
@@ -358,7 +367,8 @@ def run_roughcut(
                 edl, plan = reasoner.generate_plan(
                     brief, graph, all_obs, narrative=narrative,
                     transition_policy=("dissolve_act_boundary"
-                                       if transitions else "none"))
+                                       if transitions else "none"),
+                    card=card)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -564,6 +574,13 @@ def main():
              "硬前置 vlm_semantic 通路 ACTIVE，否则 fail-closed 拒绝",
     )
     parser.add_argument(
+        "--card",
+        type=str,
+        default=None,
+        help="镜头卡（D1 美学策略载体）：如 fast_cut/slow_paced/balanced；"
+             "未知卡响亮失败，素材条件不满足响亮失败",
+    )
+    parser.add_argument(
         "--transitions",
         action="store_true",
         help="幕切换处自动 dissolve（导演层 artistic choice；ΣD 感知验证）",
@@ -591,6 +608,7 @@ def main():
         confirm_strategy=args.confirm_strategy,
         variants=args.variants,
         transitions=args.transitions,
+        card_id=args.card,
     ))
 
 

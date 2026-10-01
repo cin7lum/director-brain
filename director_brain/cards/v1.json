@@ -1,0 +1,193 @@
+[
+  {
+    "card_id": "fast_cut",
+    "version": "1.0",
+    "name": "快剪卡",
+    "category": "节奏",
+    "purpose": "高能量快节奏：短镜头密集切换，适配动作/预告/燃向内容",
+    "energy": "high",
+    "pacing_override": {"min_clip_us": 400000, "max_clip_us": 3000000},
+    "emotion_arc_fit": ["upbeat", "suspenseful"],
+    "editing_language_fit": ["fast_cut"],
+    "transition_policy": "none",
+    "min_shots": 6,
+    "known_pitfalls": [
+      "素材镜头数少于 6 时节奏必然拖沓——选择器自动跳过",
+      "长镜头素材（>8s/镜头）会被截断，信息可能不完整"
+    ]
+  },
+  {
+    "card_id": "slow_paced",
+    "version": "1.0",
+    "name": "慢剪卡",
+    "category": "节奏",
+    "purpose": "低能量长镜头：呼吸感、沉浸感，适配风光/情感/氛围内容",
+    "energy": "calm",
+    "pacing_override": {"min_clip_us": 1500000, "max_clip_us": 8000000},
+    "emotion_arc_fit": ["calm", "melancholic", "heartwarming"],
+    "editing_language_fit": ["slow_paced"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 3,
+    "known_pitfalls": [
+      "短素材（镜头 <1.5s）物理不可能——会触发 fail-closed 拒绝",
+      "高能量素材配慢剪会显得拖沓——评审会如实扣节奏分"
+    ]
+  },
+  {
+    "card_id": "emotional_build",
+    "version": "1.0",
+    "name": "情绪递进卡",
+    "category": "情绪",
+    "purpose": "情绪逐层推进：开场平缓→中段积累→高潮释放，幕间叠化过渡",
+    "energy": "escalating",
+    "pacing_override": {"min_clip_us": 800000, "max_clip_us": 5000000},
+    "emotion_arc_fit": ["upbeat", "heartwarming"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 4,
+    "known_pitfalls": [
+      "高潮段素材不足时递进感断裂——依赖 resolve/peak 幕有可用镜头"
+    ]
+  },
+  {
+    "card_id": "suspense",
+    "version": "1.0",
+    "name": "悬念卡",
+    "category": "情绪",
+    "purpose": "紧张克制：硬切为主、镜头留白短促，惊悚/悬疑/对抗内容",
+    "energy": "escalating",
+    "pacing_override": {"min_clip_us": 600000, "max_clip_us": 4000000},
+    "emotion_arc_fit": ["suspenseful", "melancholic"],
+    "transition_policy": "none",
+    "min_shots": 4,
+    "known_pitfalls": [
+      "需要暗部/阴影素材支撑——全亮素材悬念感立不住",
+      "叠化会消解紧张感——本卡强制硬切"
+    ]
+  },
+  {
+    "card_id": "warm_moment",
+    "version": "1.0",
+    "name": "温情卡",
+    "category": "情绪",
+    "purpose": "家庭/亲子/朋友温暖瞬间：中长镜头、柔转场、呼吸感",
+    "energy": "medium",
+    "pacing_override": {"min_clip_us": 1200000, "max_clip_us": 6000000},
+    "emotion_arc_fit": ["heartwarming", "calm"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 3,
+    "known_pitfalls": [
+      "与高能快剪混用会精神分裂——一段素材一张卡"
+    ]
+  },
+  {
+    "card_id": "montage",
+    "version": "1.0",
+    "name": "蒙太奇卡",
+    "category": "节奏",
+    "purpose": "极限快切：0.3-1s 碎片化冲击，运动混剪/集锦",
+    "energy": "explosive",
+    "pacing_override": {"min_clip_us": 300000, "max_clip_us": 1000000},
+    "emotion_arc_fit": ["upbeat"],
+    "editing_language_fit": ["montage"],
+    "transition_policy": "none",
+    "min_shots": 8,
+    "known_pitfalls": [
+      "镜头数 <8 无法成立（每镜头不足 1s 需要大量素材）",
+      "信息密度低的素材会剪成频闪——画面需有强动作"
+    ]
+  },
+  {
+    "card_id": "documentary",
+    "version": "1.0",
+    "name": "纪实卡",
+    "category": "叙事",
+    "purpose": "保持原声与时间连续性：最少干预，家庭纪实/vlog",
+    "energy": "low",
+    "pacing_override": {"min_clip_us": 1000000, "max_clip_us": 8000000},
+    "emotion_arc_fit": ["calm", "neutral"],
+    "editing_language_fit": ["slow_paced"],
+    "transition_policy": "none",
+    "min_shots": 2,
+    "known_pitfalls": [
+      "转场会破坏纪实感——本卡强制硬切",
+      "依赖原声素材（有音轨）——无声素材退化为基础粗剪"
+    ]
+  },
+  {
+    "card_id": "beat_sync",
+    "version": "1.0",
+    "name": "卡点卡",
+    "category": "节奏",
+    "purpose": "镜头切换对齐 BGM 节拍（D5 节拍通路落地后自动生效）",
+    "energy": "high",
+    "pacing_override": {"min_clip_us": 300000, "max_clip_us": 2000000},
+    "emotion_arc_fit": ["upbeat", "energetic"],
+    "transition_policy": "none",
+    "beat_align_hint": true,
+    "min_shots": 6,
+    "known_pitfalls": [
+      "D5 节拍通路落地前本卡仅声明意图——切点暂吸附场景边界",
+      "需要用户提供 BGM 文件（版权归素材方）"
+    ]
+  },
+  {
+    "card_id": "climax_peak",
+    "version": "1.0",
+    "name": "高潮卡",
+    "category": "叙事",
+    "purpose": "peak 幕集中火力：最短最猛的镜头留给最高点，其余幕正常",
+    "energy": "explosive",
+    "pacing_override": {"min_clip_us": 400000, "max_clip_us": 2500000},
+    "emotion_arc_fit": ["suspenseful", "upbeat"],
+    "transition_policy": "none",
+    "min_shots": 5,
+    "known_pitfalls": [
+      "peak 幕候选不足时退化为普通快剪"
+    ]
+  },
+  {
+    "card_id": "gentle_close",
+    "version": "1.0",
+    "name": "收尾余韵卡",
+    "category": "叙事",
+    "purpose": "结尾放慢收住：resolve 幕长镜头+叠化，留余韵",
+    "energy": "calm",
+    "pacing_override": {"min_clip_us": 1500000, "max_clip_us": 6000000},
+    "emotion_arc_fit": ["calm", "melancholic", "heartwarming"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 2,
+    "known_pitfalls": [
+      "全片慢节奏需求请改用慢剪卡——本卡只管收尾气质"
+    ]
+  },
+  {
+    "card_id": "product_showcase",
+    "version": "1.0",
+    "name": "产品展示卡",
+    "category": "用途",
+    "purpose": "产品/功能演示：中短镜头、干净切换、信息优先",
+    "energy": "medium",
+    "pacing_override": {"min_clip_us": 800000, "max_clip_us": 4000000},
+    "emotion_arc_fit": ["neutral", "upbeat"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 3,
+    "known_pitfalls": [
+      "界面录屏类素材建议走生成管线（参考 shotcraft）——本卡面向实拍素材"
+    ]
+  },
+  {
+    "card_id": "balanced",
+    "version": "1.0",
+    "name": "均衡叙事卡",
+    "category": "叙事",
+    "purpose": "默认兜底：四幕均衡、中庸节奏、幕间叠化——不确定时的安全选择",
+    "energy": "medium",
+    "pacing_override": {"min_clip_us": 800000, "max_clip_us": 5000000},
+    "emotion_arc_fit": ["neutral", "calm", "upbeat", "heartwarming", "suspenseful", "melancholic"],
+    "transition_policy": "dissolve_act_boundary",
+    "min_shots": 3,
+    "known_pitfalls": [
+      "风格不鲜明是特性也是代价——强风格需求请选专项卡"
+    ]
+  }
+]
