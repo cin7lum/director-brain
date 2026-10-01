@@ -27,7 +27,11 @@ from director_brain.acts import ACT_FUNCTION, ACT_ORDER, ACT_RATIO, ROLE_TO_ACT
 from director_brain.utils import short_hash
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
-from director_brain.models.edl import EditItem, EditorialDecisionList
+from director_brain.models.edl import (
+    EditItem,
+    EditorialDecisionList,
+    TransitionSpec,
+)
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.models.story_graph import StoryGraph
 from director_brain.pathway_protocol import ensure_decision_use_allowed
@@ -194,6 +198,7 @@ class DirectorReasoner(ABC):
         observations: list[FilmObservation],
         *,
         narrative: dict | None = None,
+        transition_policy: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -224,6 +229,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         observations: list[FilmObservation],
         *,
         narrative: dict | None = None,
+        transition_policy: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -563,9 +569,22 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         # 按剩余配额从全局合格候选补齐（语义分/技术分排序）。不补则
         # validator 必 FAIL → fail-closed 拒绝出片：诚实但可用性倒退。
         # 补齐镜头 requires_approval；事件名区分路径（semantic/target topup）。
+        # ---- 转场策略（导演层 artistic choice）：幕边界 dissolve。
+        # 分配在补齐之前——补齐目标加 ΣD（生成端预补偿；validator/repair
+        # 的转场感知预算链继续兜底，8b 起既有能力）----
+        n_transitions = 0
+        total_overlap_us = 0
+        if transition_policy == "dissolve_act_boundary":
+            for i in range(len(paired) - 1):
+                if paired[i][0] != paired[i + 1][0]:
+                    paired[i][1].transition = TransitionSpec(
+                        type="xfade", name="dissolve", duration_us=400_000)
+                    n_transitions += 1
+                    total_overlap_us += 400_000
+
         topup_event = "semantic_topup" if semantic_moves else "target_topup"
         from director_brain.providers.heuristic import compute_clip_window
-        target_low = int(brief.target_duration * 0.9)
+        target_low = int(brief.target_duration * 0.9) + total_overlap_us
         act_filled: dict[str, int] = {}
         for a_name, a_edit, _d in paired:
             act_filled[a_name] = act_filled.get(a_name, 0) + (
@@ -709,7 +728,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             decisions=decisions,
             constraints=[f"target_duration_us={brief.target_duration}"]
             + [rule.encode() for rule in applied_rules]
-            + encode_bounds(clip_bounds),
+            + encode_bounds(clip_bounds)
+            + ([f"transition_policy=dissolve_act_boundary:applied={n_transitions}"]
+               if n_transitions else []),
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,
@@ -737,6 +758,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         observations: list[FilmObservation],
         *,
         narrative: dict | None = None,
+        transition_policy: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "

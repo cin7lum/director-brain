@@ -162,6 +162,7 @@ def run_roughcut(
     semantic: bool = False,
     confirm_strategy: bool = False,
     variants: int = 1,
+    transitions: bool = False,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -354,8 +355,10 @@ def run_roughcut(
                           f"{sc['duration_us'] / 1e6:.2f}s "
                           f"avg_blur={sc.get('avg_blur', 0):.1f}{mark}")
             else:
-                edl, plan = reasoner.generate_plan(brief, graph, all_obs,
-                                                   narrative=narrative)
+                edl, plan = reasoner.generate_plan(
+                    brief, graph, all_obs, narrative=narrative,
+                    transition_policy=("dissolve_act_boundary"
+                                       if transitions else "none"))
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -561,6 +564,11 @@ def main():
              "硬前置 vlm_semantic 通路 ACTIVE，否则 fail-closed 拒绝",
     )
     parser.add_argument(
+        "--transitions",
+        action="store_true",
+        help="幕切换处自动 dissolve（导演层 artistic choice；ΣD 感知验证）",
+    )
+    parser.add_argument(
         "--variants",
         type=int,
         default=1,
@@ -582,6 +590,7 @@ def main():
         semantic=args.semantic,
         confirm_strategy=args.confirm_strategy,
         variants=args.variants,
+        transitions=args.transitions,
     ))
 
 
