@@ -292,6 +292,16 @@ def run_roughcut(
         if intent_text:
             print(f"      用户意图: 已接收（{len(intent_text)} 字，规则抽取入 Brief 约束）")
 
+        # ---- 慢节奏物理可行性告知（规划层前置，避免跑到修复才拒绝）----
+        if (brief.editing_language == "slow_paced" and tech_obs):
+            durs = sorted(o.end_frame - o.start_frame for o in tech_obs)
+            median_us = durs[len(durs) // 2]
+            if median_us < 1_500_000:
+                print(
+                    f"      [告知] 慢剪意图 + 中位镜头 {median_us/1e6:.2f}s "
+                    f"（慢剪下界 1.5s）：素材物理受限，出片率会显著下降或拒绝——"
+                    f"建议改用快剪/均衡或提供更长镜头素材")
+
         # ---- D1 镜头卡：显式 --card 选择（自动匹配待矩阵验证后默认开启）----
         card = None
         if card_id:

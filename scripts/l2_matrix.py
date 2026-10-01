@@ -53,7 +53,10 @@ def run_one(cfg: dict, outdir: Path) -> dict:
                 "reason": f"素材不存在: {video}"}
 
     cmd = [sys.executable, str(Path(__file__).parent / "roughcut.py"),
-           "-i", video, "-o", out, "--target-duration", str(target)]
+           "-i", video, "-o", out, "--target-duration", str(target),
+           # 候选③：矩阵配置即批量授权动作——渲染闸门需策略确认；
+           # 状态机 hash 绑定与账本留痕逐任务照常执法
+           "--confirm-strategy"]
     if intent:
         cmd += ["--intent", intent]
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600,
