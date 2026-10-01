@@ -1,0 +1,62 @@
+{
+  "pathway": "semantic_reasoner",
+  "pathway_status": "SHADOW",
+  "status": "completed",
+  "reason": null,
+  "model": "doubao-seed-2-1-lite-260915",
+  "prompt_version": "1.1",
+  "schema_version": "pydantic_DirectorDecision",
+  "latency_ms": 4021,
+  "attempts": 1,
+  "chain_b": {
+    "decision_id": "DEC-001",
+    "creative_intent": "采用快节奏剪辑，剔除模糊镜头，完整保留关键动作场景的核心内容。",
+    "target": [
+      "pacing",
+      "source_media",
+      "shot_order"
+    ],
+    "desired_relation_or_change": [
+      "adjust_pacing"
+    ],
+    "must_preserve": [
+      "key_action_scene_content"
+    ],
+    "must_avoid": [
+      "blurry_shots"
+    ],
+    "parameterization": {
+      "magnitude": "significant",
+      "exact_value": null,
+      "unit": null,
+      "certainty": "inferred"
+    },
+    "required_context": [
+      "current_shot_duration",
+      "key_action_scene_boundaries",
+      "blurry_shot_identification"
+    ],
+    "confidence": 0.7,
+    "evidence": [
+      "快节奏剪辑",
+      "避免模糊镜头",
+      "保留关键动作场景"
+    ],
+    "status": "NEEDS_CONTEXT",
+    "user_terminology": [
+      "快节奏剪辑",
+      "模糊镜头",
+      "关键动作场景"
+    ]
+  },
+  "covered_negatives": [
+    "blurry_shots"
+  ],
+  "uncovered_negatives": [
+    "key_action_scene_content"
+  ],
+  "status_divergence": "chain_a_proceeded_but_chain_b_status=NEEDS_CONTEXT",
+  "positive_intents": [
+    "adjust_pacing"
+  ]
+}

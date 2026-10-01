@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "project_id": "sintel_trailer",
-  "created_at": 1790734326,
+  "created_at": 1790813537,
   "producer": "heuristic_director_reasoner_v0.1",
   "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
   "plan_id": "plan_sintel_trailer_22bbf5db6491d421",
@@ -9,9 +9,8 @@
   "brief_version": "0.1",
   "film_state_version": "0.1",
   "sequence": [
-    "shot_cdd0e442b56b14f7",
-    "shot_385d0e1bc5375209",
     "shot_d3bf1e03a4f33e8f",
+    "shot_cdd0e442b56b14f7",
     "shot_53a7ad8411bbde4b",
     "shot_577153ac1556da3a",
     "shot_79bc0b63e0c9c606",
@@ -20,38 +19,7 @@
   ],
   "decisions": [
     {
-      "decision_id": "dec_hook_slot_01",
-      "purpose": "select_shot",
-      "shot_refs": [
-        "shot_cdd0e442b56b14f7"
-      ],
-      "evidence_refs": [
-        "det_shot_cdd0e442b56b14f7"
-      ],
-      "rationale": "act=hook, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=167.94,score=184.7,hero(x1.1)",
-      "alternatives": [],
-      "confidence": 1.0,
-      "requires_approval": true
-    },
-    {
-      "decision_id": "dec_develop_slot_03",
-      "purpose": "select_shot",
-      "shot_refs": [
-        "shot_385d0e1bc5375209"
-      ],
-      "evidence_refs": [
-        "det_shot_385d0e1bc5375209"
-      ],
-      "rationale": "act=develop, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=101.77,score=111.9,hero(x1.1)",
-      "alternatives": [
-        "shot_577153ac1556da3a",
-        "shot_53a7ad8411bbde4b"
-      ],
-      "confidence": 0.59,
-      "requires_approval": true
-    },
-    {
-      "decision_id": "dec_develop_topup_01",
+      "decision_id": "dec_hook_topup_01",
       "purpose": "select_shot",
       "shot_refs": [
         "shot_d3bf1e03a4f33e8f"
@@ -59,10 +27,27 @@
       "evidence_refs": [
         "det_shot_d3bf1e03a4f33e8f"
       ],
-      "rationale": "act=develop, topup, heuristic:blur=176.51",
+      "rationale": "act=hook, topup, heuristic:blur=158.96",
       "alternatives": [],
       "confidence": 0.3,
       "requires_approval": true
+    },
+    {
+      "decision_id": "dec_develop_slot_03",
+      "purpose": "select_shot",
+      "shot_refs": [
+        "shot_cdd0e442b56b14f7"
+      ],
+      "evidence_refs": [
+        "det_shot_cdd0e442b56b14f7"
+      ],
+      "rationale": "act=develop, sem[imp=3(1.6x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=180.87,score=199.0,hero(x1.1)",
+      "alternatives": [
+        "shot_577153ac1556da3a",
+        "shot_53a7ad8411bbde4b"
+      ],
+      "confidence": 0.71,
+      "requires_approval": false
     },
     {
       "decision_id": "dec_develop_slot_02",
@@ -76,7 +61,7 @@
       "rationale": "act=develop, sem[imp=4(2.0x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=270.58,score=297.6,hero(x1.1)",
       "alternatives": [
         "shot_577153ac1556da3a",
-        "shot_d3bf1e03a4f33e8f"
+        "shot_cdd0e442b56b14f7"
       ],
       "confidence": 0.83,
       "requires_approval": false
@@ -90,12 +75,12 @@
       "evidence_refs": [
         "det_shot_577153ac1556da3a"
       ],
-      "rationale": "act=develop, sem[imp=4(2.0x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=279.11,score=307.0,hero(x1.1)",
+      "rationale": "act=develop, sem[imp=4(2.0x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=294.7,score=324.2,hero(x1.1)",
       "alternatives": [
         "shot_53a7ad8411bbde4b",
-        "shot_d3bf1e03a4f33e8f"
+        "shot_cdd0e442b56b14f7"
       ],
-      "confidence": 0.84,
+      "confidence": 0.87,
       "requires_approval": false
     },
     {
@@ -107,12 +92,12 @@
       "evidence_refs": [
         "det_shot_79bc0b63e0c9c606"
       ],
-      "rationale": "act=peak, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=232.01,score=255.2,hero(x1.1)",
+      "rationale": "act=peak, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=185.21,score=203.7,hero(x1.1)",
       "alternatives": [
         "shot_672a3148e8d16e46",
         "shot_4827e1e4e0fbf6ed"
       ],
-      "confidence": 0.89,
+      "confidence": 0.95,
       "requires_approval": false
     },
     {
@@ -124,7 +109,7 @@
       "evidence_refs": [
         "det_shot_672a3148e8d16e46"
       ],
-      "rationale": "act=peak, sem[imp=4(2.0x)], heuristic:blur=323.72",
+      "rationale": "act=peak, sem[imp=4(2.0x)], heuristic:blur=211.17",
       "alternatives": [
         "shot_79bc0b63e0c9c606",
         "shot_4827e1e4e0fbf6ed"
@@ -141,12 +126,12 @@
       "evidence_refs": [
         "det_shot_9a7d761e64524d53"
       ],
-      "rationale": "act=resolve, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=149.52,score=164.5,hero(x1.1)",
+      "rationale": "act=resolve, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=125.61,score=138.2,hero(x1.1)",
       "alternatives": [
-        "shot_f77bcf4b39d780a0",
-        "shot_7a75571b95f13f80"
+        "shot_7a75571b95f13f80",
+        "shot_d002e5d74886baf2"
       ],
-      "confidence": 0.32,
+      "confidence": 0.39,
       "requires_approval": true
     }
   ],
@@ -159,16 +144,16 @@
   "open_questions": [
     "some_decisions_require_approval",
     "degraded_selection_used",
-    "semantic_selection:applied:shots=13",
+    "semantic_selection:applied:shots=14",
     "narrative_reorder:applied:shots=15",
-    "constraint: must_avoid「模糊」排除镜头 shot_0a1b84bc27c2053f（blur_score below 50.0）",
-    "constraint: must_avoid「模糊」排除镜头 shot_3245852043084a00（blur_score below 50.0）"
+    "constraint: must_avoid「模糊」排除镜头 shot_0a1b84bc27c2053f（blur_score below 50.0）"
   ],
   "degraded": true,
   "degradation_events": [
-    "semantic_topup:act=develop:shot=shot_d3bf1e03a4f33e8f"
+    "semantic_topup:act=hook:shot=shot_d3bf1e03a4f33e8f"
   ],
   "validation_status": "valid",
   "approval_state": "draft",
-  "supersedes_plan_id": null
+  "supersedes_plan_id": null,
+  "state": "dispatch_eligible"
 }

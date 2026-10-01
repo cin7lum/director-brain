@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "project_id": "sintel_trailer",
-  "created_at": 1790734326,
+  "created_at": 1790813537,
   "producer": "heuristic_director_reasoner_v0.1",
   "source_ref": "D:\\新建豆包\\gen1-roughcut\\m5_real\\sintel_trailer.mp4",
   "edl_id": "edl_sintel_trailer_22bbf5db6491d421",
@@ -14,42 +14,29 @@
   "timebase": 1000000,
   "ordered_edits": [
     {
-      "source_asset_id": "shot_cdd0e442b56b14f7",
+      "source_asset_id": "shot_d3bf1e03a4f33e8f",
       "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
-      "in_frame": 4000000,
-      "out_frame": 7000000,
+      "in_frame": 17500000,
+      "out_frame": 20500000,
       "timebase": 1000000,
       "transition": null,
       "effect_refs": [],
       "shot_function": "opening",
-      "rationale": "act=hook, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=167.94,score=184.7,hero(x1.1)",
-      "act": "hook",
-      "evidence_type": "vlm"
-    },
-    {
-      "source_asset_id": "shot_385d0e1bc5375209",
-      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
-      "in_frame": 16500000,
-      "out_frame": 17500000,
-      "timebase": 1000000,
-      "transition": null,
-      "effect_refs": [],
-      "shot_function": "pacing",
-      "rationale": "act=develop, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=101.77,score=111.9,hero(x1.1)",
-      "act": "develop",
-      "evidence_type": "vlm"
-    },
-    {
-      "source_asset_id": "shot_d3bf1e03a4f33e8f",
-      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
-      "in_frame": 17500000,
-      "out_frame": 19875000,
-      "timebase": 1000000,
-      "transition": null,
-      "effect_refs": [],
-      "shot_function": "pacing",
-      "rationale": "act=develop, topup, heuristic:blur=176.51",
+      "rationale": "act=hook, topup, heuristic:blur=158.96",
       "act": null,
+      "evidence_type": "vlm"
+    },
+    {
+      "source_asset_id": "shot_cdd0e442b56b14f7",
+      "source_media_hash": "b670602fa00934ca27c4351bb0efe7ea7a07fae57284e44226025eeed7c51254",
+      "in_frame": 4000000,
+      "out_frame": 7375000,
+      "timebase": 1000000,
+      "transition": null,
+      "effect_refs": [],
+      "shot_function": "pacing",
+      "rationale": "act=develop, sem[imp=3(1.6x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=180.87,score=199.0,hero(x1.1)",
+      "act": "develop",
       "evidence_type": "vlm"
     },
     {
@@ -74,7 +61,7 @@
       "transition": null,
       "effect_refs": [],
       "shot_function": "pacing",
-      "rationale": "act=develop, sem[imp=4(2.0x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=279.11,score=307.0,hero(x1.1)",
+      "rationale": "act=develop, sem[imp=4(2.0x); narrative=development→develop], vlm:fn=ACTION,role=hero,blur=294.7,score=324.2,hero(x1.1)",
       "act": "develop",
       "evidence_type": "vlm"
     },
@@ -87,7 +74,7 @@
       "transition": null,
       "effect_refs": [],
       "shot_function": "peak",
-      "rationale": "act=peak, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=232.01,score=255.2,hero(x1.1)",
+      "rationale": "act=peak, sem[imp=4(2.0x)], vlm:fn=ACTION,role=hero,blur=185.21,score=203.7,hero(x1.1)",
       "act": "peak",
       "evidence_type": "vlm"
     },
@@ -100,7 +87,7 @@
       "transition": null,
       "effect_refs": [],
       "shot_function": "peak",
-      "rationale": "act=peak, sem[imp=4(2.0x)], heuristic:blur=323.72",
+      "rationale": "act=peak, sem[imp=4(2.0x)], heuristic:blur=211.17",
       "act": "peak",
       "evidence_type": "heuristic"
     },
@@ -113,7 +100,7 @@
       "transition": null,
       "effect_refs": [],
       "shot_function": "closing",
-      "rationale": "act=resolve, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=149.52,score=164.5,hero(x1.1)",
+      "rationale": "act=resolve, sem[imp=3(1.6x)], vlm:fn=ACTION,role=hero,blur=125.61,score=138.2,hero(x1.1)",
       "act": "resolve",
       "evidence_type": "vlm"
     }
