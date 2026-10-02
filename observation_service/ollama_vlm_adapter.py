@@ -65,6 +65,7 @@ cannot support. Keep step 1 and step 2 on separate lines.
 _SEMANTIC_PROMPT = """Analyze these 3 frames from one video shot. Return ONLY JSON:
 {"desc": "中文一句话场景描述",
  "subjects": ["主体列表"],
+ "people": ["可见人物的外观描述（颜色+衣物+发型，如'红衣短发女孩'）"],
  "action": "dialogue|action|establishing|transition|emotional|sensory",
  "emotion": "calm|tense|joyful|dark|neutral|energetic",
  "narrative": "setup|development|climax|resolution|transition",
@@ -332,6 +333,8 @@ class OllamaVLMAdapter(VLMAdapter):
             # P3-1 深度语义字段
             "scene_description": str(parsed.get("desc", "")).strip(),
             "subjects": parsed.get("subjects") or [],
+            "people": [s for s in (parsed.get("people") or [])
+                       if isinstance(s, str) and s.strip()],
             "action_type": action,
             "emotional_tone": emotion,
             "narrative_role": narrative,

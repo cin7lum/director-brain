@@ -152,3 +152,93 @@ def test_kernel_no_card_unchanged():
     edl, _plan = get_director_reasoner("heuristic").generate_plan(
         brief, graph, obs)
     assert edl.artistic_choices == []
+
+
+# ---------------------------------------------------------------------------
+# D2 实体解析与连续性
+# ---------------------------------------------------------------------------
+
+def _vlm_people_obs(idx: int, start_us: int, end_us: int, people: list[str],
+                    narrative_role: str = "development") -> FilmObservation:
+    return FilmObservation(
+        observation_id=f"vlm_{idx}", media_asset_id=f"shot_{idx:08d}",
+        media_hash=f"hash_{idx}", start_frame=start_us, end_frame=end_us,
+        timebase=1_000_000, observation_type="vlm_semantic",
+        claim=json.dumps({
+            "shot_function": "ACTION", "proposed_role_v2": "support",
+            "motion_amount": "subtle", "frame_description": "t",
+            "importance": 3, "narrative_role": narrative_role,
+            "emotional_tone": "neutral", "action_type": "action",
+            "scene_description": "测试", "people": people}),
+        provider="ollama_qwen3_vl", model_version="qwen3-vl:latest",
+        prompt_version="vlm_prompt_v4_people", confidence=0.7,
+        review_state="auto_generated", claim_kind=ClaimKind.MODEL_OBSERVATION,
+        schema_version="1.0", project_id="t", created_at=int(time.time()),
+        producer="ollama_qwen3_vl", source_ref="t.mp4")
+
+
+def test_entity_resolver_clusters_same_person():
+    """同外观描述（红衣短发女孩）跨镜头 → 同一实体。"""
+    from director_brain.entity_resolver import resolve_entities
+    obs = [
+        _vlm_people_obs(1, 0, 2_000_000, ["红衣短发女孩"]),
+        _vlm_people_obs(2, 2_000_000, 4_000_000, ["蓝衣男孩"]),
+        _vlm_people_obs(3, 4_000_000, 6_000_000, ["红衣短发女孩"]),
+    ]
+    res = resolve_entities(obs)
+    assert len(res.entities) == 2
+    a1 = set(res.assignments["shot_00000001"])
+    a3 = set(res.assignments["shot_00000003"])
+    assert a1 & a3, "镜头 1/3 的红衣女孩应同实体"
+    assert not (a1 & set(res.assignments["shot_00000002"])), "蓝衣男孩不同实体"
+    # 多成员实体置信度 ≥ 0.5；单成员弱置信
+    assert all(e.identity_confidence >= 0.3 for e in res.entities)
+
+
+def test_entity_resolver_confidence_grading():
+    """共享 颜色+载体 判别词对 → 高置信；无判别词 → 弱置信。"""
+    from director_brain.entity_resolver import resolve_entities
+    obs = [
+        _vlm_people_obs(1, 0, 2_000_000, ["红衣女孩"]),
+        _vlm_people_obs(2, 2_000_000, 4_000_000, ["红衣女孩拿着伞"]),
+    ]
+    res = resolve_entities(obs)
+    assert len(res.entities) == 1  # 判别词对命中 → 合并
+    assert res.entities[0].identity_confidence >= 0.8
+
+
+def test_entity_resolver_empty_people_no_assignment():
+    """无 people 字段的镜头不参与聚类（无证据不归属）。"""
+    from director_brain.entity_resolver import resolve_entities
+    obs = [_vlm_people_obs(1, 0, 2_000_000, [])]
+    res = resolve_entities(obs)
+    assert res.entities == [] and res.assignments == {}
+
+
+def test_kernel_entity_continuity_bonus():
+    """与上一幕已选镜头共享人物实体 → continuity_bonus 加分留痕。"""
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    try:
+        obs = [
+            _tech_obs(1, 0, 2_000_000),
+            _tech_obs(2, 1_000_000, 3_000_000),
+            _tech_obs(3, 1_500_000, 3_500_000),
+            # shot1/shot3 同实体（跨 hook→develop 人物线索）
+            _vlm_people_obs(1, 0, 2_000_000, ["红衣短发女孩"],
+                            narrative_role="setup"),
+            _vlm_people_obs(2, 1_000_000, 3_000_000, ["蓝衣男孩"]),
+            _vlm_people_obs(3, 1_500_000, 3_500_000, ["红衣短发女孩"]),
+        ]
+        brief = _brief()
+        graph = build_story_graph(brief, obs[:3])
+        from director_brain.entity_resolver import resolve_entities
+        entities = resolve_entities(obs[3:])
+        edl, plan = get_director_reasoner("heuristic").generate_plan(
+            brief, graph, obs, entities=entities)
+        assert any(q.startswith("entities_resolved:count=")
+                   for q in plan.open_questions)
+        sem = [e.rationale for e in edl.ordered_edits
+               if "entity_continuity" in (e.rationale or "")]
+        assert sem, "应有镜头获得 entity_continuity 加分"
+    finally:
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)

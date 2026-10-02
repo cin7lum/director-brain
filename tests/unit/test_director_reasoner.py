@@ -41,7 +41,7 @@ def vlm_pathway_active():
     """把 vlm_semantic 通路临时置为 ACTIVE（2026-09-30 灰度转正后即默认态；闸门本体由显式设 EXPERIMENTAL 的用例验证）。"""
     set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
     yield
-    set_pathway_status("vlm_semantic", PathwayStatus.EXPERIMENTAL)
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)  # 恢复默认（灰度转正后）
 
 
 def _make_tech_obs(

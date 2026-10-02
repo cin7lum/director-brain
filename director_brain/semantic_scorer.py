@@ -35,6 +35,7 @@ class SemanticScore:
     total: float  # 最终得分
     assigned_act: str  # 语义驱动的幕分配
     reason: str  # 评分依据
+    continuity_bonus: float = 0.0  # D2 实体连续性加分（跨幕人物线索；带默认保序）
 
 
 #: emotional_tone ↔ emotional_arc 匹配矩阵
@@ -111,12 +112,22 @@ def compute_semantic_score(
             diversity_penalty = -0.5
             break
 
-    total = base + narrative_bonus + emotion_match + action_match + diversity_penalty
+    # -- D2 实体连续性：与上一幕已选镜头共享人物实体 → 叙事线索延续加分
+    continuity_bonus = 0.0
+    prev_entities = (candidate.get("_prev_entity_ids") or set())
+    cur_entities = set(candidate.get("_entity_ids") or [])
+    if prev_entities and cur_entities & prev_entities:
+        continuity_bonus = 0.15
+
+    total = (base + narrative_bonus + emotion_match + action_match
+             + continuity_bonus + diversity_penalty)
     reasons = []
     if imp_mult != 1.0:
         reasons.append(f"imp={imp}({imp_mult:.1f}x)")
     if narrative_bonus:
         reasons.append(f"narrative={role}→{assigned}")
+    if continuity_bonus:
+        reasons.append("entity_continuity")
     if emotion_match:
         reasons.append(f"emotion={tone}↔{arc}")
     if action_match:
@@ -134,4 +145,5 @@ def compute_semantic_score(
         total=round(total, 2),
         assigned_act=assigned,
         reason="; ".join(reasons) if reasons else "base_score",
+        continuity_bonus=continuity_bonus,  # D2 实体连续性（跨幕人物线索）
     )

@@ -149,6 +149,7 @@ def _build_candidates(
             "vlm_emotional_tone": vlm_claim.get("emotional_tone"),
             "vlm_action_type": vlm_claim.get("action_type"),
             "vlm_scene_description": vlm_claim.get("scene_description", ""),
+            # D2：实体归属（entities 传入时由内核注入 _entity_ids）
         })
 
     # T2：原始（未放宽）判据结果单独留档——confidence 用它计算，
@@ -201,6 +202,7 @@ class DirectorReasoner(ABC):
         narrative: dict | None = None,
         transition_policy: str = "none",
         card: ShotCard | None = None,
+        entities=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -233,6 +235,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         narrative: dict | None = None,
         transition_policy: str = "none",
         card: ShotCard | None = None,
+        entities=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -318,6 +321,12 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             if transition_policy == "none":
                 transition_policy = card.transition_policy
 
+        # ---- D2：实体归属注入（entities: EntityResolution）----
+        entity_assignments: dict[str, list[str]] = (
+            dict(entities.assignments) if entities is not None else {})
+        for c in candidates:
+            c["_entity_ids"] = entity_assignments.get(c["source_shot_id"], [])
+
         # ---- 候选①：语义幕分配表（vlm_semantic 闸门已在上游执法）----
         # 优先级：叙事弧幕边界（P3-3 序列级理解）> 逐镜头 narrative_role
         # （P3-2）> 时间比例（story_graph 默认）。无任何语义时表为空，
@@ -363,6 +372,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         #: 已被选入 plan 的镜头 id（T1 修复：一份 plan 内同一镜头只选一次）
         selected_ids: set[str] = set()
 
+        prev_act_entity_ids: set[str] = set()
         for act_node in act_nodes:
             act_name = act_node.attributes["act"]
             shot_ids = set(act_node.attributes.get("shot_ids", []))
@@ -447,6 +457,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                     for k, v in sem.items() if k != "scene_description"
                 ):
                     continue
+                c["_prev_entity_ids"] = prev_act_entity_ids
                 s = compute_semantic_score(c, sem, brief, act_name, seen_descs)
                 desc = (sem.get("scene_description") or "")[:30].lower().strip()
                 if desc:
@@ -580,6 +591,12 @@ class HeuristicDirectorReasoner(DirectorReasoner):
                 )
                 paired.append((act_name, edit, decision))
                 selected_ids.add(edit.source_asset_id)
+            prev_act_entity_ids = {
+                eid
+                for c in act_cands
+                if c["source_shot_id"] in selected_ids
+                for eid in (c.get("_entity_ids") or [])
+            }
 
         # ---- 目标时长补齐（路径无关的可达性保底；逐条响亮留痕）----
         # 幕配额无法填满时（素材没有某类内容/暗镜头被 P0 正确排除/scenedetect
@@ -704,6 +721,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         if order_rank:
             open_questions.append(
                 f"narrative_reorder:applied:shots={len(order_rank)}")
+        if entities is not None and entities.entities:
+            open_questions.append(
+                f"entities_resolved:count={len(entities.entities)}")
         open_questions.extend(constraint_questions)
 
         source_hashes: list[str] = []
@@ -782,6 +802,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         narrative: dict | None = None,
         transition_policy: str = "none",
         card: ShotCard | None = None,
+        entities=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "

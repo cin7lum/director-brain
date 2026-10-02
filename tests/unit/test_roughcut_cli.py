@@ -296,7 +296,7 @@ class TestRoughcutCLI:
 
         assert rc == 0
         assert "通路状态（T4 shadow 协议）" in out
-        assert "vlm_semantic: EXPERIMENTAL" in out
+        assert "vlm_semantic: ACTIVE" in out  # 2026-09-30 灰度转正后默认态
         assert "ASR 归因: 视频无音轨" in out  # 探测桩 has_audio=False
 
     def test_render_gate_blocks_invalid_final(self, monkeypatch, tmp_path):

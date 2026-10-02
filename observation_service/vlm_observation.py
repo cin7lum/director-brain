@@ -21,8 +21,9 @@ from observation_service.ollama_vlm_adapter import OllamaVLMAdapter
 from observation_service.vlm_adapter import VLMAdapter
 
 _PROVIDER = "ollama_qwen3_vl"
-# v3：P3-1 多帧深度语义（候选①收编——多帧分析并入生产通路）；缓存键随版本失效
-_PROMPT_VERSION = "vlm_prompt_v3_semantic"
+# v4：D2 人物外观字段（people）——实体聚类（entity_resolver）消费；
+# 缓存键随版本失效
+_PROMPT_VERSION = "vlm_prompt_v4_people"
 _TIMEBASE_US = 1_000_000
 
 
@@ -41,6 +42,8 @@ def _claim_payload(vlm_result: dict) -> dict:
         # emotional_tone 匹配情绪弧、scene_description 供多样性降权）
         "scene_description": vlm_result.get("scene_description", ""),
         "subjects": vlm_result.get("subjects") or [],
+        # D2：人物外观描述（entity_resolver 聚类消费）
+        "people": vlm_result.get("people") or [],
         "action_type": vlm_result.get("action_type"),
         "emotional_tone": vlm_result.get("emotional_tone"),
         "narrative_role": vlm_result.get("narrative_role"),

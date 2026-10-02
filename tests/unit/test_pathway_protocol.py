@@ -8,15 +8,19 @@ from director_brain import pathway_protocol as pp
 
 @pytest.fixture()
 def restore_statuses():
-    """每个用例后恢复登记表默认态。"""
+    """每个用例后恢复登记表到用例前快照（随默认态演进，不写死）。"""
+    names = ("vlm_semantic", "relation_inference", "asr_transcript",
+             "semantic_reasoner")
+    snapshot = {name: pp.get_pathway_status(name) for name in names}
     yield
-    for name in ("vlm_semantic", "relation_inference", "asr_transcript"):
-        pp.set_pathway_status(name, pp.PathwayStatus.EXPERIMENTAL)
+    for name, status in snapshot.items():
+        pp.set_pathway_status(name, status)
 
 
 def test_defaults_experimental_with_asr_shadow():
-    """vlm/relation 默认 EXPERIMENTAL（止血态）；asr 已随主链计算+归因上报 → SHADOW。"""
-    assert pp.get_pathway_status("vlm_semantic") is pp.PathwayStatus.EXPERIMENTAL
+    """默认态（2026-09-30）：vlm_semantic 灰度转 ACTIVE；relation 仍 EXPERIMENTAL；
+    asr SHADOW。"""
+    assert pp.get_pathway_status("vlm_semantic") is pp.PathwayStatus.ACTIVE
     assert pp.get_pathway_status("relation_inference") is pp.PathwayStatus.EXPERIMENTAL
     assert pp.get_pathway_status("asr_transcript") is pp.PathwayStatus.SHADOW
 
@@ -29,6 +33,7 @@ def test_describe_lists_all_pathways():
 
 
 def test_decision_use_blocked_unless_active(restore_statuses):
+    pp.set_pathway_status("vlm_semantic", pp.PathwayStatus.EXPERIMENTAL)
     with pytest.raises(pp.PathwayNotActiveError):
         pp.ensure_decision_use_allowed("vlm_semantic")
 
@@ -54,10 +59,12 @@ def test_unknown_pathway_rejected():
         pp.set_pathway_status("nonexistent_pathway", pp.PathwayStatus.ACTIVE)
 
 
-def test_reasoner_blocks_vlm_when_experimental():
+def test_reasoner_blocks_vlm_when_experimental(restore_statuses):
     """决策入口闸门：EXPERIMENTAL 下传入 VLM 观测 → PathwayNotActiveError。"""
     import json
     import time
+
+    pp.set_pathway_status("vlm_semantic", pp.PathwayStatus.EXPERIMENTAL)
 
     from director_brain.director_reasoner import HeuristicDirectorReasoner, _build_candidates
     from director_brain.models.film_observation import ClaimKind, FilmObservation

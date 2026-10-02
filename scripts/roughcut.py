@@ -218,6 +218,7 @@ def run_roughcut(
 
         # ---- 1.5 语义观测（候选①生产入口；通路 ACTIVE 硬前置）----
         narrative = None
+        entities = None
         if semantic:
             from director_brain.pathway_protocol import PathwayStatus
             pw = get_pathway_status("vlm_semantic")
@@ -265,6 +266,11 @@ def run_roughcut(
                             "narrative_role": c.get("narrative_role"),
                             "importance": c.get("importance"),
                         })
+                from director_brain.entity_resolver import resolve_entities
+                entities = resolve_entities(vlm_obs)
+                n_ent = len(entities.entities)
+                print(f"      实体解析: {n_ent} 个人物实体"
+                      f"（{sum(1 for v in entities.assignments.values() for _ in v)} 次归属）")
                 try:
                     narrative = analyze_narrative(
                         sems, shot_ids=shot_ids, api_key=ark_key)
@@ -378,7 +384,7 @@ def run_roughcut(
                     brief, graph, all_obs, narrative=narrative,
                     transition_policy=("dissolve_act_boundary"
                                        if transitions else "none"),
-                    card=card)
+                    card=card, entities=entities)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -395,6 +401,8 @@ def run_roughcut(
             "constraints": plan.constraints,
             "state": plan.state,
         })
+        if entities is not None and entities.entities:
+            _safe_log(ledger, plan.plan_id, "entities_resolved", entities.to_dict())
 
         # ---- 链 B 影子语义决策辅助（阶段 7.5，SHADOW）----
         # 与链 A 并行产出 DirectorDecision 并全量对账上报；影子输出只进
