@@ -408,3 +408,34 @@ def test_kernel_beat_snap_aligns_when_active():
             sps("beat_grid", PathwayStatus.EXPERIMENTAL)
     finally:
         set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+
+
+# ---------------------------------------------------------------------------
+# D6 参考片学习（特征提取 → 显式卡 → user 卡库装载）
+# ---------------------------------------------------------------------------
+
+def test_reference_card_roundtrip(tmp_path):
+    """参考片 → 特征 → 卡 → user 卡库装载 → --card 可选。"""
+    import subprocess
+    from director_brain.shot_cards import get_card, load_cards
+    from scripts.reference_card import extract_features, features_to_card, save_user_card
+
+    src = str(tmp_path / "ref.mp4")
+    subprocess.run(["ffmpeg", "-f", "lavfi",
+                    "-i", "testsrc=duration=10:size=320x240:rate=25",
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p", src, "-y"],
+                   capture_output=True, text=True, check=True)
+    # testsrc 无场景变化 → 单镜头；用 scenedetect 后端切不出多镜头，
+    # 特征提取对单镜头素材也应产出合法卡（min_shots 兜底）
+    features = extract_features(src)
+    assert features["shot_count"] >= 1
+    card = features_to_card(features, "测试参考卡")
+    assert card.card_id.startswith("ref_")
+    assert card.pacing_override["min_clip_us"] >= 300_000
+    out = save_user_card(card)
+    assert out.is_file()
+    assert get_card(card.card_id) is not None  # user 卡进卡库
+    # 同 id 重复保存不产生重复卡
+    save_user_card(card)
+    ids = [c.card_id for c in load_cards()]
+    assert ids.count(card.card_id) == 1

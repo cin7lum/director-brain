@@ -1,0 +1,25 @@
+[
+  {
+    "card_id": "ref_53886",
+    "version": "1.0",
+    "name": "参考片卡:sintel_trailer",
+    "category": "参考片",
+    "purpose": "复现参考片《sintel_trailer》的节奏特征：ASL 2.75s、切点密度 21.8/min、四幕占比 {'hook': 0.11, 'develop': 0.47, 'peak': 0.26, 'resolve': 0.16}",
+    "energy": "medium",
+    "pacing_override": {
+      "min_clip_us": 1000000,
+      "max_clip_us": 4000000
+    },
+    "emotion_arc_fit": [],
+    "editing_language_fit": [],
+    "transition_policy": "dissolve_act_boundary",
+    "beat_align_hint": false,
+    "min_shots": 6,
+    "known_pitfalls": [
+      "参考片仅 19 个镜头，特征置信有限——参数可手工再调",
+      "参考片切点密度 21.8 切/分钟；素材差异大时节奏可能不可复现",
+      "未做语义分析（无情绪弧数据）——可对参考片跑 --semantic 后重生成"
+    ],
+    "attribution": "generated from reference sintel_trailer (feature extraction only, no content copy)"
+  }
+]

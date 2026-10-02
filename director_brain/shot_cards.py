@@ -19,10 +19,18 @@ _CARD_FILE_VERSION = "1"  # 文件名版本（v1.json）；卡内 version 字段
 
 
 def load_cards() -> list[ShotCard]:
-    """加载全部内置卡（schema 校验失败即抛错——坏卡不能静默入库）。"""
+    """加载内置卡 + user 卡（cards/user/*.json；同 id 时 user 卡覆盖内置——
+    用户显式生成的参考片卡优先）。schema 校验失败即抛错——坏卡不能静默入库。"""
     path = _CARDS_DIR / f"v{_CARD_FILE_VERSION}.json"
     raw = json.loads(path.read_text(encoding="utf-8"))
     cards = [ShotCard(**item) for item in raw]
+    user_dir = _CARDS_DIR / "user"
+    if user_dir.is_dir():
+        for uf in sorted(user_dir.glob("*.json")):
+            uitems = json.loads(uf.read_text(encoding="utf-8"))
+            for item in uitems:
+                cards = [c for c in cards if c.card_id != item.get("card_id")]
+                cards.append(ShotCard(**item))
     ids = [c.card_id for c in cards]
     if len(ids) != len(set(ids)):
         raise ValueError(f"卡库 card_id 重复: {ids}")
