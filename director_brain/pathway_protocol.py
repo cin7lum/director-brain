@@ -52,9 +52,11 @@ _STATUS: dict[str, PathwayStatus] = {
     # set_pathway_status("vlm_semantic", PathwayStatus.SHADOW)。
     "vlm_semantic": PathwayStatus.ACTIVE,
     "relation_inference": PathwayStatus.EXPERIMENTAL,
-    #: ASR 已随主链计算并全量归因上报（T4），其 Brief 消费不驱动选片——
-    #: 现实角色即影子，故默认 SHADOW 而非 EXPERIMENTAL。
-    "asr_transcript": PathwayStatus.SHADOW,
+    #: asr_transcript 置 ACTIVE（2026-09-30，D3 声音驱动剪辑）：自 T4 起全量
+    #: 计算+归因上报（三批矩阵零吊销事件），影子期证据齐备且所有者已批准
+    #: D3 排期。语音价值默认关闭（roughcut --voice-led 显式开启）——
+    #: 默认 CLI 行为不变；回退 = set_pathway_status SHADOW 一条命令。
+    "asr_transcript": PathwayStatus.ACTIVE,
     #: 链 B 语义决策（阶段 7.5）：已准入模型（doubao-seed-2-1-lite-260915，
     #: 见 evidence/DIRECTOR_BRAIN_MODEL_ADMISSION/MODEL_ADMISSION.md）经
     #: ark_adapter 并行产出 DirectorDecision，全量对账上报，不驱动成片。

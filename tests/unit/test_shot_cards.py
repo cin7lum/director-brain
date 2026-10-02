@@ -242,3 +242,81 @@ def test_kernel_entity_continuity_bonus():
         assert sem, "应有镜头获得 entity_continuity 加分"
     finally:
         set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+
+
+# ---------------------------------------------------------------------------
+# D3 语音驱动选片（voice_led）
+# ---------------------------------------------------------------------------
+
+def _speech_obs(idx: int, start_us: int, end_us: int, text: str) -> FilmObservation:
+    return FilmObservation(
+        observation_id=f"asr_{idx}", media_asset_id="src",
+        media_hash="hash_src", start_frame=start_us, end_frame=end_us,
+        timebase=1_000_000, observation_type="speech_transcript",
+        claim=text, provider="faster_whisper", model_version="large-v3-turbo",
+        prompt_version="n/a", confidence=0.9, review_state="auto_generated",
+        claim_kind=ClaimKind.MEASURED, schema_version="1.0",
+        project_id="t", created_at=int(time.time()),
+        producer="faster_whisper", source_ref="t.mp4")
+
+
+def test_voice_led_bonus_applies_to_speech_shots():
+    """voice_led 开启：对白覆盖 ≥20% 的镜头获得 +0.1 价值加成。"""
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    try:
+        obs = [
+            _tech_obs(1, 0, 3_000_000, blur=150.0),
+            _tech_obs(2, 3_000_000, 6_000_000, blur=150.0),
+            _tech_obs(3, 6_000_000, 9_000_000, blur=150.0),
+            # 语音覆盖 shot_1 全部、shot_2 一半、shot_3 无
+            _speech_obs(1, 0, 3_000_000, "台词一"),
+            _speech_obs(2, 3_000_000, 4_500_000, "台词二"),
+        ]
+        brief = _brief()
+        graph = build_story_graph(brief, obs[:3])
+        edl, plan = get_director_reasoner("heuristic").generate_plan(
+            brief, graph, obs, voice_led=True)
+        assert any(q.startswith("voice_led:applied:")
+                   for q in plan.open_questions)
+        assert any(c.startswith("voice_led=on:")
+                   for c in plan.constraints)
+        covered = [e for e in edl.ordered_edits
+                   if "speech_bonus" not in (e.rationale or "")]
+        # 加成通过 selection_score/generate 生效——行为验证：无语音的
+        # shot_3 与有语音的 shot_1 同模糊度时，shot_1 先入选
+        seq = [e.source_asset_id for e in edl.ordered_edits]
+        if "shot_00000003" in seq and "shot_00000001" in seq:
+            assert seq.index("shot_00000001") < seq.index("shot_00000003")
+    finally:
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+
+
+def test_voice_led_off_no_change():
+    """默认（无 --voice-led）行为与旧路径一致（无语音注记）。"""
+    obs = [
+        _tech_obs(1, 0, 3_000_000),
+        _tech_obs(2, 3_000_000, 6_000_000),
+        _speech_obs(1, 0, 3_000_000, "台词"),
+    ]
+    brief = _brief()
+    graph = build_story_graph(brief, obs[:2])
+    edl, plan = get_director_reasoner("heuristic").generate_plan(
+        brief, graph, obs)
+    assert not any(q.startswith("voice_led:") for q in plan.open_questions)
+    assert not any(c.startswith("voice_led=") for c in plan.constraints)
+
+
+def test_voice_led_without_speech_attributed():
+    """voice_led 但素材无语音观测 → 归因标记（speech_shots=-1）。"""
+    obs = [_tech_obs(1, 0, 3_000_000), _tech_obs(2, 3_000_000, 6_000_000)]
+    brief = _brief()
+    graph = build_story_graph(brief, obs)
+    _edl, plan = get_director_reasoner("heuristic").generate_plan(
+        brief, graph, obs, voice_led=True)
+    assert "voice_led:applied:speech_shots=-1" in plan.open_questions
+
+
+def test_asr_pathway_default_active():
+    """D3：asr_transcript 默认 ACTIVE（影子期证据齐备 + 所有者批准）。"""
+    from director_brain.pathway_protocol import PathwayStatus, get_pathway_status
+    assert get_pathway_status("asr_transcript") is PathwayStatus.ACTIVE

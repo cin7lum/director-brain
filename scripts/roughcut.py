@@ -164,6 +164,7 @@ def run_roughcut(
     variants: int = 1,
     transitions: bool = False,
     card_id: str | None = None,
+    voice_led: bool = False,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -384,7 +385,7 @@ def run_roughcut(
                     brief, graph, all_obs, narrative=narrative,
                     transition_policy=("dissolve_act_boundary"
                                        if transitions else "none"),
-                    card=card, entities=entities)
+                    card=card, entities=entities, voice_led=voice_led)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -599,6 +600,11 @@ def main():
              "未知卡响亮失败，素材条件不满足响亮失败",
     )
     parser.add_argument(
+        "--voice-led",
+        action="store_true",
+        help="语音驱动选片（D3）：对白覆盖镜头价值加成；需素材有语音观测",
+    )
+    parser.add_argument(
         "--transitions",
         action="store_true",
         help="幕切换处自动 dissolve（导演层 artistic choice；ΣD 感知验证）",
@@ -627,6 +633,7 @@ def main():
         variants=args.variants,
         transitions=args.transitions,
         card_id=args.card,
+        voice_led=args.voice_led,
     ))
 
 

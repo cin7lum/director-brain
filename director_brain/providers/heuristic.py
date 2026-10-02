@@ -160,7 +160,7 @@ class HeuristicBaseline:
             if score_key is not None:
                 fused = c.get(score_key)
                 if isinstance(fused, (int, float)):
-                    return float(fused)
+                    return float(fused) + c.get("_speech_bonus", 0.0)
             blur = c.get("blur_score") or 0
             mult, _ = vlm_multiplier(c, target_duration_us)
             # S4：importance 权重（1-5 → 0.4~2.0 倍；未标注 → 1.0）。
@@ -170,7 +170,8 @@ class HeuristicBaseline:
             if imp is None:
                 imp = c.get("_claim_metrics", {}).get("importance")
             imp_mult = (0.4 + 0.4 * imp) if isinstance(imp, (int, float)) and 1 <= imp <= 5 else 1.0
-            return blur * mult * imp_mult
+            # D3：语音价值加成（voice_led；对白覆盖镜头 +0.1）
+            return blur * mult * imp_mult + c.get("_speech_bonus", 0.0)
 
         usable.sort(key=lambda c: -_score(c))
 

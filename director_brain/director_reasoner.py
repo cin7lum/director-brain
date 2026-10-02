@@ -203,6 +203,7 @@ class DirectorReasoner(ABC):
         transition_policy: str = "none",
         card: ShotCard | None = None,
         entities=None,
+        voice_led: bool = False,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -236,6 +237,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         transition_policy: str = "none",
         card: ShotCard | None = None,
         entities=None,
+        voice_led: bool = False,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -321,6 +323,26 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             if transition_policy == "none":
                 transition_policy = card.transition_policy
 
+        # ---- D3：语音价值（voice_led 显式开启；asr_transcript 通路闸门）----
+        speech_obs = [
+            o for o in observations if o.observation_type == "speech_transcript"
+        ]
+        speech_shots = 0
+        if voice_led and speech_obs:
+            ensure_decision_use_allowed("asr_transcript")
+            utterances = [(o.start_frame, o.end_frame) for o in speech_obs]
+            for c in candidates:
+                s_in, s_out = c["source_in_us"], c["source_out_us"]
+                overlap = sum(
+                    max(0, min(s_out, u_end) - max(s_in, u_start))
+                    for u_start, u_end in utterances)
+                coverage = overlap / max(s_out - s_in, 1)
+                c["_speech_coverage"] = round(coverage, 2)
+                c["_speech_bonus"] = 0.1 if coverage >= 0.2 else 0.0
+                speech_shots += 1 if coverage >= 0.2 else 0
+        if not (voice_led and speech_obs) and voice_led:
+            # voice_led 但素材无语音观测——响亮归因（对齐 ASR 归因先例）
+            speech_shots = -1
         # ---- D2：实体归属注入（entities: EntityResolution）----
         entity_assignments: dict[str, list[str]] = (
             dict(entities.assignments) if entities is not None else {})
@@ -724,6 +746,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         if entities is not None and entities.entities:
             open_questions.append(
                 f"entities_resolved:count={len(entities.entities)}")
+        if voice_led:
+            open_questions.append(
+                f"voice_led:applied:speech_shots={speech_shots}")
         open_questions.extend(constraint_questions)
 
         source_hashes: list[str] = []
@@ -772,7 +797,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             + encode_bounds(clip_bounds)
             + ([f"transition_policy=dissolve_act_boundary:applied={n_transitions}"]
                if n_transitions else [])
-            + ([f"shot_card={card.card_id}@{card.version}"] if card else []),
+            + ([f"shot_card={card.card_id}@{card.version}"] if card else [])
+            + ([f"voice_led=on:speech_shots={speech_shots}"] if voice_led else []),
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,
@@ -803,6 +829,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         transition_policy: str = "none",
         card: ShotCard | None = None,
         entities=None,
+        voice_led: bool = False,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "

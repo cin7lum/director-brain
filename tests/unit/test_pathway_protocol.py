@@ -22,7 +22,7 @@ def test_defaults_experimental_with_asr_shadow():
     asr SHADOW。"""
     assert pp.get_pathway_status("vlm_semantic") is pp.PathwayStatus.ACTIVE
     assert pp.get_pathway_status("relation_inference") is pp.PathwayStatus.EXPERIMENTAL
-    assert pp.get_pathway_status("asr_transcript") is pp.PathwayStatus.SHADOW
+    assert pp.get_pathway_status("asr_transcript") is pp.PathwayStatus.ACTIVE  # D3 灰度转正
 
 
 def test_describe_lists_all_pathways():
