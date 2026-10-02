@@ -165,6 +165,7 @@ def run_roughcut(
     transitions: bool = False,
     card_id: str | None = None,
     voice_led: bool = False,
+    bgm_path: str | None = None,
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -220,6 +221,18 @@ def run_roughcut(
         # ---- 1.5 语义观测（候选①生产入口；通路 ACTIVE 硬前置）----
         narrative = None
         entities = None
+        beat_grid = None
+        if bgm_path:
+            from observation_service.beat_grid import analyze_beat_grid
+            try:
+                beat_grid = analyze_beat_grid(bgm_path, cache_dir=str(Path(_PROJECT_ROOT) / "data"))
+                print(f"      节拍网格: bpm={beat_grid.bpm} "
+                      f"beats={len(beat_grid.beat_times_us)}"
+                      f"（通路 beat_grid="
+                      f"{get_pathway_status('beat_grid').value}——"
+                      f"吸附需 ACTIVE）")
+            except Exception as exc:  # noqa: BLE001
+                print(f"      节拍网格失败（响亮跳过）: {str(exc)[:80]}")
         if semantic:
             from director_brain.pathway_protocol import PathwayStatus
             pw = get_pathway_status("vlm_semantic")
@@ -385,7 +398,8 @@ def run_roughcut(
                     brief, graph, all_obs, narrative=narrative,
                     transition_policy=("dissolve_act_boundary"
                                        if transitions else "none"),
-                    card=card, entities=entities, voice_led=voice_led)
+                    card=card, entities=entities, voice_led=voice_led,
+                    beat_grid=beat_grid)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -457,6 +471,10 @@ def run_roughcut(
             _safe_log(ledger, plan.plan_id, "plan_validated",
                       {"stage": "post_repair", "valid": is_valid, "errors": errors})
             print(f"      修复后验证: {'PASS' if is_valid else 'FAIL'}")
+
+        if bgm_path and Path(bgm_path).is_file() and is_valid:
+            edl.audio_refs.append(f"{bgm_path}|-14")
+            print(f"      配乐: {Path(bgm_path).name}（amix 混音，-14dB）")
 
         # P1-c：验证状态回写——plan.validation_status 不再停留在 pending
         if not repaired or is_valid:
@@ -600,6 +618,13 @@ def main():
              "未知卡响亮失败，素材条件不满足响亮失败",
     )
     parser.add_argument(
+        "--bgm",
+        type=str,
+        default=None,
+        help="BGM 文件：进 audio_refs 混音 + 节拍网格计算"
+             "（切点吸附需 beat_grid 通路 ACTIVE）",
+    )
+    parser.add_argument(
         "--voice-led",
         action="store_true",
         help="语音驱动选片（D3）：对白覆盖镜头价值加成；需素材有语音观测",
@@ -634,6 +659,7 @@ def main():
         transitions=args.transitions,
         card_id=args.card,
         voice_led=args.voice_led,
+        bgm_path=args.bgm,
     ))
 
 

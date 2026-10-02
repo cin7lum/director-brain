@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 http = [
     "fastapi>=0.100",
+    "librosa>=0.10",  # D5 节拍网格（ISC；采用级准入，见计划附录 A）
     "uvicorn>=0.23",
 ]
 # ASR（faster-whisper 拖带 ctranslate2/CUDA 二进制，重依赖，按需安装）

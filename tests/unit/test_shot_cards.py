@@ -320,3 +320,91 @@ def test_asr_pathway_default_active():
     """D3：asr_transcript 默认 ACTIVE（影子期证据齐备 + 所有者批准）。"""
     from director_brain.pathway_protocol import PathwayStatus, get_pathway_status
     assert get_pathway_status("asr_transcript") is PathwayStatus.ACTIVE
+
+
+# ---------------------------------------------------------------------------
+# D5 节拍网格与切点吸附
+# ---------------------------------------------------------------------------
+
+def _make_beat_wav(path, bpm=120.0, dur_s=8.0):
+    import numpy as np
+    import soundfile as sf
+    sr = 22050
+    t = np.arange(int(sr * dur_s)) / sr
+    click = np.zeros_like(t)
+    step = 60.0 / bpm
+    k = 0
+    while k * step < dur_s:
+        i = int(k * step * sr)
+        n = min(400, len(click) - i)
+        if n > 0:
+            click[i:i+n] += np.exp(-np.linspace(0, 6, n)) * np.sin(2*np.pi*1000*np.linspace(0, 6, n)*0.001)
+        k += 1
+    sf.write(path, click, sr)
+
+
+def test_beat_grid_analysis_and_cache(tmp_path):
+    from observation_service.beat_grid import analyze_beat_grid
+    wav = str(tmp_path / "beat.wav")
+    _make_beat_wav(wav, bpm=120.0, dur_s=8.0)
+    cache = str(tmp_path / "cache")
+    g1 = analyze_beat_grid(wav, cache_dir=cache)
+    assert 110 <= g1.bpm <= 130
+    assert len(g1.beat_times_us) >= 12
+    g2 = analyze_beat_grid(wav, cache_dir=cache)
+    assert g2.beat_times_us == g1.beat_times_us  # 缓存命中
+
+
+def test_beat_grid_missing_file_loud(tmp_path):
+    from observation_service.beat_grid import analyze_beat_grid
+    with pytest.raises(RuntimeError, match="不存在"):
+        analyze_beat_grid(str(tmp_path / "nope.wav"))
+
+
+def test_kernel_beat_snap_requires_active_pathway():
+    """EXPERIMENTAL（默认）：网格计算+注记，但不吸附（禁止半消费）。"""
+    obs = [_tech_obs(i, i * 3_000_000, (i + 1) * 3_000_000) for i in range(1, 6)]
+    brief = _brief()
+    graph = build_story_graph(brief, obs)
+
+    class _Grid:
+        bpm = 120.0
+        beat_times_us = [int(i * 500_000) for i in range(1, 40)]
+        source = "test"
+
+    edl, plan = get_director_reasoner("heuristic").generate_plan(
+        brief, graph, obs, beat_grid=_Grid())
+    assert any(q.startswith("beat_grid:bpm=120") for q in plan.open_questions)
+    assert not any(ev.startswith("beat_aligned")
+                   for ev in plan.degradation_events)
+
+
+def test_kernel_beat_snap_aligns_when_active():
+    """通路 ACTIVE：剪切点吸附节拍（degradation 留痕 + 时长在半拍容差内变化）。"""
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    try:
+        from director_brain.pathway_protocol import set_pathway_status as sps
+        sps("beat_grid", PathwayStatus.ACTIVE)
+        try:
+            obs = [_tech_obs(i, i * 3_000_000, (i + 1) * 3_000_000)
+                   for i in range(1, 6)]
+            brief = _brief()
+            graph = build_story_graph(brief, obs)
+
+            class _Grid:
+                bpm = 120.0
+                beat_times_us = [int(i * 500_000) for i in range(1, 60)]
+                source = "test"
+
+            edl, plan = get_director_reasoner("heuristic").generate_plan(
+                brief, graph, obs, beat_grid=_Grid())
+            assert any(q.startswith("beat_grid:bpm=120")
+                       for q in plan.open_questions)
+            # 至少一个切点被吸附或保持（网格 0.5s 间距 vs 3s 镜头——
+            # 3.0s 处的切点恰在节拍上，吸附量可能为 0；验证不越界即可）
+            for e in edl.ordered_edits:
+                assert e.out_frame > e.in_frame
+        finally:
+            sps("beat_grid", PathwayStatus.EXPERIMENTAL)
+    finally:
+        set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)

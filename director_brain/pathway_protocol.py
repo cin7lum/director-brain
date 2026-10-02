@@ -63,6 +63,9 @@ _STATUS: dict[str, PathwayStatus] = {
     #: 与 asr_transcript 同理：现实角色即影子，默认 SHADOW；置 ACTIVE 属
     #: 治理决策，须用户确认且以 L2/L3 影子期证据为前提。
     "semantic_reasoner": PathwayStatus.SHADOW,
+    #: D5 节拍网格：计算与落账本不需转正；切点吸附节拍=决策消费，
+    #: 须 ACTIVE（roughcut --beat-align 显式开启）。
+    "beat_grid": PathwayStatus.EXPERIMENTAL,
 }
 
 #: 各通路的一句话职责（上报用）。
@@ -71,6 +74,7 @@ _PATHWAY_PURPOSE: dict[str, str] = {
     "relation_inference": "镜头间关系边（技术信号 + 可选 VLM 语义）",
     "asr_transcript": "ASR 语音转写观测",
     "semantic_reasoner": "链 B 语义决策（LLM→DirectorDecision，影子对账）",
+    "beat_grid": "BGM 节拍网格（librosa；切点吸附的吸附参照）",
 }
 
 

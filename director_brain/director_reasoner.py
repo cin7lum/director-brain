@@ -204,6 +204,7 @@ class DirectorReasoner(ABC):
         card: ShotCard | None = None,
         entities=None,
         voice_led: bool = False,
+        beat_grid=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -238,6 +239,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         card: ShotCard | None = None,
         entities=None,
         voice_led: bool = False,
+        beat_grid=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -716,6 +718,49 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             if not placed:
                 break  # 无幕可放且无进展：物理上限，交 validator 判定
 
+        # ---- D5：切点吸附节拍（beat_grid 通路 ACTIVE 时生效）----
+        # 输出时间轴的每个剪切点吸附最近节拍（容差半拍）；调整量钳制在
+        # 源镜头边界内。EXPERIMENTAL 下闸门拒绝吸附——只留注记（禁止半消费）。
+        beat_aligned = 0
+        snap_enabled = False
+        if beat_grid is not None and beat_grid.beat_times_us:
+            from director_brain.pathway_protocol import (
+                PathwayStatus as _PS,
+                ensure_decision_use_allowed as _gate,
+                get_pathway_status as _get,
+            )
+            snap_enabled = _get("beat_grid") is _PS.ACTIVE
+            if snap_enabled:
+                _gate("beat_grid")
+            cand_by_id = {c["source_shot_id"]: c for c in candidates}
+            cum = 0
+            half_beat = int(500_000 * 60.0 / max(beat_grid.bpm, 30.0) / 2) + 1
+            for _act, edit, _dec in paired:
+                overlap = (edit.transition.duration_us
+                           if (edit.transition and edit.transition.type == "xfade")
+                           else 0)
+                cum += edit.out_frame - edit.in_frame
+                cut_pos = cum - overlap  # 该切点在输出时间轴的位置
+                nearest = min(beat_grid.beat_times_us,
+                              key=lambda b: abs(b - cut_pos))
+                delta = nearest - cut_pos
+                if not snap_enabled or delta == 0 or abs(delta) > half_beat:
+                    continue
+                cand = cand_by_id.get(edit.source_asset_id)
+                if cand is None:
+                    continue
+                new_out = edit.out_frame + delta
+                if new_out < edit.in_frame + MIN_CLIP_US:
+                    continue
+                if new_out > cand.get("source_out_us", new_out):
+                    continue
+                shift = new_out - edit.out_frame
+                edit.out_frame = int(new_out)
+                cum += shift
+                beat_aligned += 1
+                degradation_events.append(
+                    f"beat_aligned:shot={edit.source_asset_id}:shift={shift}")
+
         # ---- 按幕顺序（hook→develop→peak→resolve）----
         # 幕内排序：有叙事推荐顺序（P3-3 suggested_order）时按其位次，
         # 未覆盖的镜头排在其后；否则按 in_frame 升序（旧行为）。
@@ -749,6 +794,9 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         if voice_led:
             open_questions.append(
                 f"voice_led:applied:speech_shots={speech_shots}")
+        if beat_grid is not None:
+            open_questions.append(
+                f"beat_grid:bpm={beat_grid.bpm}:aligned={beat_aligned}")
         open_questions.extend(constraint_questions)
 
         source_hashes: list[str] = []
@@ -830,6 +878,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         card: ShotCard | None = None,
         entities=None,
         voice_led: bool = False,
+        beat_grid=None,
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "
