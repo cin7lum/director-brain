@@ -1,0 +1,56 @@
+{
+  "ledgers": {
+    "production_rate": {
+      "produced": 96,
+      "total": 120,
+      "text": "96/120 (80%)"
+    },
+    "defect_rate": {
+      "defective": 0,
+      "produced": 96,
+      "text": "0/96 (0%)"
+    },
+    "refusal_correctness": {
+      "explainable": 23,
+      "refused": 24,
+      "text": "23/24 (96%)"
+    }
+  },
+  "dev_holdout": {
+    "dev": {
+      "production_rate": {
+        "produced": 46,
+        "total": 60,
+        "text": "46/60 (77%)"
+      },
+      "defect_rate": {
+        "defective": 0,
+        "produced": 46,
+        "text": "0/46 (0%)"
+      },
+      "refusal_correctness": {
+        "explainable": 14,
+        "refused": 14,
+        "text": "14/14 (100%)"
+      }
+    },
+    "holdout": {
+      "production_rate": {
+        "produced": 50,
+        "total": 60,
+        "text": "50/60 (83%)"
+      },
+      "defect_rate": {
+        "defective": 0,
+        "produced": 50,
+        "text": "0/50 (0%)"
+      },
+      "refusal_correctness": {
+        "explainable": 9,
+        "refused": 10,
+        "text": "9/10 (90%)"
+      }
+    },
+    "verdict": "PASS"
+  }
+}
