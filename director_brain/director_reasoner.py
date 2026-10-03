@@ -205,6 +205,7 @@ class DirectorReasoner(ABC):
         entities=None,
         voice_led: bool = False,
         beat_grid=None,
+        audio_style: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         """从简报/故事图/观测产出 (EDL, 决策计划)。
 
@@ -240,6 +241,7 @@ class HeuristicDirectorReasoner(DirectorReasoner):
         entities=None,
         voice_led: bool = False,
         beat_grid=None,
+        audio_style: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         tech_obs = [
             o for o in observations if o.observation_type == "deterministic_technical"
@@ -718,6 +720,15 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             if not placed:
                 break  # 无幕可放且无进展：物理上限，交 validator 判定
 
+        # ---- D3-b：J/L-cut 音频偏移（导演 artistic choice；全片统一 v1，
+        # 渲染器检测到偏移即切换音频时间轴图）----
+        if audio_style == "j_cut":
+            for _a, edit, _d in paired:
+                edit.audio_lead_us = 400_000
+        elif audio_style == "l_cut":
+            for _a, edit, _d in paired:
+                edit.audio_tail_us = 400_000
+
         # ---- D5：切点吸附节拍（beat_grid 通路 ACTIVE 时生效）----
         # 输出时间轴的每个剪切点吸附最近节拍（容差半拍）；调整量钳制在
         # 源镜头边界内。EXPERIMENTAL 下闸门拒绝吸附——只留注记（禁止半消费）。
@@ -846,7 +857,8 @@ class HeuristicDirectorReasoner(DirectorReasoner):
             + ([f"transition_policy=dissolve_act_boundary:applied={n_transitions}"]
                if n_transitions else [])
             + ([f"shot_card={card.card_id}@{card.version}"] if card else [])
-            + ([f"voice_led=on:speech_shots={speech_shots}"] if voice_led else []),
+            + ([f"voice_led=on:speech_shots={speech_shots}"] if voice_led else [])
+            + ([f"audio_style={audio_style}"] if audio_style != "none" else []),
             open_questions=open_questions,
             degraded=bool(degradation_events),
             degradation_events=degradation_events,
@@ -879,6 +891,7 @@ class LLMDirectorReasoner(DirectorReasoner):
         entities=None,
         voice_led: bool = False,
         beat_grid=None,
+        audio_style: str = "none",
     ) -> tuple[EditorialDecisionList, DirectorDecisionPlan]:
         raise NotImplementedError(
             "LLM director reasoner requires ollama endpoint; "

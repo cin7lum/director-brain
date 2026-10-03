@@ -167,3 +167,42 @@ def test_edl_to_ffmpeg_concat_generates_file() -> None:
     finally:
         if os.path.exists(path):
             os.unlink(path)
+
+
+# ---------------------------------------------------------------------------
+# D3-b：J/L-cut 音频时间轴渲染
+# ---------------------------------------------------------------------------
+
+def test_jcut_uses_audio_timeline_graph(tmp_path):
+    """任一镜头带音频偏移 → filter_complex 走 adelay+amix 时间轴图。"""
+    from execution.renderer import _build_filter_complex
+    edl = _make_edl_with_audio(tmp_path) if False else None
+    # 构造最小 EDL（复用本文件既有夹具形态）
+    from director_brain.models.edl import EditItem, EditorialDecisionList
+    edits = [EditItem(source_asset_id=f"s{i}", source_media_hash="h",
+                      in_frame=i * 1_000_000, out_frame=(i + 1) * 1_000_000,
+                      timebase=1_000_000, audio_lead_us=400_000)
+             for i in range(2)]
+    edl = EditorialDecisionList(
+        schema_version="1.0", project_id="t", created_at=0, producer="t",
+        source_ref="s.mp4", edl_id="e", version="0.1", brief_version="0.1",
+        context_id="c", timebase=1_000_000, ordered_edits=edits,
+        approval_state="draft")
+    graph = _build_filter_complex(edl, has_audio=True)
+    assert "adelay=" in graph and "amix=" in graph
+
+
+def test_no_jcut_uses_legacy_graph(tmp_path):
+    """无偏移 → 旧 concat 音频路径（逐位不变）。"""
+    from execution.renderer import _build_filter_complex
+    from director_brain.models.edl import EditItem, EditorialDecisionList
+    edits = [EditItem(source_asset_id=f"s{i}", source_media_hash="h",
+                      in_frame=i * 1_000_000, out_frame=(i + 1) * 1_000_000,
+                      timebase=1_000_000) for i in range(2)]
+    edl = EditorialDecisionList(
+        schema_version="1.0", project_id="t", created_at=0, producer="t",
+        source_ref="s.mp4", edl_id="e", version="0.1", brief_version="0.1",
+        context_id="c", timebase=1_000_000, ordered_edits=edits,
+        approval_state="draft")
+    graph = _build_filter_complex(edl, has_audio=True)
+    assert "adelay=" not in graph and "concat=n=2:v=1:a=1" in graph

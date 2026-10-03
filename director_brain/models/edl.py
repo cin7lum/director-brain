@@ -36,6 +36,13 @@ class EditItem(BaseModel):
     out_frame: int
     timebase: int
     transition: TransitionSpec | None = None
+    #: D3-b：J/L-cut 音频偏移（导演 artistic choice）。
+    #: audio_lead_us>0 = 声音先入（本镜头音频从源时间轴提前 lead 开始，
+    #: 越过切点压在前镜头画面尾部）；audio_tail_us>0 = 声音延续
+    #: （本镜头音频延出 tail，压在后镜头画面头部）。
+    #: 渲染器检测到任一非零偏移即切换音频时间轴图（adelay+amix）。
+    audio_lead_us: int = 0
+    audio_tail_us: int = 0
     effect_refs: list[str] = Field(default_factory=list)
     shot_function: str | None = None
     rationale: str | None = None
@@ -44,6 +51,13 @@ class EditItem(BaseModel):
     #: P1-b 结构化字段：证据类型 "heuristic" | "vlm"（修复器优先级判据，
     #: 旧数据为 None 时回退 rationale 字符串嗅探）
     evidence_type: str | None = None
+
+    @field_validator("audio_lead_us", "audio_tail_us")
+    @classmethod
+    def _audio_offsets_non_negative(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("audio offsets must be >= 0")
+        return v
 
     @field_validator("transition", mode="before")
     @classmethod

@@ -74,6 +74,9 @@ def _build_filter_complex(
     """
     from director_brain.timeline import compute_output_timeline
 
+    # ---- D3-b：J/L-cut 检测——任一镜头带音频偏移即切换音频时间轴图 ----
+    jlm = any(e.audio_lead_us or e.audio_tail_us for e in edl.ordered_edits)
+
     parts: list[str] = []
     v_labels: list[str] = []
     a_labels: list[str] = []
@@ -87,7 +90,9 @@ def _build_filter_complex(
             f"settb=AVTB,scale=trunc(iw/2)*2:trunc(ih/2)*2[v{i}];"
         )
         v_labels.append(f"v{i}")
-        if has_audio:
+        if has_audio and not jlm:
+            # jlm（D3-b J/L-cut）模式下音频由时间轴图（adelay+amix）产出，
+            # 顶部不再发逐镜头 atrim 链——避免悬空输出
             parts.append(
                 f"[0:a]atrim=start={start_s}:end={end_s},asetpts=PTS-STARTPTS[a{i}];"
             )
@@ -100,6 +105,41 @@ def _build_filter_complex(
         and tl.transition_to_next.type == "xfade"
         for tl in timeline[: n - 1]
     )
+
+    if jlm and use_xfade:
+        raise ValueError(
+            "J/L-cut 音频偏移与 xfade 链式转场暂不兼容——"
+            "请去掉音频偏移或改用硬切（cut）接缝")
+
+    if jlm and has_audio:
+        # ---- 音频时间轴重建：每镜头音频按自己的源窗口裁剪、adelay 定位，
+        # amix 汇总（重叠区自然混音=J/L-cut 的听感本体）----
+        timeline_by_idx = {i: tl for i, tl in enumerate(timeline)}
+        total_s = (timeline[-1].out_start_us + timeline[-1].duration_us) / 1e6
+        amix_labels: list[str] = []
+        for i, edit in enumerate(edl.ordered_edits):
+            tl = timeline_by_idx[i]
+            cum_in = tl.out_start_us
+            lead = min(edit.audio_lead_us, cum_in)  # 首镜头 lead 钳到 0 起
+            a_in = (edit.in_frame - lead) / edit.timebase
+            a_out = (edit.out_frame + edit.audio_tail_us) / edit.timebase
+            delay_ms = int((cum_in - lead) / 1000)
+            parts.append(
+                f"[0:a]atrim=start={a_in:.6f}:end={a_out:.6f},"
+                f"asetpts=PTS-STARTPTS,"
+                f"adelay={delay_ms}:all=1[aj{i}];"
+            )
+            amix_labels.append(f"[aj{i}]")
+        parts.append(
+            f"{''.join(amix_labels)}"
+            f"amix=inputs={len(amix_labels)}:normalize=0:duration=longest,"
+            f"atrim=end={total_s:.6f},asetpts=PTS-STARTPTS[{audio_out_label}];"
+        )
+        # 视频仍走原路径（concat 或 xfade），但音频段不再参与 concat
+        if not use_xfade:
+            concat_input = "".join(f"[{v}]" for v in v_labels)
+            parts.append(f"{concat_input}concat=n={n}:v=1:a=0[v]")
+            return "".join(parts)
 
     if not use_xfade:
         if has_audio:

@@ -38,6 +38,16 @@
             ],
             "default": null
           },
+          "audio_lead_us": {
+            "default": 0,
+            "title": "Audio Lead Us",
+            "type": "integer"
+          },
+          "audio_tail_us": {
+            "default": 0,
+            "title": "Audio Tail Us",
+            "type": "integer"
+          },
           "effect_refs": {
             "items": {
               "type": "string"

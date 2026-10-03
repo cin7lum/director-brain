@@ -166,6 +166,7 @@ def run_roughcut(
     card_id: str | None = None,
     voice_led: bool = False,
     bgm_path: str | None = None,
+    audio_style: str = "none",
 ) -> int:
     """执行端到端粗剪流程。返回 0 成功，非 0 失败。
 
@@ -399,7 +400,7 @@ def run_roughcut(
                     transition_policy=("dissolve_act_boundary"
                                        if transitions else "none"),
                     card=card, entities=entities, voice_led=voice_led,
-                    beat_grid=beat_grid)
+                    beat_grid=beat_grid, audio_style=audio_style)
         except EvidenceTooPoorError as exc:
             # T2 fail-closed：技术证据不足，拒绝导演（不注水选片）
             print(f"      导演放弃（evidence_too_poor）: {exc}")
@@ -618,6 +619,16 @@ def main():
              "未知卡响亮失败，素材条件不满足响亮失败",
     )
     parser.add_argument(
+        "--j-cut",
+        action="store_true",
+        help="声音先入（D3-b）：切点处incoming音频提前 0.4s（全片统一 v1）",
+    )
+    parser.add_argument(
+        "--l-cut",
+        action="store_true",
+        help="声音延续（D3-b）：切点处outgoing音频延出 0.4s（全片统一 v1）",
+    )
+    parser.add_argument(
         "--bgm",
         type=str,
         default=None,
@@ -660,6 +671,9 @@ def main():
         card_id=args.card,
         voice_led=args.voice_led,
         bgm_path=args.bgm,
+        audio_style=(("j_cut" if args.j_cut else "")
+                     + ("l_cut" if args.l_cut else "")
+                     or "none"),
     ))
 
 
