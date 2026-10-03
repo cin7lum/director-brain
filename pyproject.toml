@@ -25,6 +25,7 @@ asr = [
     "faster-whisper>=1.0",
 ]
 dev = [
+    "httpx2>=0.1",  # starlette TestClient（新版必需）
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
 ]
