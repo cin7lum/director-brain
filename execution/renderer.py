@@ -30,6 +30,7 @@ def _nvenc_available() -> bool:
             result = subprocess.run(
                 ["ffmpeg", "-hide_banner", "-encoders"],
                 capture_output=True, text=True, check=False, timeout=30,
+                encoding="utf-8", errors="replace",
             )
             _NVENC_CACHE = "h264_nvenc" in (result.stdout or "")
         except (OSError, subprocess.TimeoutExpired):
@@ -200,7 +201,8 @@ def _build_filter_complex(
 def _run_ffmpeg(cmd: list[str]) -> None:
     """执行 ffmpeg 命令，失败抛 RuntimeError（含 stderr 尾部）。"""
     logger.debug("ffmpeg 命令: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False,
+                            encoding="utf-8", errors="replace")
     if result.returncode != 0:
         stderr_tail = (result.stderr or "")[-2000:]
         raise RuntimeError(f"ffmpeg render failed: {stderr_tail}")

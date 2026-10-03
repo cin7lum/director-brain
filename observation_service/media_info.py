@@ -99,6 +99,7 @@ def probe_media_meta(video_path: str) -> MediaMeta:
     try:
         proc = subprocess.run(
             cmd, capture_output=True, text=True, timeout=30, check=False,
+            encoding="utf-8", errors="replace",
         )
     except FileNotFoundError:
         return MediaMeta(ok=False, reason="ffprobe 不可用")

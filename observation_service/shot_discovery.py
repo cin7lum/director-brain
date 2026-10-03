@@ -30,7 +30,8 @@ def _probe_duration_us(path: str) -> int | None:
         path,
     ]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
     except OSError:
         return None
     if r.returncode != 0:
@@ -56,7 +57,8 @@ def _scene_cut_times_us(path: str, threshold: float) -> list[int] | None:
         "-f", "null", "-",
     ]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
     except OSError:
         return None
     if r.returncode != 0:
