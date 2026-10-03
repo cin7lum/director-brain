@@ -1,5 +1,7 @@
 # 02 · Director Brain（导演脑）
 
+[![CI](https://github.com/cin7lum/director-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/cin7lum/director-brain/actions/workflows/ci.yml)
+
 将「用户想剪成什么」（自然语言意图）×「素材里有什么」（多模态观测）转化为**可解释、可追溯、可修订**的剪辑决策，并渲染成片。AI 剪辑流水线（02 导演脑 → 03 军火库 → 04 剪映/Resolve 执行 → 05 质检）中唯一拥有"导演权"的模块，同时是可插拔大模块与独立产品（CLI / REST API）。
 
 **核心立场**：证据不足就拒绝导演（fail-closed）；每条决策可审计；全绿不等于能用——一切能力以真实实测工件为验收标准。
