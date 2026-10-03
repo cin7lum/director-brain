@@ -12,14 +12,14 @@ dependencies = [
     "pydantic>=2.0",
     "numpy>=1.24",
     "opencv-python>=4.8",
+    # api/（REST 8 端点，被集成测试覆盖）与 beat_grid（D5）为核心依赖——
+    # 原计划"删除零实现 http extra"顺带完成：api 已实现，extra 名不副实
+    "fastapi>=0.100",
+    "uvicorn>=0.23",
+    "librosa>=0.10",  # D5 节拍网格（ISC；采用级准入，见计划附录 A）
 ]
 
 [project.optional-dependencies]
-http = [
-    "fastapi>=0.100",
-    "librosa>=0.10",  # D5 节拍网格（ISC；采用级准入，见计划附录 A）
-    "uvicorn>=0.23",
-]
 # ASR（faster-whisper 拖带 ctranslate2/CUDA 二进制，重依赖，按需安装）
 asr = [
     "faster-whisper>=1.0",
