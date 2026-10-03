@@ -53,7 +53,11 @@ def test_env_fields_do_not_leak_values():
     """doctor 只报告 .env 字段名，绝不输出字段值。"""
     results = run_checks()
     text = repr(results)
-    for line in (_PROJECT_ROOT and Path(_PROJECT_ROOT) / ".env").read_text(
+    env_file = Path(_PROJECT_ROOT) / ".env"
+    if not env_file.is_file():
+        # CI/干净环境无 .env——无值可泄漏，断言空转通过
+        return
+    for line in env_file.read_text(
         encoding="utf-8", errors="replace"
     ).splitlines():
         line = line.strip()

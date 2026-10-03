@@ -222,6 +222,7 @@ def confirm_strategy_endpoint(plan_id: str, req: ConfirmStrategyRequest):
         from storage.sqlite_repository import SqliteRepository
         from director_brain.audit_trail import log_decision
         try:
+            Path("./data").mkdir(parents=True, exist_ok=True)
             repo = SqliteRepository("./data/director_brain.db")
             log_decision(repo, plan.plan_id, "strategy_confirmed", {
                 "plan_hash": confirmation.plan_hash,
@@ -424,6 +425,7 @@ def decision_ledger_endpoint(project_id: str):
         from storage.sqlite_repository import SqliteRepository
         from storage.repository import DecisionLedgerEntry
         settings_db = "./data/director_brain.db"
+        Path(settings_db).parent.mkdir(parents=True, exist_ok=True)
         repo = SqliteRepository(settings_db)
         entries = repo.list(DecisionLedgerEntry, project_id=project_id)
         return _envelope(corr, {
