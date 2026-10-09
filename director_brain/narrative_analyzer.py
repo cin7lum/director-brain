@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.23"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.24"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -877,10 +877,13 @@ def _project_group_system_prompt(
         + contrast_dimensions
         + ". Labels, rationales, emotional arc, tradeoffs, and uncertainties "
         "alone do not make candidates distinct. Justify executable choices "
-        "from the creator brief and available application_effects. Do not change "
-        "an act or reorder sources arbitrarily. If no grounded alternative is "
-        "available, do not invent one; downstream validation will reject "
-        "candidates with identical structure and enabled execution choices. "
+        "from the creator brief and available application_effects. When enabled "
+        "execution choices exist, the response schema constrains one available "
+        "choice to differ from the primary. Do not change an act or reorder sources "
+        "arbitrarily. Do not invent source facts or unsupported rationales; if no "
+        "grounded alternative is available, fail closed. Downstream validation "
+        "still rejects candidates with identical structure and enabled execution "
+        "choices. "
         "The generic example above shows field shapes only; follow the appended "
         "schema's exact strategy count."
     )
@@ -1441,6 +1444,7 @@ def _project_group_response_schema(
     include_editing_language_choice: bool = False,
     include_transition_policy_choice: bool = False,
     semantic_constraints: list[dict] | None = None,
+    contrast_against: dict | None = None,
 ) -> dict:
     if type(strategy_count) is not int or strategy_count not in {1, 2}:
         raise ValueError("project group schema strategy count is invalid")
@@ -1600,6 +1604,29 @@ def _project_group_response_schema(
             "transition_policy_choice", "transition_policy_rationale",
             "transition_duration_us",
         ])
+    if contrast_against is not None:
+        # Keep the contrast constraint compact enough for bounded project
+        # synthesis requests. Prefer the most direct EDL choice, then audio,
+        # then transitions; the model remains free to make additional grounded
+        # structural or executable differences.
+        for field, enabled in (
+            ("editing_language_choice", include_editing_language_choice),
+            ("audio_style_choice", include_audio_style_choice),
+            ("transition_policy_choice", include_transition_policy_choice),
+        ):
+            if not enabled:
+                continue
+            allowed_values = strategy["properties"][field]["enum"]
+            primary_value = contrast_against.get(field)
+            if primary_value not in allowed_values:
+                raise ValueError(
+                    f"primary project strategy has invalid {field}")
+            alternatives = [
+                value for value in allowed_values if value != primary_value
+            ]
+            if alternatives:
+                strategy["properties"][field]["enum"] = alternatives
+                break
     return {
         "type": "object",
         "properties": {
@@ -2512,18 +2539,20 @@ def _analyze_project_group(
         raise ValueError(
             "project synthesis source-asset group mapping lost a source")
     input_evidence_ref_indexes = sorted(child_indexes)
-    response_schema = _project_group_response_schema(
-        children, strategy_count=1,
-        include_audio_style_choice=include_audio_style_choice,
-        include_editing_language_choice=include_editing_language_choice,
-        include_transition_policy_choice=include_transition_policy_choice,
-        semantic_constraints=semantic_constraints)
-
     def generate_candidate(
         candidate_role: str,
         candidate_id_index: int,
         prior_context: dict | None = None,
+        contrast_against: dict | None = None,
     ) -> dict:
+        response_schema = _project_group_response_schema(
+            children, strategy_count=1,
+            include_audio_style_choice=include_audio_style_choice,
+            include_editing_language_choice=include_editing_language_choice,
+            include_transition_policy_choice=include_transition_policy_choice,
+            semantic_constraints=semantic_constraints,
+            contrast_against=contrast_against,
+        )
         system = _project_group_system_prompt(
             include_audio_style_choice=include_audio_style_choice,
             include_editing_language_choice=include_editing_language_choice,
@@ -2569,7 +2598,8 @@ def _analyze_project_group(
     primary = generate_candidate("primary", 0)
     primary_strategy = primary["strategies"][0]
     prior_context = _project_group_contrast_candidate_context(primary_strategy)
-    contrasting = generate_candidate("contrasting", 1, prior_context)
+    contrasting = generate_candidate(
+        "contrasting", 1, prior_context, contrast_against=primary_strategy)
     result = {
         "summary": primary["summary"],
         "strategies": [primary_strategy, contrasting["strategies"][0]],
@@ -2799,12 +2829,33 @@ def _pack_project_group_batches(
     current: list[dict] = []
 
     def max_candidate_request_bytes(group: list[dict]) -> int:
-        schema = _project_group_response_schema(
+        primary_schema = _project_group_response_schema(
             group, strategy_count=1,
             include_audio_style_choice=include_audio_style_choice,
             include_editing_language_choice=include_editing_language_choice,
             include_transition_policy_choice=include_transition_policy_choice,
             semantic_constraints=semantic_constraints,
+        )
+        contrast_size_reference = {}
+        for field, enabled, choices in (
+            ("audio_style_choice", include_audio_style_choice,
+             ["none", "j_cut", "l_cut"]),
+            ("editing_language_choice", include_editing_language_choice,
+             list(EDITING_LANGUAGE_PROFILE_IDS)),
+            ("transition_policy_choice", include_transition_policy_choice,
+             ["none", "dissolve_act_boundary"]),
+        ):
+            if enabled:
+                # Excluding the shortest value leaves the largest enum in the
+                # contrast schema and therefore provides a conservative bound.
+                contrast_size_reference[field] = min(choices, key=len)
+        contrast_schema = _project_group_response_schema(
+            group, strategy_count=1,
+            include_audio_style_choice=include_audio_style_choice,
+            include_editing_language_choice=include_editing_language_choice,
+            include_transition_policy_choice=include_transition_policy_choice,
+            semantic_constraints=semantic_constraints,
+            contrast_against=contrast_size_reference,
         )
         prompt_options = {
             "include_audio_style_choice": include_audio_style_choice,
@@ -2831,8 +2882,10 @@ def _pack_project_group_batches(
                 )),
         )
         return max(
-            _project_request_bytes(primary_system, primary_user, schema),
-            _project_request_bytes(contrast_system, contrast_user, schema),
+            _project_request_bytes(
+                primary_system, primary_user, primary_schema),
+            _project_request_bytes(
+                contrast_system, contrast_user, contrast_schema),
         )
 
     for child in children:

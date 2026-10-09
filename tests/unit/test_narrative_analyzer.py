@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.23"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.24"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -1138,6 +1138,39 @@ def test_project_group_contrast_context_carries_enabled_execution_choices():
     assert len(placeholder["editing_language_rationale"]["statement"]) == 240
 
 
+def test_project_group_contrast_schema_excludes_primary_execution_choices():
+    child = {
+        "node_id": "segment-0001",
+        "global_indices": [0],
+        "available_hypotheses": {"local-A": {}, "local-B": {}},
+    }
+    primary = {
+        "audio_style_choice": "j_cut",
+        "editing_language_choice": "fast_cut",
+        "transition_policy_choice": "dissolve_act_boundary",
+    }
+
+    schema = narrative_analyzer._project_group_response_schema(
+        [child],
+        strategy_count=1,
+        include_audio_style_choice=True,
+        include_editing_language_choice=True,
+        include_transition_policy_choice=True,
+        contrast_against=primary,
+    )
+
+    strategy_schema = schema["properties"]["strategies"]["items"]
+    properties = strategy_schema["properties"]
+    assert set(properties["editing_language_choice"]["enum"]) == {
+        value for value in narrative_analyzer.EDITING_LANGUAGE_PROFILE_IDS
+        if value != primary["editing_language_choice"]
+    }
+    assert properties["audio_style_choice"]["enum"] == [
+        "none", "j_cut", "l_cut"]
+    assert properties["transition_policy_choice"]["enum"] == [
+        "none", "dissolve_act_boundary"]
+
+
 def test_strategy_transition_policy_rejects_unknown_choice_and_unbound_rationale():
     response = _narrative()
     for option in response["strategy_hypotheses"]:
@@ -1372,8 +1405,8 @@ def test_project_group_generates_one_contrasting_candidate_and_fails_closed_with
         narrative_analyzer, "_PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS", 1)
     calls = []
 
-    def provider(_base_url, _api_key, _model, system, user, **_kwargs):
-        calls.append((system, user))
+    def provider(_base_url, _api_key, _model, system, user, **kwargs):
+        calls.append((system, user, kwargs.get("response_schema")))
         if system.startswith(narrative_analyzer._PROJECT_NARRATIVE_SEGMENT_PROMPT):
             return json.dumps({
                 "summary": "A one-shot source segment.",
@@ -1421,6 +1454,9 @@ def test_project_group_generates_one_contrasting_candidate_and_fails_closed_with
                     {"child_id": "segment-0001", "act": "hook"},
                     {"child_id": "segment-0002", "act": "develop"},
                 ],
+                "editing_language_choice": "fast_cut",
+                "editing_language_rationale": _evidence_claim(
+                    "A fast-cut project option.", 0, 1),
             }
 
         return json.dumps({
@@ -1442,6 +1478,9 @@ def test_project_group_generates_one_contrasting_candidate_and_fails_closed_with
                 "tradeoffs": [_evidence_claim("Preserves source order.", 0)],
                 "uncertainties": [_evidence_claim(
                     "The sources do not establish cross-asset continuity.", 1)],
+                "editing_language_choice": "fast_cut",
+                "editing_language_rationale": _evidence_claim(
+                    "A fast-cut project option.", 0, 1),
             }],
             "limitations": [],
         })
@@ -1459,12 +1498,18 @@ def test_project_group_generates_one_contrasting_candidate_and_fails_closed_with
             timeout=30,
             temperature=0,
             director_brief="Compare two evidence-grounded edit approaches.",
+            include_editing_language_choice=True,
         )
 
     assert len(calls) == 4  # two leaf calls and one call per candidate
     assert exc_info.value.failure_code == "group_strategies_identical"
     assert exc_info.value.failure_stage == "project_synthesis"
     assert exc_info.value.provider_call_count == 4
+    contrast_schema = calls[-1][2]
+    strategy_schema = contrast_schema["properties"]["strategies"]["items"]
+    editing_choices = strategy_schema["properties"][
+        "editing_language_choice"]["enum"]
+    assert "fast_cut" not in editing_choices
 
 
 def test_project_synthesis_strategy_ids_are_application_owned():
