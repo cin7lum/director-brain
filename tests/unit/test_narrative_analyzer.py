@@ -237,7 +237,10 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.24"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.25"
+    assert "Keep any choice-specific label, intent, rationale, arc, and " in (
+        captured["system"])
+    assert "tradeoff aligned" in captured["system"]
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [

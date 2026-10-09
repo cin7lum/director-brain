@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.24"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.25"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -784,12 +784,11 @@ def _project_schema_text(response_schema: dict) -> str:
 
 def _project_strategy_claim_system_prompt(system_prompt: str) -> str:
     return system_prompt + (
-        "\nEach strategy must have exactly one emotional_arc claim describing "
-        "that strategy's intended emotional progression, not a verified audience "
-        "response. Emit emotional_arc, tradeoff, and uncertainty claims as objects "
-        "with a concise statement and source_indices. Indices are zero-based "
-        "positions from the source indices explicitly present in this request. "
-        "Cite only indices in that supplied set; do not invent evidence references."
+        "\nEach strategy needs one evidence-linked emotional_arc, not an audience "
+        "claim. Keep any choice-specific label, intent, rationale, arc, and "
+        "tradeoff aligned. Claims are objects with concise statement and "
+        "source_indices; indices are zero-based within the supplied input. Cite "
+        "only supplied indices; invent no evidence references."
     )
 
 
