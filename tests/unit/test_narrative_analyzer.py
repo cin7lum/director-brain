@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.26"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.27"
     assert "If choices alone distinguish strategies" in captured["system"]
     assert "labels and intents must name them" in captured["system"]
     assert "creator_direction" in captured["user"]
@@ -1438,6 +1438,33 @@ def test_project_group_prompt_requires_child_scoped_hypothesis_ids():
     assert "Do not use another child's hypothesis_id" in system
     assert "Do not include a project-level `hypothesis_id`" in system
     assert "assigns stable candidate IDs after parsing" in system
+
+
+def test_project_group_user_explicitly_enumerates_child_order_members():
+    children = [{
+        "node_id": "synthesis-0001",
+        "global_indices": [0],
+        "asset_groups": [0],
+        "summary": "A bounded synthesized proposal.",
+        "strategy_summaries": [],
+    }, {
+        "node_id": "segment-0007",
+        "global_indices": [1],
+        "asset_groups": [1],
+        "summary": "A bounded source proposal.",
+        "strategy_summaries": [],
+    }]
+
+    user = narrative_analyzer._project_group_user("A project brief.", children, [])
+
+    assert (
+        '`child_order` must be an exact permutation of: '
+        '["synthesis-0001","segment-0007"]'
+        in user
+    )
+    assert user.index("must be an exact permutation") < user.index(
+        "Source segments and their available editorial hypotheses"
+    )
 
 
 def test_project_group_generates_one_contrasting_candidate_and_fails_closed_without_retry(
