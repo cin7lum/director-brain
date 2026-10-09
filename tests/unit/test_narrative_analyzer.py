@@ -190,6 +190,10 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         kwargs["response_metadata"].update({
             "model": "provider/qwen-build-42",
             "system_fingerprint": "fp_build_42",
+            "finish_reason": "stop",
+            "prompt_tokens": 85,
+            "completion_tokens": 120,
+            "total_tokens": 205,
         })
         return json.dumps(_narrative([2, 0, 1]))
 
@@ -310,6 +314,14 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "provider_identity_state": "reported",
         "provider_reported_model": "provider/qwen-build-42",
         "provider_reported_system_fingerprint": "fp_build_42",
+        "provider_response_metadata": {
+            "model": "provider/qwen-build-42",
+            "system_fingerprint": "fp_build_42",
+            "finish_reason": "stop",
+            "prompt_tokens": 85,
+            "completion_tokens": 120,
+            "total_tokens": 205,
+        },
         "runtime_binding_state": "verified",
         "verified_model_digest": "c" * 64,
         "verified_runtime_version": "0.32.14",
@@ -2456,6 +2468,15 @@ def test_project_segment_short_emotion_array_fails_closed_safely(
     def short_emotion_array(*args, **kwargs):
         nonlocal call_count
         call_count += 1
+        kwargs["response_metadata"].update({
+            "model": "qwen2.5:7b",
+            "system_fingerprint": "fp-short-32",
+            "finish_reason": "stop",
+            "prompt_tokens": 1337,
+            "completion_tokens": 22,
+            "total_tokens": 1359,
+            "private_detail": "must not be retained",
+        })
         return json.dumps({
             "summary": "Synthetic contract fixture.",
             "emotional_trajectory": ["x"] * (2 if expected_count == 32 else 1),
@@ -2486,6 +2507,14 @@ def test_project_segment_short_emotion_array_fails_closed_safely(
     assert exc_info.value.failure_code == "segment_emotions"
     assert exc_info.value.provider_call_count == 1
     assert exc_info.value.failure_stage == "segment"
+    assert exc_info.value.provider_response_metadata == {
+        "model": "qwen2.5:7b",
+        "system_fingerprint": "fp-short-32",
+        "finish_reason": "stop",
+        "prompt_tokens": 1337,
+        "completion_tokens": 22,
+        "total_tokens": 1359,
+    }
     assert "Synthetic contract fixture" not in str(exc_info.value)
     assert exc_info.value.__cause__ is None
 

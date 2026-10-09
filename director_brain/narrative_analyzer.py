@@ -1686,6 +1686,29 @@ def _project_group_response_schema(
     }
 
 
+def _safe_project_provider_response_metadata(
+    metadata: object,
+) -> dict[str, str | int]:
+    """Keep only bounded, non-content fields from a provider response envelope."""
+    if not isinstance(metadata, dict):
+        return {}
+    safe: dict[str, str | int] = {}
+    string_patterns = {
+        "model": r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}",
+        "system_fingerprint": r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}",
+        "finish_reason": r"[A-Za-z0-9_.:-]{1,64}",
+    }
+    for key, pattern in string_patterns.items():
+        value = metadata.get(key)
+        if isinstance(value, str) and re.fullmatch(pattern, value):
+            safe[key] = value
+    for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+        value = metadata.get(key)
+        if type(value) is int and 0 <= value <= 1_000_000_000:
+            safe[key] = value
+    return safe
+
+
 def _post_project_narrative_json(
     base_url: str,
     api_key: str,
@@ -1785,7 +1808,8 @@ def _post_project_narrative_json(
         # allowlisted provider-envelope fields for bounded failure diagnosis.
         exc.provider_call_count = len(provider_call_provenance) + 1
         exc.failure_stage = call_stage
-        exc.provider_response_metadata = dict(response_metadata)
+        exc.provider_response_metadata = _safe_project_provider_response_metadata(
+            response_metadata)
         raise
     reported_model = response_metadata.get("model")
     reported_fingerprint = response_metadata.get("system_fingerprint")
@@ -1798,6 +1822,10 @@ def _post_project_narrative_json(
         "provider_reported_model": reported_model,
         "provider_reported_system_fingerprint": reported_fingerprint,
     })
+    bounded_response_metadata = _safe_project_provider_response_metadata(
+        response_metadata)
+    if bounded_response_metadata:
+        call_record["provider_response_metadata"] = bounded_response_metadata
     provider_call_provenance.append(call_record)
     try:
         return extract_json_object(content)
@@ -3424,6 +3452,15 @@ def analyze_project_narrative(
         if isinstance(exc, LLMStructuredOutputError) and code is None:
             exc.failure_code = "project_schema_invalid"
             code = exc.failure_code
+        if isinstance(exc, LLMStructuredOutputError):
+            response_metadata = _safe_project_provider_response_metadata(
+                getattr(exc, "provider_response_metadata", {}))
+            if (not response_metadata
+                    and exc.provider_call_count == len(provenance)
+                    and provenance):
+                response_metadata = _safe_project_provider_response_metadata(
+                    provenance[-1].get("provider_response_metadata", {}))
+            exc.provider_response_metadata = response_metadata
         if getattr(exc, "failure_stage", None) is not None:
             pass
         elif isinstance(exc, LLMInputCapacityError):
