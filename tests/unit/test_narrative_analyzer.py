@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.28"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.29"
     assert "If choices alone distinguish strategies" in captured["system"]
     assert "labels and intents must name them" in captured["system"]
     assert "creator_direction" in captured["user"]
@@ -1443,8 +1443,11 @@ def test_project_group_prompt_requires_child_scoped_hypothesis_ids():
     assert "Do not use another child's hypothesis_id" in system
     assert "Do not include a project-level `hypothesis_id`" in system
     assert "assigns stable candidate IDs after parsing" in system
+    assert "appended JSON Schema defines this call's exact strategy count" in system
+    assert '"different label"' not in system
     assert "Do not reuse the primary label or intent" in contrast_system
     assert "if unchanged, both name the changed enabled choice" in contrast_system
+    assert "generic example above" not in contrast_system
 
 
 def test_project_group_user_explicitly_enumerates_child_order_members():

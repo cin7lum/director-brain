@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.28"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.29"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -165,10 +165,9 @@ _PROJECT_NARRATIVE_GROUP_PROMPT = """You are composing an editorial hypothesis f
 
 Summaries are model-derived hypotheses, not verified facts. Source assets have independent clocks. Do not infer cross-asset identity, event, place, continuity, action-reaction, or causality. The caller may supply unverified labels; they are optional context, never proof. Do not rank the strategies or declare a winner.
 
-Return only JSON with exactly these fields:
-{"summary":"concise project-level editorial arc or uncertainty","strategies":[{"label":"short label","editorial_intent":"concise intent","emotional_arc":{"statement":"intended project emotional progression","source_indices":[0]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"concrete tradeoff","source_indices":[0]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[0]}]},{"label":"different label","editorial_intent":"different intent","emotional_arc":{"statement":"a different intended progression","source_indices":[1]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"different tradeoff","source_indices":[1]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[1]}]}],"limitations":["what the summaries cannot establish"]}
+Return only a JSON object with top-level fields `summary`, `strategies`, and `limitations`. The appended JSON Schema defines this call's exact strategy count and nested field shape.
 
-Return exactly two strategy hypotheses. Do not include a project-level `hypothesis_id`; Director Brain assigns stable candidate IDs after parsing. Each strategy must contain one evidence-linked emotional_arc for its intended project-level progression; it is an editorial proposal, not a verified audience response. Each child_order must contain every supplied child ID once. Each strategy must select exactly one listed hypothesis for each child and assign one allowed act to each child. The strategies must differ in child order, child-strategy selection, or act assignment; different wording alone is insufficient. Each available child hypothesis includes an application_effect: segment effects show the exact included-source order and excluded-source indices; synthesized effects show the ordered child/hypothesis/act choices and total included/excluded counts. Both effect forms include per-source-asset-group counts that show the mechanical coverage consequences of those choices. Use them when selecting child hypotheses, preserve their include/exclude dispositions, and do not assume equal asset coverage is required unless the Brief says so. Group numbers are manifest-order evidence groups, not chronology, identity, or proof of quality. These are structural consequences of unverified hypotheses, not semantic truth; do not invent per-shot facts absent from child summaries. Global source indices are evidence references, not timestamps or a shared clock. Keep all prose concise. Never state that a cross-asset relationship was verified."""
+Do not include a project-level `hypothesis_id`; Director Brain assigns stable candidate IDs after parsing. Each strategy must contain one evidence-linked emotional_arc for its intended project-level progression; it is an editorial proposal, not a verified audience response. Each child_order must contain every supplied child ID once. Each strategy must select exactly one listed hypothesis for each child and assign one allowed act to each child. The strategies must differ in child order, child-strategy selection, or act assignment; different wording alone is insufficient. Each available child hypothesis includes an application_effect: segment effects show the exact included-source order and excluded-source indices; synthesized effects show the ordered child/hypothesis/act choices and total included/excluded counts. Both effect forms include per-source-asset-group counts that show the mechanical coverage consequences of those choices. Use them when selecting child hypotheses, preserve their include/exclude dispositions, and do not assume equal asset coverage is required unless the Brief says so. Group numbers are manifest-order evidence groups, not chronology, identity, or proof of quality. These are structural consequences of unverified hypotheses, not semantic truth; do not invent per-shot facts absent from child summaries. Global source indices are evidence references, not timestamps or a shared clock. Keep all prose concise. Never state that a cross-asset relationship was verified."""
 
 _CREATOR_DIRECTION_POLICY = """
 
@@ -883,10 +882,6 @@ def _project_group_system_prompt(
         system = _project_constraint_review_system_prompt(system)
     if candidate_role not in {"primary", "contrasting"}:
         raise ValueError("project group candidate role is invalid")
-    system = system.replace(
-        "Return exactly two strategy hypotheses.",
-        "The appended JSON schema defines the required strategy count.",
-    )
     contrast_axes = [
         "child order", "child-strategy selection", "act assignment",
     ]
@@ -919,15 +914,14 @@ def _project_group_system_prompt(
         "grounded alternative is available, fail closed. Downstream validation "
         "still rejects candidates with identical structure and enabled execution "
         "choices. "
-        "The generic example above shows field shapes only; follow the appended "
-        "schema's exact strategy count."
+        "The appended JSON Schema defines the exact strategy count and fields "
+        "for this call."
     )
     role_instruction = (
         "Generate exactly one primary candidate in this call. Keep summary "
         "candidate-neutral; it describes shared context and uncertainty, not "
-        "a winning approach. The generic "
-        "example above shows field shapes only; follow the appended schema's "
-        "exact strategy count."
+        "a winning approach. The appended JSON Schema defines the exact "
+        "strategy count and fields for this call."
         if candidate_role == "primary" else contrasting_instruction
     )
     return (
