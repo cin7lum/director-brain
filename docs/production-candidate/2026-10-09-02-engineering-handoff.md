@@ -4,8 +4,8 @@
 
 ## 仓库与当前验证
 
-- 权威仓库：`cin7lum/director-brain`。本地开发分支：`codex/02-production-candidate`；当前 HEAD 为文档提交 `bdae0e01ba0626ffd544968a9c55501f2f1dcab4`，父提交/源码实现为 `82f6af964baee75d39ff565472c412352ea512d3`。2026-10-09 普通快进 push 成功；push 输出与 `git ls-remote` 均确认开发分支指向 `bdae0e0`，`master` 指向 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`。此前一次 fetch 连接重置，但之后远端分支已直接核验。
-- 精确 HEAD `bdae0e01ba0626ffd544968a9c55501f2f1dcab4` 的本机全套回归：**985 passed / 6 skipped / 8 warnings，243.88 秒**；该提交只改文档，源码实现仍为父提交 `82f6af9`。测试环境为 Python 3.12.8、pytest 8.4.2、FastAPI 0.143.0、Starlette 1.7.0、httpx2 2.13.1、Pydantic 2.14.0、httpx 0.28.1；依赖安装在临时环境，仓库无锁文件。本次 GitHub check-runs 查询为 0；活跃的 `.github/workflows/ci.yml` 仅响应 push 到 master 和 pull_request，因此这是本机复现，不是 GitHub Actions 结果。
+- 权威仓库：`cin7lum/director-brain`。本地开发分支：`codex/02-production-candidate`。本轮核验时，远端开发分支最后一次成功确认是 `bdae0e01ba0626ffd544968a9c55501f2f1dcab4`，`master` 是 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`；随后对本地文档检查提交 `8ece21fc95e5692a20fb4d2da9309a838c659f2c` 的普通 push 遇 HTTPS 连接重置而失败。该远端值是历史核验锚点，不代表后续同步结果；执行时本机当前 HEAD 以 `git rev-parse HEAD`、当前远端以 `git ls-remote` 为准。源码实现仍为 `82f6af964baee75d39ff565472c412352ea512d3`。
+- 已在准确的远端开发提交 `bdae0e01ba0626ffd544968a9c55501f2f1dcab4` 上本机重跑全套：**985 passed / 6 skipped / 8 warnings，243.88 秒**。该提交源码与本地后续状态提交间没有源码改动。测试环境为 Python 3.12.8、pytest 8.4.2、FastAPI 0.143.0、Starlette 1.7.0、httpx2 2.13.1、Pydantic 2.14.0、httpx 0.28.1；依赖安装在临时环境，仓库无锁文件。GitHub check-runs API 对 `bdae0e0` 返回 0；活跃的 `.github/workflows/ci.yml` 仅响应 push 到 master 和 pull_request，因此当前结果是本机复现，不是 GitHub Actions 结果。
 - 旧记录必须分开看：2026-10-08 dirty worktree 的 **888/6/8** 与历史 master CI 的 **602/8** 都不是当前开发分支结果。
 - 历史未跟踪文件、用户卡片、Evidence、数据集材料、数据库、缓存和环境文件继续留在本机；本次没有用 `git add -A`，没有覆盖或清理它们。Evidence 目录被 Git 忽略，不含于公开仓库提交。
 
@@ -23,6 +23,8 @@
 - 当前代码已有三项针对性约束：segment 用户提示明确要求按本次镜头数返回情绪项和完整策略来源；segment 上限为 16；structured output 的 `finish_reason=length` 被归类为 `provider_output_truncated` 并 fail closed。
 - 当前代码下 32 镜头纯合成多素材运行：默认 16 镜头分段，两次 `segment` 加一次 `project_synthesis` 共 3 次本地调用；返回 2 个候选，2 个 Plan 校验通过，2 个 EDL 均绑定合成源身份、区别于启发式基线且彼此不同；0 次非 loopback 尝试。对比保持 `confirmable=false`、质量 `NOT_PROVEN`。该运行只证明软件/本地模型链，不证明真实素材判断或艺术质量。
 - Attempt 06 的 CoMind TRAIN 项目边界仍为 `declared_unverified`，不能作为新推理输入。真实项目复验需要单独确认本地处理权限的多素材项目或其他已准入数据。不得把合成运行升级为真实项目证据。
+- 2026-10-09 公开素材只读筛查发现 NASA Roman integration、Wikimedia Commons 的 Yosemite 无音轨、Scheldebeker、Wiki Wedding、访谈、意大利旅行剪辑及短列车 POV 等候选。所有素材均为 `NOT_ADMITTED`；具体限制和链接见 `docs/production-candidate/2026-10-09-p2-public-real-video-source-screen.md`。NASA 两个同事件文件的本地下载、解码及 Qwen2.5:7b 调用等待对确切文件和处理范围的确认；截至本文更新时间均为 `NOT_RUN`。
+- 用户提供的本地个人素材目录仅执行只读目录/文件元数据核对：环境可访问；未读取文件名或媒体内容、未预览/抽帧、未哈希、未调用模型、未上传。选取具体素材及本机模型处理范围仍待明确授权；原始目录路径与本地明细不写入公开仓库。Ignored 本机回执在 `evidence/P2_LOCAL_USER_SOURCE_ACCESS_2026-10-09/attempt-01/`。
 
 ## 产品边界与后续路线
 
@@ -37,3 +39,4 @@
 - 32 镜头当前 schema 静态输出容量探针：`evidence/P2_SEGMENT_OUTPUT_CAPACITY_2026-10-09/attempt-01/`。
 - 当前 32 镜头合成分层运行：`evidence/P2_CURRENT_32_SHOT_SYNTHETIC_HIERARCHICAL_2026-10-09/attempt-01/`。
 - 当前提交本机完整测试回执：`evidence/P2_CURRENT_COMMIT_FULL_SUITE_2026-10-09/attempt-01/`（只含运行元数据与摘要，没有完整 stdout）。P2 修复及根因边界：`docs/plans/2026-10-09-p2-response-contract.md`。旧 P1/P2 Evidence 保存在本机；不得用本文档替代其原始回执。
+- 公开真实视频来源筛查及未覆盖类型：`docs/production-candidate/2026-10-09-p2-public-real-video-source-screen.md`。原始网页只读核查；未下载或处理媒体。
