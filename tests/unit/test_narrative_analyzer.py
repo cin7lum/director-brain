@@ -237,10 +237,9 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.25"
-    assert "Keep any choice-specific label, intent, rationale, arc, and " in (
-        captured["system"])
-    assert "tradeoff aligned" in captured["system"]
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.26"
+    assert "If choices alone distinguish strategies" in captured["system"]
+    assert "labels and intents must name them" in captured["system"]
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -694,6 +693,12 @@ def test_project_strategy_failure_codes_are_specific_and_allowlisted(
             "project_strategies_identical",
         ),
         (
+            "project",
+            "project strategy choice contrast requires distinct labels and "
+            "editorial intent",
+            "project_strategies_identical",
+        ),
+        (
             "group",
             "project synthesis strategies have identical structure and "
             "enabled execution choices",
@@ -905,6 +910,22 @@ def test_project_strategy_uniqueness_includes_enabled_editing_language_choice():
 
     second["editing_language_choice"] = "fast_cut"
     with pytest.raises(ValueError, match="project strategy hypotheses must differ"):
+        narrative_analyzer._validate_project_strategy_hypotheses(
+            response, 3, include_editing_language_choice=True)
+
+
+def test_choice_only_project_strategies_need_distinct_labels_and_intent():
+    response = _narrative()
+    first, second = response["strategy_hypotheses"]
+    second["suggested_order"] = list(first["suggested_order"])
+    second["label"] = first["label"]
+    second["editorial_intent"] = first["editorial_intent"]
+    for option, choice in ((first, "fast_cut"), (second, "slow_paced")):
+        option["editing_language_choice"] = choice
+        option["editing_language_rationale"] = _evidence_claim(
+            f"The source supports the {choice} approach.", 0, 1)
+
+    with pytest.raises(ValueError, match="choice contrast requires distinct labels"):
         narrative_analyzer._validate_project_strategy_hypotheses(
             response, 3, include_editing_language_choice=True)
 

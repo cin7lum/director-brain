@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.25"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.26"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -632,6 +632,7 @@ def _validate_project_strategy_hypotheses(
 
     identifiers: set[str] = set()
     structures: set[tuple] = set()
+    structural_variants: dict[tuple, list[tuple[tuple, str, str]]] = {}
     for option in options:
         required = {
             "hypothesis_id", "label", "editorial_intent", "suggested_order",
@@ -762,14 +763,30 @@ def _validate_project_strategy_hypotheses(
                 option["transition_policy_choice"],
                 option["transition_duration_us"],
             ))
-        signature = (
+        structural_signature = (
             tuple(order), boundary_signature, disposition_signature,
-            tuple(execution_choices),
         )
+        choice_signature = tuple(execution_choices)
+        signature = (*structural_signature, choice_signature)
         if signature in structures:
             raise ValueError(
                 "project strategy hypotheses must differ in shot order, source "
                 "disposition, act structure, or enabled execution choice")
+        label_signature = re.sub(r"\W+", "", option["label"].casefold())
+        intent_signature = re.sub(
+            r"\W+", "", option["editorial_intent"].casefold())
+        for prior_choices, prior_label, prior_intent in structural_variants.get(
+            structural_signature, []
+        ):
+            if (prior_choices != choice_signature
+                    and (prior_label == label_signature
+                         or prior_intent == intent_signature)):
+                raise ValueError(
+                    "project strategy choice contrast requires distinct labels "
+                    "and editorial intent")
+        structural_variants.setdefault(structural_signature, []).append((
+            choice_signature, label_signature, intent_signature,
+        ))
         structures.add(signature)
 
 
@@ -785,10 +802,10 @@ def _project_schema_text(response_schema: dict) -> str:
 def _project_strategy_claim_system_prompt(system_prompt: str) -> str:
     return system_prompt + (
         "\nEach strategy needs one evidence-linked emotional_arc, not an audience "
-        "claim. Keep any choice-specific label, intent, rationale, arc, and "
-        "tradeoff aligned. Claims are objects with concise statement and "
-        "source_indices; indices are zero-based within the supplied input. Cite "
-        "only supplied indices; invent no evidence references."
+        "claim. If choices alone distinguish strategies, labels and intents must "
+        "name them and rationale, arc, and tradeoff must match. Claims are "
+        "objects with concise statement and zero-based source_indices; cite only "
+        "supplied indices. Invent no references."
     )
 
 
@@ -1102,6 +1119,11 @@ _PROJECT_VALIDATION_FAILURE_CODES = {
         "project",
         "project strategy hypotheses must differ in shot order, source "
         "disposition, act structure, or enabled execution choice",
+    ): "project_strategies_identical",
+    (
+        "project",
+        "project strategy choice contrast requires distinct labels and "
+        "editorial intent",
     ): "project_strategies_identical",
     (
         "group",
