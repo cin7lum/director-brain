@@ -967,10 +967,22 @@ def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
         shadow_failure_generator_calls += 1
         from director_brain.llm_adapter import LLMStructuredOutputError
 
-        raise LLMStructuredOutputError(
+        failure = LLMStructuredOutputError(
             "SENSITIVE_PROVIDER_DETAIL_MUST_NOT_BE_RETAINED",
             failure_code="project_strategy_schema_invalid",
         )
+        failure.provider_call_count = 2
+        failure.failure_stage = "segment"
+        failure.provider_response_metadata = {
+            "model": "provider/qwen-build-42",
+            "system_fingerprint": "fp_build_42",
+            "finish_reason": "length",
+            "prompt_tokens": 1270,
+            "completion_tokens": 4096,
+            "total_tokens": 5366,
+            "private_detail": "SENSITIVE_ENVELOPE_DETAIL_MUST_NOT_BE_RETAINED",
+        }
+        raise failure
 
     monkeypatch.setattr(
         api_main, "generate_project_shadow_strategy_options",
@@ -1004,11 +1016,22 @@ def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
     assert set(failure_detail) == {
         "stage", "failure_code", "request_fingerprint",
         "idempotency_key_sha256", "manifest_id", "manifest_revision",
-        "context_id", "story_graph_id",
+        "context_id", "story_graph_id", "provider_failure_stage",
+        "provider_call_count", "provider_response_metadata",
     }
     assert failure_detail["stage"] == "reasoner_generation"
     assert failure_detail["failure_code"] == "project_strategy_schema_invalid"
     assert failure_detail["manifest_revision"] == 1
+    assert failure_detail["provider_failure_stage"] == "segment"
+    assert failure_detail["provider_call_count"] == 2
+    assert failure_detail["provider_response_metadata"] == {
+        "model": "provider/qwen-build-42",
+        "system_fingerprint": "fp_build_42",
+        "finish_reason": "length",
+        "prompt_tokens": 1270,
+        "completion_tokens": 4096,
+        "total_tokens": 5366,
+    }
     assert all(
         isinstance(failure_detail[key], str) and failure_detail[key]
         for key in ("manifest_id", "context_id", "story_graph_id")
@@ -1018,6 +1041,7 @@ def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
     serialized_failure_entry = json.dumps(failure_entry, ensure_ascii=False)
     assert "PRIVATE_INTENT_SENTINEL_MUST_NOT_BE_RETAINED" not in serialized_failure_entry
     assert "SENSITIVE_PROVIDER_DETAIL_MUST_NOT_BE_RETAINED" not in serialized_failure_entry
+    assert "SENSITIVE_ENVELOPE_DETAIL_MUST_NOT_BE_RETAINED" not in serialized_failure_entry
     assert _envelope_data(local_client.get(
         "/v1/projects/project-01/director-plan-shadow-comparisons"))["count"] == 0
     replayed_failure = local_client.post(

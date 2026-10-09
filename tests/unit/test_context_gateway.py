@@ -219,7 +219,10 @@ def test_local_vlm_analysis_profile_binds_model_runtime_prompt_and_sampling(
     assert "model=qwen3-vl:4b@sha256:" + "a" * 64 in profile
     assert "ollama=0.32.14" in profile
     assert "prompt=vlm_prompt_v4_people:" in profile
-    assert "sampling=shot-relative-v1:0.15,0.50,0.85" in profile
+    assert (
+        "sampling=shot-relative-v2:0.15,0.50,0.85:max-width-2560:lanczos"
+        in profile
+    )
     assert (
         "generation=format=json,temperature=0.1,num_ctx=8192,num_predict=1024,"
         "think=false,"

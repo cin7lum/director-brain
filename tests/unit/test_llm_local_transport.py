@@ -23,10 +23,19 @@ def test_structured_chat_rejects_token_limit_even_when_content_is_valid_json():
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({
+                "model": "provider/model-v7",
+                "system_fingerprint": "fp_123",
+                "usage": {
+                    "prompt_tokens": 1270,
+                    "completion_tokens": 4096,
+                    "total_tokens": 5366,
+                    "private_detail": "must not enter metadata",
+                },
                 "choices": [{
                     "finish_reason": "length",
                     "message": {"content": '{"private_marker":true}'},
                 }],
+                "debug_text": "must not enter metadata",
             }).encode())
 
         def log_message(self, *_args):
@@ -34,15 +43,28 @@ def test_structured_chat_rejects_token_limit_even_when_content_is_valid_json():
 
     server, thread = _serve(ModelHandler)
     server.call_count = 0
+    metadata = {}
     try:
         with pytest.raises(LLMStructuredOutputError) as exc_info:
             post_chat_json(
                 f"http://127.0.0.1:{server.server_port}/v1",
                 "local-only", "test-model", "system", "user",
                 response_schema={"type": "object"},
+                response_metadata=metadata,
             )
         assert exc_info.value.failure_code == "provider_output_truncated"
         assert "private_marker" not in str(exc_info.value)
+        assert metadata == {
+            "model": "provider/model-v7",
+            "system_fingerprint": "fp_123",
+            "finish_reason": "length",
+            "prompt_tokens": 1270,
+            "completion_tokens": 4096,
+            "total_tokens": 5366,
+        }
+        assert exc_info.value.provider_response_metadata == metadata
+        assert "private_detail" not in json.dumps(metadata)
+        assert "debug_text" not in json.dumps(metadata)
         assert server.call_count == 1
     finally:
         _stop(server, thread)

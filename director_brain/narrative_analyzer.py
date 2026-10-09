@@ -838,7 +838,12 @@ def _project_group_system_prompt(
         system = _project_transition_policy_choice_system_prompt(system)
     if assess_semantic_constraints:
         system = _project_constraint_review_system_prompt(system)
-    return system
+    return (
+        system.rstrip()
+        + "\n\nFor each child strategy selection, copy a hypothesis_id that is "
+        "listed under that same child_id's available_hypotheses. Do not use "
+        "another child's hypothesis_id."
+    )
 
 
 def _ground_project_system_prompt(system: str, response_schema: dict | None) -> str:
@@ -1377,24 +1382,48 @@ def _project_group_response_schema(
         allowed_indices, statement_limit=240,
     )
     child_id_schema = {"type": "string", "enum": child_ids}
-    child_assignments = {
-        "type": "array",
-        "minItems": len(child_ids),
-        "maxItems": len(child_ids),
-        "items": {
+    child_assignment_alternatives = []
+    for child in children:
+        available_hypotheses = child.get("available_hypotheses")
+        if isinstance(available_hypotheses, dict):
+            hypothesis_ids = list(available_hypotheses)
+        elif isinstance(available_hypotheses, list):
+            hypothesis_ids = [
+                item.get("hypothesis_id")
+                for item in available_hypotheses
+                if isinstance(item, dict)
+            ]
+        else:
+            hypothesis_ids = []
+        if not hypothesis_ids:
+            raise ValueError(
+                "project group schema child has no available hypotheses")
+        if any(
+            not isinstance(hypothesis_id, str)
+            or re.fullmatch(
+                r"[A-Za-z0-9][A-Za-z0-9_-]{0,47}", hypothesis_id) is None
+            for hypothesis_id in hypothesis_ids
+        ) or len(hypothesis_ids) != len(set(hypothesis_ids)):
+            raise ValueError(
+                "project group schema child has an invalid hypothesis ID")
+        hypothesis_ids.sort()
+        child_assignment_alternatives.append({
             "type": "object",
             "properties": {
-                "child_id": child_id_schema,
+                "child_id": {"type": "string", "enum": [child["node_id"]]},
                 "hypothesis_id": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 48,
-                    "pattern": r"^[A-Za-z0-9][A-Za-z0-9_-]{0,47}$",
+                    "enum": hypothesis_ids,
                 },
             },
             "required": ["child_id", "hypothesis_id"],
             "additionalProperties": False,
-        },
+        })
+    child_assignments = {
+        "type": "array",
+        "minItems": len(child_ids),
+        "maxItems": len(child_ids),
+        "items": {"anyOf": child_assignment_alternatives},
     }
     act_assignments = {
         "type": "array",
@@ -1609,7 +1638,7 @@ def _post_project_narrative_json(
         "max_tokens": _PROJECT_NARRATIVE_MAX_OUTPUT_TOKENS,
         "temperature": temperature,
     }
-    response_metadata: dict[str, str] = {}
+    response_metadata: dict[str, str | int] = {}
     if response_schema is not None:
         transport_options["response_schema"] = response_schema
     transport_options["response_metadata"] = response_metadata
@@ -1625,9 +1654,11 @@ def _post_project_narrative_json(
                 )
     except (LLMTransportError, LLMStructuredOutputError) as exc:
         # An attempted exchange is counted without admitting failed-call
-        # provenance into a successful candidate's verified trace.
+        # provenance into a successful candidate's verified trace. Retain only
+        # allowlisted provider-envelope fields for bounded failure diagnosis.
         exc.provider_call_count = len(provider_call_provenance) + 1
         exc.failure_stage = call_stage
+        exc.provider_response_metadata = dict(response_metadata)
         raise
     reported_model = response_metadata.get("model")
     reported_fingerprint = response_metadata.get("system_fingerprint")

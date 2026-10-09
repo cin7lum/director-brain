@@ -13,6 +13,7 @@ import uuid
 import ipaddress
 import hmac
 import hashlib
+import re
 import subprocess
 import threading
 from contextlib import contextmanager
@@ -152,6 +153,41 @@ def _safe_project_reasoner_transport_headers(
     if not isinstance(code, str) or code not in _SAFE_PROJECT_REASONER_TRANSPORT_CODES:
         return None
     return {"X-Director-Brain-Failure-Code": code}
+
+
+def _safe_project_reasoner_failure_diagnostics(exc: Exception) -> dict[str, Any]:
+    """Project only bounded, allowlisted provider envelope fields into local receipts."""
+    diagnostics: dict[str, Any] = {}
+    failure_stage = getattr(exc, "failure_stage", None)
+    if failure_stage in {
+        "flat_project", "segment", "project_synthesis", "preflight",
+        "input_capacity", "project_validation",
+    }:
+        diagnostics["provider_failure_stage"] = failure_stage
+    call_count = getattr(exc, "provider_call_count", None)
+    if type(call_count) is int and 1 <= call_count <= 10_000:
+        diagnostics["provider_call_count"] = call_count
+
+    metadata = getattr(exc, "provider_response_metadata", None)
+    if isinstance(metadata, dict):
+        safe_metadata: dict[str, str | int] = {}
+        for key in ("model", "system_fingerprint"):
+            value = metadata.get(key)
+            if (isinstance(value, str)
+                    and re.fullmatch(
+                        r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}", value)):
+                safe_metadata[key] = value
+        finish_reason = metadata.get("finish_reason")
+        if (isinstance(finish_reason, str)
+                and re.fullmatch(r"[A-Za-z0-9_.:-]{1,64}", finish_reason)):
+            safe_metadata["finish_reason"] = finish_reason
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+            value = metadata.get(key)
+            if type(value) is int and 0 <= value <= 1_000_000_000:
+                safe_metadata[key] = value
+        if safe_metadata:
+            diagnostics["provider_response_metadata"] = safe_metadata
+    return diagnostics
 
 
 _PROJECT_REASONER_FAILURE_RESPONSES = {
@@ -1336,21 +1372,24 @@ def _record_project_director_shadow_failure(
     else:
         failure_code = "internal_error"
 
+    detail = {
+        "stage": "reasoner_generation",
+        "failure_code": failure_code,
+        "request_fingerprint": request_fingerprint,
+        "idempotency_key_sha256": idempotency_key_sha256,
+        "manifest_id": manifest.manifest_id,
+        "manifest_revision": manifest.revision,
+        "context_id": context.context_id,
+        "story_graph_id": graph.graph_id,
+    }
+    detail.update(_safe_project_reasoner_failure_diagnostics(exc))
+
     try:
         log_decision(
             repo,
             comparison_id,
             "director_strategy_comparison_failed",
-            {
-                "stage": "reasoner_generation",
-                "failure_code": failure_code,
-                "request_fingerprint": request_fingerprint,
-                "idempotency_key_sha256": idempotency_key_sha256,
-                "manifest_id": manifest.manifest_id,
-                "manifest_revision": manifest.revision,
-                "context_id": context.context_id,
-                "story_graph_id": graph.graph_id,
-            },
+            detail,
             project_id=project_id,
         )
         _complete_project_director_shadow_run()

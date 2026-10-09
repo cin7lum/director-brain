@@ -25,6 +25,10 @@ def test_local_preview_extraction_restricts_ffmpeg_to_file_protocol(
     assert len(commands) == 3
     for command in commands:
         assert command[0] == "ffmpeg"
+        filter_index = command.index("-vf")
+        assert command[filter_index + 1] == (
+            "scale=w='min(2560,iw)':h=-2:flags=lanczos"
+        )
         whitelist_index = command.index("-protocol_whitelist")
         input_index = command.index("-i")
         assert command[whitelist_index + 1] == "file"
@@ -52,3 +56,8 @@ def test_default_keyframe_extraction_keeps_existing_protocol_behavior(
 
     assert commands
     assert all("-protocol_whitelist" not in command for command in commands)
+    assert all(
+        command[command.index("-vf") + 1]
+        == "scale=w='min(2560,iw)':h=-2:flags=lanczos"
+        for command in commands
+    )

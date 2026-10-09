@@ -22,6 +22,21 @@ def _source_rationales(shot_count: int) -> list[dict]:
     } for index in range(shot_count)]
 
 
+def _group_schema_children() -> list[dict]:
+    return [
+        {
+            "node_id": "segment-0001",
+            "global_indices": (2, 4),
+            "available_hypotheses": {"a1": {}, "a2": {}},
+        },
+        {
+            "node_id": "segment-0002",
+            "global_indices": (9,),
+            "available_hypotheses": {"b1": {}, "b2": {}},
+        },
+    ]
+
+
 def test_director_brief_prompt_policy_separates_intent_from_asr_evidence():
     system_prompts = (
         narrative_analyzer._NARRATIVE_PROMPT,
@@ -1150,10 +1165,8 @@ def test_project_narrative_validator_enforces_emotion_bound_if_provider_ignores_
 
 
 def test_project_group_claim_schema_limits_citations_to_visible_source_indices():
-    schema = narrative_analyzer._project_group_response_schema([
-        {"node_id": "segment-0001", "global_indices": (2, 4)},
-        {"node_id": "segment-0002", "global_indices": (9,)},
-    ])
+    schema = narrative_analyzer._project_group_response_schema(
+        _group_schema_children())
 
     claim_schema = schema["properties"]["strategies"]["items"][
         "properties"]["tradeoffs"]["items"]
@@ -1166,8 +1179,7 @@ def test_project_group_claim_schema_limits_citations_to_visible_source_indices()
 def test_project_group_schema_can_require_candidate_audio_choices():
     schema = narrative_analyzer._project_group_response_schema(
         [
-            {"node_id": "segment-0001", "global_indices": (2, 4)},
-            {"node_id": "segment-0002", "global_indices": (9,)},
+            *_group_schema_children(),
         ],
         include_audio_style_choice=True,
     )
@@ -1180,8 +1192,7 @@ def test_project_group_schema_can_require_candidate_audio_choices():
 def test_project_group_schema_can_require_candidate_pacing_choices():
     schema = narrative_analyzer._project_group_response_schema(
         [
-            {"node_id": "segment-0001", "global_indices": (2, 4)},
-            {"node_id": "segment-0002", "global_indices": (9,)},
+            *_group_schema_children(),
         ],
         include_editing_language_choice=True,
     )
@@ -1199,10 +1210,7 @@ def test_project_group_schema_binds_open_constraint_review_scope():
         "brief_index": 2,
         "text": "strangers",
     }]
-    children = [
-        {"node_id": "segment-0001", "global_indices": (2, 4)},
-        {"node_id": "segment-0002", "global_indices": (9,)},
-    ]
+    children = _group_schema_children()
 
     schema = narrative_analyzer._project_group_response_schema(
         children, semantic_constraints=constraints)
@@ -1226,10 +1234,8 @@ def test_project_group_schema_binds_open_constraint_review_scope():
 
 
 def test_project_group_schema_matches_validator_text_and_object_bounds():
-    schema = narrative_analyzer._project_group_response_schema([
-        {"node_id": "segment-0001", "global_indices": (2, 4)},
-        {"node_id": "segment-0002", "global_indices": (9,)},
-    ])
+    schema = narrative_analyzer._project_group_response_schema(
+        _group_schema_children())
     properties = schema["properties"]
     strategy = properties["strategies"]["items"]
     strategy_properties = strategy["properties"]
@@ -1244,11 +1250,31 @@ def test_project_group_schema_matches_validator_text_and_object_bounds():
     assert strategy_properties["editorial_intent"]["maxLength"] == 500
     assert strategy_properties["editorial_intent"]["pattern"] == r"\S"
     assert strategy_properties["child_strategy_by_child"]["items"][
-        "additionalProperties"] is False
+        "anyOf"][0]["additionalProperties"] is False
+    alternatives = strategy_properties["child_strategy_by_child"]["items"][
+        "anyOf"]
+    assert alternatives[0]["properties"]["child_id"]["enum"] == [
+        "segment-0001"]
+    assert alternatives[0]["properties"]["hypothesis_id"]["enum"] == [
+        "a1", "a2"]
+    assert alternatives[1]["properties"]["child_id"]["enum"] == [
+        "segment-0002"]
+    assert alternatives[1]["properties"]["hypothesis_id"]["enum"] == [
+        "b1", "b2"]
     assert strategy_properties["act_by_child"]["items"][
         "additionalProperties"] is False
     claim = strategy_properties["tradeoffs"]["items"]
     assert claim["properties"]["statement"]["pattern"] == r"\S"
+
+
+def test_project_group_prompt_requires_child_scoped_hypothesis_ids():
+    system = narrative_analyzer._project_group_system_prompt(
+        include_audio_style_choice=False,
+        include_editing_language_choice=False,
+    )
+
+    assert "listed under that same child_id's available_hypotheses" in system
+    assert "Do not use another child's hypothesis_id" in system
 
 
 def test_project_evidence_claim_validation_rejects_unavailable_indices():
@@ -2141,6 +2167,14 @@ def test_project_failure_context_counts_prior_calls_without_retry(
             if failure_kind == "transport":
                 raise LLMTransportError("connection failed", failure_code=expected_code)
             if failure_kind == "truncated":
+                kwargs["response_metadata"].update({
+                    "model": "provider/qwen-build-42",
+                    "system_fingerprint": "fp_build_42",
+                    "finish_reason": "length",
+                    "prompt_tokens": 1270,
+                    "completion_tokens": 4096,
+                    "total_tokens": 5366,
+                })
                 raise LLMStructuredOutputError("token limit", failure_code=expected_code)
         count = kwargs["response_schema"]["properties"]["emotional_trajectory"]["minItems"]
         result = {
@@ -2188,6 +2222,15 @@ def test_project_failure_context_counts_prior_calls_without_retry(
     assert calls == exc_info.value.provider_call_count == 2
     assert exc_info.value.failure_stage == "segment"
     assert exc_info.value.failure_code == expected_code
+    if failure_kind == "truncated":
+        assert exc_info.value.provider_response_metadata == {
+            "model": "provider/qwen-build-42",
+            "system_fingerprint": "fp_build_42",
+            "finish_reason": "length",
+            "prompt_tokens": 1270,
+            "completion_tokens": 4096,
+            "total_tokens": 5366,
+        }
     assert "private_marker" not in str(exc_info.value)
 
 

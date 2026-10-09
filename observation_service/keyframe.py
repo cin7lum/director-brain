@@ -20,7 +20,10 @@ import tempfile
 import os
 
 MULTI_FRAME_SAMPLE_POSITIONS = (0.15, 0.50, 0.85)
-MULTI_FRAME_SAMPLING_PROFILE = "shot-relative-v1:0.15,0.50,0.85"
+MULTI_FRAME_MAX_WIDTH = 2560
+MULTI_FRAME_SAMPLING_PROFILE = (
+    "shot-relative-v2:0.15,0.50,0.85:max-width-2560:lanczos"
+)
 
 
 @contextlib.contextmanager
@@ -113,6 +116,8 @@ def extract_keyframes(video_path: str, shot_in_us: int, shot_out_us: int,
             cmd.extend([
                 "-ss", f"{pos_sec:.3f}",
                 "-i", video_path,
+                "-vf",
+                f"scale=w='min({MULTI_FRAME_MAX_WIDTH},iw)':h=-2:flags=lanczos",
                 "-frames:v", "1",
                 "-q:v", "2",
                 path,

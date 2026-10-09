@@ -140,6 +140,8 @@ class LLMStructuredOutputError(ValueError):
     def __init__(self, message: str, *, failure_code: str | None = None) -> None:
         super().__init__(message)
         self.failure_code = failure_code
+        # Bounded provider-envelope fields only; never response content.
+        self.provider_response_metadata: dict[str, str | int] = {}
 
 
 class LLMInputCapacityError(ValueError):
@@ -232,7 +234,7 @@ def post_chat_json(
     max_tokens: int = 2048,
     temperature: float = 0.1,
     response_schema: dict | None = None,
-    response_metadata: dict[str, str] | None = None,
+    response_metadata: dict[str, str | int] | None = None,
 ) -> str:
     """OpenAI 兼容 /chat/completions 统一传输缝（架构体检候选④收编）。
 
@@ -243,9 +245,11 @@ def post_chat_json(
     400 时 JSON 模式可去掉该参数重试一次；Schema 模式必须失败关闭，不能降级。
     返回 content 字符串；
     网络/HTTP/空回复抛 :class:`LLMTransportError`（fail-closed）。
-    ``response_metadata`` (when supplied) receives only the provider envelope's
-    bounded ``model`` and ``system_fingerprint`` identifiers; response content
-    and other metadata are never copied there.
+    ``response_metadata`` (when supplied) receives only bounded provider
+    envelope identifiers and diagnostics (finish reason and token counts).
+    Response content, prompts, and unrelated provider metadata are never copied
+    there; the same allowlisted metadata is attached to structured-output
+    failures so callers can retain a safe failure receipt.
     """
     if response_metadata is not None:
         response_metadata.clear()
@@ -283,11 +287,25 @@ def post_chat_json(
                 ):
                     response_metadata[target_key] = value
         choice = (data.get("choices") or [{}])[0]
+        if response_metadata is not None:
+            finish_reason = choice.get("finish_reason")
+            if (isinstance(finish_reason, str)
+                    and re.fullmatch(r"[A-Za-z0-9_.:-]{1,64}", finish_reason)):
+                response_metadata["finish_reason"] = finish_reason
+            usage = data.get("usage") if isinstance(data, dict) else None
+            if isinstance(usage, dict):
+                for key in ("prompt_tokens", "completion_tokens", "total_tokens"):
+                    value = usage.get(key)
+                    if type(value) is int and 0 <= value <= 1_000_000_000:
+                        response_metadata[key] = value
         if response_schema is not None and choice.get("finish_reason") == "length":
-            raise LLMStructuredOutputError(
+            error = LLMStructuredOutputError(
                 "structured provider output reached its token limit",
                 failure_code="provider_output_truncated",
             )
+            if response_metadata is not None:
+                error.provider_response_metadata = dict(response_metadata)
+            raise error
         return choice.get("message", {}).get("content", "")
 
     payload = {
