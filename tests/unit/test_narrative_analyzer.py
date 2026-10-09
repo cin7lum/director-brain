@@ -222,7 +222,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.12"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.14"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -2198,6 +2198,19 @@ def test_segment_request_states_exact_cardinality():
     assert "exactly 32 input shots" in prompt
     assert "exactly 32 emotional_trajectory entries" in prompt
     assert "indices 0 through 31" in prompt
+
+
+def test_segment_prompt_requires_structural_signature_self_check():
+    prompt = narrative_analyzer._PROJECT_NARRATIVE_SEGMENT_PROMPT
+    assert "compare the pair's structural signatures" in prompt
+    assert "suggested_order" in prompt
+    assert "set of included local shot indices" in prompt
+    signatures = prompt.split(
+        "Before returning, compare the pair's structural signatures:", 1
+    )[1].split("At least one signature", 1)[0]
+    assert "act_boundaries" not in signatures
+    assert "different labels, wording, emotional arcs, tradeoffs, or uncertainties alone do not count" in prompt
+    assert "Do not change order or source disposition merely to manufacture a contrast" in prompt
 
 
 def test_project_segment_schema_requires_one_emotion_entry_per_shot():

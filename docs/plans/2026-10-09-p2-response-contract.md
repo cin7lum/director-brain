@@ -40,3 +40,23 @@ Exact local gaps to reproduce before fixing: provider truncation is not distingu
 - Report runtime result separately from deterministic software tests; Director Quality and P2 exit remain NOT_PROVEN absent independent evidence.
 - Run appropriate existing regression suite, inspect the exact diff and preserve all pre-existing untracked/ignored assets.
 - Commit independently reviewable capability blocks locally on `codex/02-production-candidate`; push only a reviewed major-stage checkpoint to that branch. No master edits, PR merge, deployment, Resolve/NAS writes.
+
+## 2026-10-09 synthetic hierarchical strategy failure
+
+The first bounded local hierarchical run on eight synthetic semantic observations failed after one `segment` call with fixed code `segment_strategies_identical`. The run retained no generated response, prose, emotion values, or prompt. It confirms that the output validator rejects a duplicate strategy pair; it does not establish the cause of the earlier CoMind run or any Director Quality result.
+
+Alternatives considered:
+
+1. **Tighten the existing segment prompt's structural self-check** — smallest change within the existing Reasoner and validator; preserves fail-closed behavior.
+2. Replace the validator's duplicate rejection with a warning — rejected because duplicate candidates are not a meaningful strategy comparison.
+3. Synthesize a second candidate from the heuristic baseline — deferred because that would change candidate provenance and is not required to correct this prompt contract.
+
+Decision: use option 1. Prompt version 2.14 asks the segment model to compare only `suggested_order` and included-source sets, which are fields available in that response schema, while forbidding unsupported changes made only to create a contrast. A first runtime on 2.13 returned two candidates, but its prompt referred to `act_boundaries`, which the segment schema does not expose; that run does not verify the corrected self-check. The validator remains authoritative. If the model still cannot produce two evidence-supported structures, the request fails closed; the result must not be promoted to a valid comparison. Verify the prompt contract in unit tests and run one bounded hierarchical call using synthetic observations only. This is software/runtime evidence, not quality acceptance.
+
+## Implementation and verification (2026-10-09)
+
+- Prompt version **2.14** now limits the local structural self-check to fields exposed by the segment response schema: source order and the included-source set. Unit coverage also locks out the previous schema-mismatched `act_boundaries` reference.
+- The corrected bounded runtime (`evidence/P2_SYNTHETIC_HIERARCHICAL_STRATEGY_CONTRAST_2026-10-09/attempt-03/`) used eight fully synthetic semantic observations with explicit fictional descriptions, two assets, the pinned local Ollama `qwen2.5:7b` model and runtime, and three calls (`segment`, `segment`, `project_synthesis`). It returned two candidates; both had unique EDL execution signatures and both differed from the heuristic baseline. No source media, raw response, generated text, or prompt was retained. The result remained `confirmable=false`, `quality_acceptance=NOT_PROVEN`.
+- The earlier 2.13 runtime used the same enriched fixture but had the invalid `act_boundaries` instruction; it is retained only as history. The original `segment_strategies_identical` failure used sparse fixture descriptions. This is not evidence that prompt text alone caused the outcome; the evidence and prompt changed between those runs.
+- Focused `narrative_analyzer` plus `project_story_graph` regressions: **136 passed**. Full repository suite: **985 passed, 6 skipped, 8 warnings**. The run used Python 3.12.8 in a temporary environment with project-declared `fastapi` and `httpx2` dependencies; the checkout has no lockfile. GitHub CI was not run.
+- The CoMind TRAIN input remains `declared_unverified` and is not authorized for new model calls. Its earlier response-contract failure remains historical; the later CoMind attempt without a terminal receipt remains `INCOMPLETE`. P2 quality, admitted real-project generalization, pathway admission, and Production Candidate acceptance remain **NOT_PROVEN**.
