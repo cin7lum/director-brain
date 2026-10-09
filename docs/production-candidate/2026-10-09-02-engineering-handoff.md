@@ -2,26 +2,38 @@
 
 更新时间：2026-10-09（Asia/Shanghai）
 
-## 仓库与检查点
+## 仓库与当前验证
 
-- 权威仓库：`cin7lum/director-brain`；`origin/master` 仍为 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`。
-- 本地开发分支：`codex/02-production-candidate`。产品候选快照提交：`c0ae875eac950fb63562a20b1437343e3a5863a4`。后续仅在该开发分支继续；本次同步不合并 PR、不改 master。
-- 本次没有重跑测试、GitHub CI 或媒体运行。最近保存的全套本地回归记录为 2026-10-08 的 **888 passed / 6 skipped / 8 warnings**，覆盖当时的 dirty worktree，不等同于本提交验证。GitHub master 的历史记录为 **602 passed / 8 skipped**；开发分支 CI 尚未确认。
-- 本地工件仍有未跟踪与 ignored 项。已创建主机本地的全仓库备份、逐文件 SHA-256 清单及仅本地资产表；不含于 GitHub 提交的 Evidence、用户卡片、数据集材料、数据库、缓存和环境文件仍留在当前 checkout 与备份中。
+- 权威仓库：`cin7lum/director-brain`。本地开发分支：`codex/02-production-candidate`；当前实现提交：`82f6af964baee75d39ff565472c412352ea512d3`（`fix(reasoner): require schema-backed strategy contrast`）。本地 `origin/codex/02-production-candidate` 最后已知为 `2de2b4dc991f5032338ac16f351105dddc8ac5ff`，`origin/master` 最后已知为 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`。2026-10-09 `git fetch` 因 GitHub HTTPS 连接重置失败；远端最新提交尚未重新确认。
+- 当前实现提交的本地完整回归：**985 passed / 6 skipped / 8 warnings**。环境为 Python 3.12.8、pytest 8.4.2、FastAPI 0.143.0、Starlette 1.7.0、httpx2 2.13.1、Pydantic 2.14.0、httpx 0.28.1；FastAPI/httpx2 按项目声明范围装入临时测试环境。该仓库没有锁文件；这不是 GitHub Actions 结果。`.github/workflows/ci.yml` 的当前分支 CI 尚未确认。
+- 旧记录必须分开看：2026-10-08 dirty worktree 的 **888/6/8** 与历史 master CI 的 **602/8** 都不是当前开发分支结果。
+- 历史未跟踪文件、用户卡片、Evidence、数据集材料、数据库、缓存和环境文件继续留在本机；本次没有用 `git add -A`，没有覆盖或清理它们。Evidence 目录被 Git 忽略，不含于公开仓库提交。
 
 ## 阶段状态
 
-- **当前阶段：P2 Director Reasoner，IN_PROGRESS。** P1 的当前树项目链已出现一次 `COMPLETE_SOFTWARE_RUNTIME_TRACE / PRODUCT_QUALITY_NOT_PROVEN`：多素材 ingest、Context、StoryGraph/Plan、跨独立 Uvicorn 进程持久化读回。对应 CoMind TRAIN 研究素材及本地候选树，不能证明已获授权真实项目、项目级泛化或导演质量。两项目隔离记录为合成软件测试。正式项目级 DEV/HOLDOUT 与真实项目验收仍 **NOT_PROVEN**。
-- **P2 首个未解决断点：** 已有绑定失败回执记录 `shot_count=32`，但 `emotional_trajectory` 只有 2 项；只定位到 cardinality mismatch，未解释 provider 为什么只生成 2 项。2026-10-09 的普通分层 Reasoner 运行以 `LLMStructuredOutputError` 失败、没有产出 Plan/EDL，也没有捕获规范化失败码或 provider-call 数。一次合成 flat-provider smoke 返回候选只证明软件接线，不证明导演质量。不要再扩展 Attempt 05；用已有回执推进 P2 产品修复，保持失败关闭且不保留 prompt、语义文本或原始回复。
-- `semantic_reasoner` / `director_strategy_reasoning` 仍为 **SHADOW**；`relation_inference` / `beat_grid` 仍为 **EXPERIMENTAL**。不得因本次提交或测试通过改为 ACTIVE。
+- **P0/P1：沿用既有交接状态，不重做。** 当前 P1 软件运行链有既存 `COMPLETE_SOFTWARE_RUNTIME_TRACE / PRODUCT_QUALITY_NOT_PROVEN` 证据；真实授权项目、独立 holdout 与产品质量仍未证明。
+- **当前阶段：P2 Director Reasoner，IN_PROGRESS。** `director_strategy_reasoning` / `semantic_reasoner` 保持 **SHADOW**；`relation_inference` / `beat_grid` 保持 **EXPERIMENTAL**。
+- 已有 2026-10-09 CoMind TRAIN 普通分层运行（HEAD `5b4dab0`）：两次 provider call 后失败，`failure_code=segment_schema_invalid`。随后基于相同未核实来源的 attempt 02 只有 freeze、没有终态 `run.json`，状态为 **INCOMPLETE**。不把其视为失败或成功回执，也不再调用该数据。
 
-## 外部依赖与产品边界
+### 32 镜头短输出故障
 
-- 05/FQL 提出的 REST lifecycle/export 问题已由 02 owner-side 视为通用 Brain 能力缺口；当前候选包含项目级 Brief/Plan/EDL/Strategy 与 SHADOW comparison 的持久化、版本绑定/读回和幂等行为，并有本地合成软件证据。该证据不等于真实 FQL 联调；05 特定 intake/export、revision loop 仍待 **P4**。历史记录中的 legacy 单素材 lifecycle 不能因项目级路径存在而默认视为全覆盖。
-- `dispatch_eligible=false` 及 SHADOW confirmation 不是 04 执行证明。**P3** 仍需绑定真实 04 仓库/包、版本、owner 与 Resolve/MCP 运行资产，并实现正式执行、Readback 和 Execution Receipt。
-- 02 拥有导演决策及版本化 Brief、Film Context、StoryGraph、Plan、EDL、StrategyConfirmation、Revision。03 保持 Orchestrator 边界；04 拥有正式 Resolve 执行；05 保持独立 Film Quality 评价。02 内部 evaluator 不替代 05；FFmpeg 只用于 Preview/Verification/Fallback。基础模型与大规模数据集训练不是默认路径。
-- 后续顺序保持 **P2 → P3 → P4 → P5**。P5 仍需独立项目边界的开发/holdout、不同片型与真实授权素材、冻结协议后的 owner-approved 数值门、真实盲评/人工偏好、独立质量评价及恢复/可靠性证据。未满足的 holdout、阈值批准和 04 条件只阻塞依赖它们的阶段。
+- 原始 `attempt-06-hierarchical-diagnostic/failure.json` 仍可访问，6 个 SHA-256 sidecar 均通过核验。它记录一轮 provider call、`phase=project_shadow_reasoner_call`、`failure_code=segment_emotions`：预期 32 个情绪项，实际为 2 个非空字符串，其余位置缺失。请求为 6,680 UTF-8 bytes，低于 24 KiB 请求上限；该运行的 `segment_max_shots=32`、completion cap 为 4,096 tokens。响应 `finish_reason` 与实际 completion 长度未保存。
+- 既有两份无 provider 容量审计针对完整 772-observation 请求：输入 43,169 tokens 超过 32,768 context；紧凑完整输出为 10,591 tokens，两套完整序列的探索性布局为 6,052 tokens，均超过 4,096 completion cap。它们证明完整扁平请求存在容量冲突，不能直接解释首个 32 镜头 segment。
+- 新的当前 schema 静态探针显示：带 32 个情绪项、双策略、完整来源理由的极简合法 segment 仅 1,709 tokens，低于 4,096。它只能排除“schema 最小形状必然超限”，不能还原历史 response 的 token 数、finish reason 或缺失原因。Attempt 06 冻结的产品源码哈希不匹配当前 Git 提交，也不匹配保留的 pre-sync checkout；当时精确 prompt 源码不可还原。因此历史故障直接根因保持 **NOT_PROVEN**，不称为已证实的截断或模型缺陷。
+- 当前代码已有三项针对性约束：segment 用户提示明确要求按本次镜头数返回情绪项和完整策略来源；segment 上限为 16；structured output 的 `finish_reason=length` 被归类为 `provider_output_truncated` 并 fail closed。
+- 当前代码下 32 镜头纯合成多素材运行：默认 16 镜头分段，两次 `segment` 加一次 `project_synthesis` 共 3 次本地调用；返回 2 个候选，2 个 Plan 校验通过，2 个 EDL 均绑定合成源身份、区别于启发式基线且彼此不同；0 次非 loopback 尝试。对比保持 `confirmable=false`、质量 `NOT_PROVEN`。该运行只证明软件/本地模型链，不证明真实素材判断或艺术质量。
+- Attempt 06 的 CoMind TRAIN 项目边界仍为 `declared_unverified`，不能作为新推理输入。真实项目复验需要单独确认本地处理权限的多素材项目或其他已准入数据。不得把合成运行升级为真实项目证据。
+
+## 产品边界与后续路线
+
+- 02 拥有导演意图理解、Film Context/StoryGraph 消费、解释性策略与 Plan/EDL、版本和修订；03 负责能力路由；04 负责正式 Resolve 执行、Readback 与 Execution Receipt；05 负责独立质量评价。内部 validator、确定性粗剪、SHADOW 候选和全绿源码测试均不等于艺术质量通过。
+- 05/FQL 的独立 intake/export 与修订闭环归 P4；不能以 02 内部评分替代。P3 需要真实 04 仓库/包、版本、owner 与 Resolve/MCP 运行资产；P5 需要独立真实项目与 holdout、盲评、人工偏好、独立质量及恢复/可靠性证据。
+- 完整阶段顺序保持 **P2 → P3 → P4 → P5**。未准入的语义路径保持 SHADOW；不执行生产 Resolve、NAS、未授权数据上传、不可逆数据操作或受保护主分支合并。
 
 ## 证据位置
 
-完整 P1/P2 运行回执与原始 Evidence 保留在本机 `evidence/`，未随本次候选推送；交接时按其中的 `RUN_REVIEW.md`、`IMPLEMENTATION_EVIDENCE.md` 及关联 hash sidecar 核对。最新 P2 记录位于 `evidence/P2_CURRENT_HIERARCHICAL_RUNTIME_RUN/IMPLEMENTATION_EVIDENCE.md`、`evidence/P2_CURRENT_PROMPT_RUNTIME_SMOKE_2026-10-09.md` 与 `evidence/P2_SEGMENT_EMOTION_SCHEMA_ALIGNMENT/ATTEMPT_05_STRUCTURE_ONLY_REVIEW.md`。当前树 P1 trace 位于 `evidence/P1_CURRENT_TREE_FULL_PROJECT_TRACE/attempt-02/RUN_REVIEW.md`。
+- P2 32 镜头历史故障：`evidence/P2_PROJECT_DIRECTOR_REASONER_REAL_CONTEXT/attempt-06-hierarchical-diagnostic/`（原回执及 hash sidecar 可核验）。
+- 完整项目容量审计：`evidence/P2_PROJECT_DIRECTOR_REASONER_CAPACITY_AUDIT/attempt-01/` 与 `attempt-02/`。
+- 32 镜头当前 schema 静态输出容量探针：`evidence/P2_SEGMENT_OUTPUT_CAPACITY_2026-10-09/attempt-01/`。
+- 当前 32 镜头合成分层运行：`evidence/P2_CURRENT_32_SHOT_SYNTHETIC_HIERARCHICAL_2026-10-09/attempt-01/`。
+- 最近完整本地测试及 P2 修复记录：`docs/plans/2026-10-09-p2-response-contract.md`。旧 P1/P2 Evidence 保存在本机；不得用本文档替代其原始回执。
