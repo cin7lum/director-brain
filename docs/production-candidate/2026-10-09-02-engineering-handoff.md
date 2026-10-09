@@ -23,7 +23,7 @@
 - 当前代码已有三项针对性约束：segment 用户提示明确要求按本次镜头数返回情绪项和完整策略来源；segment 上限为 16；structured output 的 `finish_reason=length` 被归类为 `provider_output_truncated` 并 fail closed。
 - 当前代码下 32 镜头纯合成多素材运行：默认 16 镜头分段，两次 `segment` 加一次 `project_synthesis` 共 3 次本地调用；返回 2 个候选，2 个 Plan 校验通过，2 个 EDL 均绑定合成源身份、区别于启发式基线且彼此不同；0 次非 loopback 尝试。对比保持 `confirmable=false`、质量 `NOT_PROVEN`。该运行只证明软件/本地模型链，不证明真实素材判断或艺术质量。
 - Attempt 06 的 CoMind TRAIN 项目边界仍为 `declared_unverified`，不能作为新推理输入。真实项目复验需要单独确认本地处理权限的多素材项目或其他已准入数据。不得把合成运行升级为真实项目证据。
-- 2026-10-09 公开素材只读筛查发现 NASA Roman integration、Wikimedia Commons 的 Yosemite 无音轨、Scheldebeker、Wiki Wedding、访谈、意大利旅行剪辑及短列车 POV 等候选。所有素材均为 `NOT_ADMITTED`；具体限制和链接见 `docs/production-candidate/2026-10-09-p2-public-real-video-source-screen.md`。NASA 两个同事件文件的本地下载、解码及 Qwen2.5:7b 调用等待对确切文件和处理范围的确认；截至本文更新时间均为 `NOT_RUN`。
+- 2026-10-09 公开素材只读筛查发现 NASA Roman integration、NASA LRO launch 多机位、Wikimedia Commons 的 Yosemite 无音轨、Scheldebeker、Wiki Wedding、访谈、意大利旅行剪辑及短列车 POV 等候选。所有素材均为 `NOT_ADMITTED`；具体限制和链接见 `docs/production-candidate/2026-10-09-p2-public-real-video-source-screen.md`。NASA 两个 Roman 文件的本地下载、解码及 Qwen2.5:7b 调用等待对确切文件和处理范围的确认；截至本文更新时间均为 `NOT_RUN`。
 - 用户提供的本地个人素材目录仅执行只读目录/文件元数据核对：环境可访问；未读取文件名或媒体内容、未预览/抽帧、未哈希、未调用模型、未上传。选取具体素材及本机模型处理范围仍待明确授权；原始目录路径与本地明细不写入公开仓库。Ignored 本机回执在 `evidence/P2_LOCAL_USER_SOURCE_ACCESS_2026-10-09/attempt-01/`。
 
 ## 产品边界与后续路线
