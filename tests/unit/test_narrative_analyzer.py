@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.14"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.16"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -1763,9 +1763,9 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
             assert emotion_schema["minItems"] == local_count
             assert emotion_schema["maxItems"] == local_count
             strategy_schema = schema["properties"]["strategy_hypotheses"]
-            expected_hypothesis_count = 1 if local_count == 1 else 2
+            expected_hypothesis_max = 1 if local_count == 1 else 2
             assert (strategy_schema["minItems"], strategy_schema["maxItems"]
-                    ) == (expected_hypothesis_count, expected_hypothesis_count)
+                    ) == (1, expected_hypothesis_max)
             strategy_properties = strategy_schema["items"]["properties"]
             order_schema = strategy_properties["suggested_order"]
             assert order_schema["minItems"] == local_count
@@ -2143,11 +2143,13 @@ def test_project_segment_short_emotion_array_fails_closed_safely(
      ("transport", "provider_connection_error"),
      ("truncated", "provider_output_truncated"),
      ("strategy_count", "segment_strategy_count"),
+     ("strategy_single_without_limitation",
+      "segment_strategy_explicit_limitation"),
      ("strategy_fields", "segment_strategy_fields"),
      ("strategy_order", "segment_order"),
      ("rationale_coverage", "segment_source_rationale_coverage"),
      ("rationale_source", "segment_source_rationale_source"),
-     ("rationale_evidence", "segment_source_rationale_evidence")],
+     ("rationale_evidence", "segment_source_rationale_focus_missing")],
 )
 def test_project_failure_context_counts_prior_calls_without_retry(
     monkeypatch, failure_kind, expected_code,
@@ -2196,7 +2198,9 @@ def test_project_failure_context_counts_prior_calls_without_retry(
         if calls == 2:
             options = result["strategy_hypotheses"]
             if failure_kind == "strategy_count":
-                options.pop()
+                options.clear()
+            elif failure_kind == "strategy_single_without_limitation":
+                options[:] = options[:1]
             elif failure_kind == "strategy_fields":
                 options[0]["unknown"] = "private_marker"
             elif failure_kind == "strategy_order":
@@ -2245,15 +2249,17 @@ def test_segment_request_states_exact_cardinality():
 
 def test_segment_prompt_requires_structural_signature_self_check():
     prompt = narrative_analyzer._PROJECT_NARRATIVE_SEGMENT_PROMPT
-    assert "compare the pair's structural signatures" in prompt
+    assert "return one or two unranked local strategy hypotheses" in prompt
+    assert "Return a second hypothesis only when" in prompt
     assert "suggested_order" in prompt
     assert "set of included local shot indices" in prompt
-    signatures = prompt.split(
-        "Before returning, compare the pair's structural signatures:", 1
-    )[1].split("At least one signature", 1)[0]
-    assert "act_boundaries" not in signatures
     assert "different labels, wording, emotional arcs, tradeoffs, or uncertainties alone do not count" in prompt
     assert "Do not change order or source disposition merely to manufacture a contrast" in prompt
+    assert "If only one local structure is supportable, return that one structure and state the limitation" in prompt
+    assert "`shot_idx` must be distinct across those rationales" in prompt
+    assert "Before returning, verify exact source coverage and no repeated focus index" in prompt
+    assert '"shot_idx":0' in prompt
+    assert '"shot_idx":1' in prompt
 
 
 def test_project_segment_schema_requires_one_emotion_entry_per_shot():
@@ -2271,9 +2277,9 @@ def test_project_segment_schema_requires_one_emotion_entry_per_shot():
         assert trajectory["items"]["maxLength"] == 64
         assert trajectory["items"]["pattern"] == r"\S"
         strategies = schema["properties"]["strategy_hypotheses"]
-        expected_strategy_count = 1 if shot_count == 1 else 2
+        expected_strategy_max = 1 if shot_count == 1 else 2
         assert (strategies["minItems"], strategies["maxItems"]) == (
-            expected_strategy_count, expected_strategy_count)
+            1, expected_strategy_max)
         properties = strategies["items"]["properties"]
         assert properties["suggested_order"]["items"]["enum"] == list(
             range(shot_count))
@@ -2346,6 +2352,57 @@ def test_project_leaf_output_bound_splits_at_sixteen_shots(monkeypatch):
         range(17))
 
 
+def test_project_leaf_accepts_one_supported_multishot_strategy(monkeypatch):
+    def fake_post(_base_url, _api_key, _model, _system, _user, **kwargs):
+        shot_count = kwargs["response_schema"]["properties"][
+            "emotional_trajectory"]["minItems"]
+        assert kwargs["response_schema"]["properties"][
+            "strategy_hypotheses"]["minItems"] == 1
+        return json.dumps({
+            "summary": "One supportable source-local approach.",
+            "emotional_trajectory": ["neutral"] * shot_count,
+            "key_moments": [],
+            "strategy_hypotheses": [{
+                "hypothesis_id": "local-only",
+                "label": "source order",
+                "editorial_intent": "Preserve the observed source progression.",
+                "emotional_arc": _evidence_claim(
+                    "Keep the available progression intact.", 0, shot_count - 1),
+                "suggested_order": list(range(shot_count)),
+                "source_rationales": _source_rationales(shot_count),
+            }],
+            "limitations": [
+                "This segment supports one local order; alternatives are not substantiated."
+            ],
+        })
+
+    monkeypatch.setattr(narrative_analyzer, "post_chat_json", fake_post)
+    semantics = [
+        {"scene_description": "Synthetic observed source."}
+        for _ in range(3)
+    ]
+    leaves, calls = narrative_analyzer._build_project_leaf_nodes(
+        semantics,
+        ["asset-a"] * len(semantics),
+        director_brief="Synthetic brief.",
+        base_url="http://localhost:11434/v1",
+        model="qwen2.5:7b",
+        api_key="ollama-local",
+        timeout=30,
+        temperature=0,
+        provider_call_provenance=[],
+    )
+
+    assert calls == 1
+    assert list(leaves[0]["available_hypotheses"]) == ["local-only"]
+    assert "alternatives are not substantiated" in leaves[0]["limitations"][0]
+    group_schema = narrative_analyzer._project_group_response_schema(leaves)
+    selection_alternatives = group_schema["properties"]["strategies"][
+        "items"]["properties"]["child_strategy_by_child"]["items"]["anyOf"]
+    assert selection_alternatives[0]["properties"]["hypothesis_id"][
+        "enum"] == ["local-only"]
+
+
 def test_project_segment_strategies_require_exact_source_rationale_coverage():
     strategies = [{
         "hypothesis_id": "local-A",
@@ -2366,6 +2423,19 @@ def test_project_segment_strategies_require_exact_source_rationale_coverage():
     }]
     narrative_analyzer._validate_project_segment_strategy_hypotheses(strategies, 3)
 
+    one_supported = {
+        "summary": "One supportable local approach.",
+        "emotional_trajectory": ["neutral"] * 3,
+        "key_moments": [],
+        "strategy_hypotheses": [strategies[0]],
+        "limitations": ["No second evidence-supported local structure is available."],
+    }
+    narrative_analyzer._validate_project_segment_result(one_supported, 3)
+
+    missing_limitation = dict(one_supported, limitations=[])
+    with pytest.raises(ValueError, match="explicit limitation"):
+        narrative_analyzer._validate_project_segment_result(missing_limitation, 3)
+
     missing = json.loads(json.dumps(strategies))
     missing[0]["source_rationales"].pop()
     with pytest.raises(ValueError, match="cover every source"):
@@ -2373,7 +2443,7 @@ def test_project_segment_strategies_require_exact_source_rationale_coverage():
 
     uncited_focus = json.loads(json.dumps(strategies))
     uncited_focus[0]["source_rationales"][0]["source_indices"] = [1]
-    with pytest.raises(ValueError, match="evidence references"):
+    with pytest.raises(ValueError, match="do not cite focus source"):
         narrative_analyzer._validate_project_segment_strategy_hypotheses(
             uncited_focus, 3)
 

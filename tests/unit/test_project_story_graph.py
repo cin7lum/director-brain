@@ -2821,6 +2821,14 @@ def test_project_shadow_strategy_options_return_unranked_nonconfirmable_plans(mo
     monkeypatch.setattr(
         reasoner, "_analyze_project", lambda *args, **kwargs: same_order_narrative)
 
+    from director_brain.llm_adapter import LLMStructuredOutputError
+
+    with pytest.raises(LLMStructuredOutputError) as duplicate_edls:
+        reasoner.generate_project_shadow_strategy_options(
+            brief, manifest, context, graph, observations)
+    assert duplicate_edls.value.failure_code == "project_edl_candidates_identical"
+    assert duplicate_edls.value.failure_stage == "candidate_materialization"
+
     from director_brain.models.edl import TransitionSpec
 
     original_generate_project_plan = HeuristicDirectorReasoner._generate_project_plan

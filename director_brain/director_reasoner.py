@@ -73,6 +73,7 @@ from director_brain.providers.heuristic import (
 )
 from director_brain.semantic_scorer import SemanticScore, compute_semantic_score
 from director_brain.models.shot_card import ShotCard
+from director_brain.llm_adapter import LLMStructuredOutputError
 from director_brain.intent_constraints import (
     EDITING_LANGUAGE_PROFILE_IDS,
     TechnicalAvoidRule,
@@ -3161,6 +3162,15 @@ class LLMDirectorReasoner(DirectorReasoner):
         execution_signatures = [
             item["edl_execution_signature"] for item in candidates
         ]
+        if len(execution_signatures) != len(set(execution_signatures)):
+            failure = LLMStructuredOutputError(
+                "project strategy candidates did not produce distinct EDL execution sequences",
+                failure_code="project_edl_candidates_identical",
+            )
+            failure.failure_stage = "candidate_materialization"
+            failure.provider_call_count = len(
+                narrative.get("provider_call_provenance", []))
+            raise failure
         execution_signature_counts = {
             signature: execution_signatures.count(signature)
             for signature in set(execution_signatures)

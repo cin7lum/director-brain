@@ -161,7 +161,7 @@ def _safe_project_reasoner_failure_diagnostics(exc: Exception) -> dict[str, Any]
     failure_stage = getattr(exc, "failure_stage", None)
     if failure_stage in {
         "flat_project", "segment", "project_synthesis", "preflight",
-        "input_capacity", "project_validation",
+        "input_capacity", "project_validation", "candidate_materialization",
     }:
         diagnostics["provider_failure_stage"] = failure_stage
     call_count = getattr(exc, "provider_call_count", None)
