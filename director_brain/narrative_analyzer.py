@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.27"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.28"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -909,9 +909,10 @@ def _project_group_system_prompt(
         "understand what the second candidate must contrast. Make a grounded "
         "difference in at least one executable dimension: "
         + contrast_dimensions
-        + ". Labels, rationales, emotional arc, tradeoffs, and uncertainties "
-        "alone do not make candidates distinct. Justify executable choices "
-        "from the creator brief and available application_effects. When enabled "
+        + ". Do not reuse the primary label or intent. Prefer grounded "
+        "structural contrast; if unchanged, both name the changed enabled "
+        "choice and its editorial effect. Justify choices from the Brief and "
+        "application_effects. When enabled "
         "execution choices exist, the response schema constrains one available "
         "choice to differ from the primary. Do not change an act or reorder sources "
         "arbitrarily. Do not invent source facts or unsupported rationales; if no "
