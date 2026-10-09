@@ -734,6 +734,24 @@ def test_decision_ledger_endpoint(tmp_path, monkeypatch):
     assert body["data"]["entries"][0]["decision_id"] == "plan-in-scope"
 
 
+def test_project_reasoner_failure_location_is_allowlisted():
+    from types import SimpleNamespace
+    from director_brain.director_reasoner import _project_aggregate_story_graph
+
+    with pytest.raises(ValueError) as raised:
+        _project_aggregate_story_graph(
+            SimpleNamespace(project_id="manifest-project"),
+            SimpleNamespace(project_id="different-project"),
+            [],
+        )
+
+    location = api_main._safe_project_reasoner_failure_location(raised.value)
+    assert location is not None
+    assert location["component"] == "director_reasoner"
+    assert type(location["line"]) is int
+    assert set(location) == {"component", "line"}
+
+
 def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
     tmp_path, monkeypatch
 ):
@@ -1126,6 +1144,7 @@ def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
     assert unclassified_detail["attribution_state"] == "unclassified"
     assert unclassified_detail["exception_type"] == "ValueError"
     assert "provider_failure_stage" not in unclassified_detail
+    assert "failure_location" not in unclassified_detail
     assert private_value_error_marker not in json.dumps(unclassified_entries[0])
     assert "PRIVATE_UNCLASSIFIED_INTENT_MUST_NOT_LEAK" not in json.dumps(
         unclassified_entries[0])

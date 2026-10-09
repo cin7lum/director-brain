@@ -133,6 +133,13 @@ _SAFE_PROJECT_REASONER_TRANSPORT_CODES = frozenset({
     "provider_model_binding_error",
     "provider_transport_error",
 })
+_SAFE_PROJECT_REASONER_FAILURE_COMPONENT_SUFFIXES = (
+    ("director_brain/director_reasoner.py", "director_reasoner"),
+    ("director_brain/narrative_analyzer.py", "narrative_analyzer"),
+    ("director_brain/project_story_graph.py", "project_story_graph"),
+    ("director_brain/story_graph_builder.py", "story_graph_builder"),
+    ("director_brain/project_story_link_review.py", "project_story_link_review"),
+)
 _PROJECT_SHADOW_RUN_STATES = (
     "running",
     "recoverable",
@@ -195,6 +202,22 @@ def _safe_project_reasoner_failure_diagnostics(exc: Exception) -> dict[str, Any]
         if safe_metadata:
             diagnostics["provider_response_metadata"] = safe_metadata
     return diagnostics
+
+
+def _safe_project_reasoner_failure_location(exc: Exception) -> dict[str, Any] | None:
+    """Return only a fixed component name and line for local diagnosis."""
+    location = None
+    traceback = exc.__traceback__
+    while traceback is not None:
+        filename = traceback.tb_frame.f_code.co_filename.replace("\\", "/").lower()
+        for suffix, component in _SAFE_PROJECT_REASONER_FAILURE_COMPONENT_SUFFIXES:
+            if filename.endswith(suffix):
+                line = traceback.tb_lineno
+                if type(line) is int and 1 <= line <= 100_000:
+                    location = {"component": component, "line": line}
+                break
+        traceback = traceback.tb_next
+    return location
 
 
 _PROJECT_REASONER_FAILURE_RESPONSES = {
@@ -1409,6 +1432,9 @@ def _record_project_director_shadow_failure(
         if (isinstance(exception_type, str)
                 and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,79}", exception_type)):
             detail["exception_type"] = exception_type
+        failure_location = _safe_project_reasoner_failure_location(exc)
+        if failure_location is not None:
+            detail["failure_location"] = failure_location
     detail.update(_safe_project_reasoner_failure_diagnostics(exc))
 
     try:
