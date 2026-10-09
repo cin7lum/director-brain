@@ -198,6 +198,7 @@ def test_semantic_multiframe_profile_pins_context_size_in_request_and_fingerprin
     adapter = OllamaVLMAdapter()
     response = {
         "function": "SENSORY_INSERT",
+        "shot_scale": "wide",
         "role": "broll",
         "motion": "subtle",
         "narrative": "transition",
@@ -215,6 +216,7 @@ def test_semantic_multiframe_profile_pins_context_size_in_request_and_fingerprin
         with patch.object(adapter, "_chat", side_effect=fake_chat):
             result = adapter.analyze_frames([image, image, image])
         assert result["status"] == OBSERVED
+        assert result["shot_scale"] == "wide"
         assert seen["options"]["num_ctx"] == SEMANTIC_NUM_CTX == 8192
         assert f"num_ctx={SEMANTIC_NUM_CTX}" in SEMANTIC_GENERATION_PROFILE
     finally:
@@ -378,6 +380,7 @@ class TestVLMSuccess:
             reply_text = (
                 "街道上一个人在阳光下行走，光影分明。\n"
                 '{"shot_function": "ACTION", '
+                '"shot_scale": "close", '
                 '"sensory_wet_heat": 0.3, '
                 '"sensory_mood_intensity": 0.7, '
                 '"motion_amount": "subtle", '
@@ -398,6 +401,7 @@ class TestVLMSuccess:
             assert result["status"] == OBSERVED
             assert result["shot_function"] in _VALID_SHOT_FUNCTIONS
             assert result["shot_function"] == "ACTION"
+            assert result["shot_scale"] == "close"
             assert result["motion_amount"] in _VALID_MOTION
             assert result["proposed_role_v2"] in _VALID_ROLES
             assert result["frame_description"], "frame_description 不应为空"

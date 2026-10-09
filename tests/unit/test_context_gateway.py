@@ -218,7 +218,7 @@ def test_local_vlm_analysis_profile_binds_model_runtime_prompt_and_sampling(
 
     assert "model=qwen3-vl:4b@sha256:" + "a" * 64 in profile
     assert "ollama=0.32.14" in profile
-    assert "prompt=vlm_prompt_v4_people:" in profile
+    assert "prompt=vlm_prompt_v5_shot_scale:" in profile
     assert (
         "sampling=shot-relative-v2:0.15,0.50,0.85:max-width-2560:lanczos"
         in profile
@@ -228,7 +228,7 @@ def test_local_vlm_analysis_profile_binds_model_runtime_prompt_and_sampling(
         "think=false,"
         "unsupported_options=fail_closed"
     ) in profile
-    assert "observation_map=film_observation_mapping_v1" in profile
+    assert "observation_map=film_observation_mapping_v2" in profile
     assert f"observation_schema=FilmObservation/{FILM_OBSERVATION_SCHEMA_VERSION}" in profile
     assert "FilmObservation/1.1" not in profile
     assert project_analysis_profile(

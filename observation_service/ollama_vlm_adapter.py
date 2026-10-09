@@ -33,6 +33,7 @@ _VALID_FUNCTIONS = {
     "ESTABLISHING", "ACTION", "REACTION", "DETAIL",
     "TRANSITION", "ATMOSPHERIC_EVIDENCE", "SENSORY_INSERT",
 }
+_VALID_SHOT_SCALES = {"wide", "medium", "close", "unknown"}
 _VALID_MOTION = {"static", "subtle", "burst"}
 _VALID_ROLES = {"hero", "support", "transition", "broll", "discard"}
 #: P3-1 深度语义词表（analyze_frames 多帧模式）
@@ -45,9 +46,10 @@ _PROMPT = """You are looking at one frame extracted from a short-video shot.
 Step 1: Describe the frame in one Chinese sentence (what do you actually see?
 Setting, subjects, action, lighting).
 
-Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 6 fields:
+Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 7 fields:
 {
   "shot_function": one of ESTABLISHING/ACTION/REACTION/DETAIL/TRANSITION/ATMOSPHERIC_EVIDENCE/SENSORY_INSERT,
+  "shot_scale": one of wide/medium/close/unknown,
   "sensory_wet_heat": number 0-1 or null,
   "sensory_mood_intensity": number 0-1 or null,
   "motion_amount": one of static/subtle/burst,
@@ -59,7 +61,11 @@ Step 2: Return ONLY a JSON object (no markdown fences, no prose) with these 6 fi
 }
 
 Rules: pick the fallback value if you cannot tell; never invent numbers you
-cannot support. Keep step 1 and step 2 on separate lines.
+cannot support. Classify shot_scale by how much of the main subject is visible:
+wide shows substantial surroundings, medium shows an intermediate subject
+distance, and close shows a face or object detail filling much of the frame.
+Use unknown when the framing is mixed or unclear. Keep step 1 and step 2 on
+separate lines.
 """
 
 #: P3-1 多帧深度语义 prompt（原 observation_service/semantic_analyzer 收编：
@@ -67,6 +73,7 @@ cannot support. Keep step 1 and step 2 on separate lines.
 #: 多图会全输出进 thinking，故精简 + format:"json" + think:false）。
 _SEMANTIC_PROMPT = """Analyze these 3 frames from one video shot. Return ONLY JSON:
 {"desc": "中文一句话场景描述",
+ "shot_scale": "wide|medium|close|unknown",
  "subjects": ["主体列表"],
  "people": ["可见人物的外观描述（颜色+衣物+发型，如'红衣短发女孩'）"],
  "action": "dialogue|action|establishing|transition|emotional|sensory",
@@ -79,12 +86,17 @@ _SEMANTIC_PROMPT = """Analyze these 3 frames from one video shot. Return ONLY JS
  "function": "ESTABLISHING|ACTION|REACTION|DETAIL|TRANSITION|ATMOSPHERIC_EVIDENCE|SENSORY_INSERT",
  "role": "hero|support|transition|broll|discard",
  "temporal": "首帧到尾帧的变化"}
-Rules: desc/temporal in Chinese. importance = information value + visual quality. Be conservative."""
+Rules: desc/temporal in Chinese. importance = information value + visual quality.
+shot_scale describes the predominant framing across the three frames, based on
+how much of the main subject is visible: wide shows substantial surroundings,
+medium shows an intermediate subject distance, and close shows a face or object
+detail filling much of the frame. Use unknown when framing changes or is unclear.
+Be conservative."""
 
 SEMANTIC_PROMPT_SHA256 = hashlib.sha256(
     _SEMANTIC_PROMPT.encode("utf-8")
 ).hexdigest()
-SEMANTIC_PROMPT_VERSION = "vlm_prompt_v4_people"
+SEMANTIC_PROMPT_VERSION = "vlm_prompt_v5_shot_scale"
 SEMANTIC_FORMAT = "json"
 SEMANTIC_TEMPERATURE = 0.1
 SEMANTIC_NUM_CTX = 8192
@@ -96,7 +108,7 @@ SEMANTIC_GENERATION_PROFILE = (
     f"think={str(SEMANTIC_THINK).lower()},"
     "unsupported_options=fail_closed"
 )
-SEMANTIC_OBSERVATION_MAPPER_VERSION = "film_observation_mapping_v1"
+SEMANTIC_OBSERVATION_MAPPER_VERSION = "film_observation_mapping_v2"
 
 PROJECT_LINK_COMPARISON_PROMPT = """Compare two source observations from separate assets.
 The first 3 images are source A; the next 3 images are source B. They are
@@ -442,6 +454,14 @@ class OllamaVLMAdapter(VLMAdapter):
                 f"shot_function: got {sf_raw!r}, fallback to 'SENSORY_INSERT'",
             )
 
+        shot_scale_raw = parsed.get("shot_scale")
+        shot_scale = (
+            shot_scale_raw
+            if isinstance(shot_scale_raw, str)
+            and shot_scale_raw in _VALID_SHOT_SCALES
+            else "unknown"
+        )
+
         mo_raw = parsed.get("motion_amount")
         if mo_raw in _VALID_MOTION:
             motion_amount = mo_raw
@@ -467,6 +487,7 @@ class OllamaVLMAdapter(VLMAdapter):
 
         return {
             "shot_function": shot_function,
+            "shot_scale": shot_scale,
             "sensory_wet_heat": _norm_float(parsed.get("sensory_wet_heat")),
             "sensory_mood_intensity": _norm_float(
                 parsed.get("sensory_mood_intensity"),
@@ -485,6 +506,7 @@ class OllamaVLMAdapter(VLMAdapter):
         """生成 degraded dict（所有字段扁平，fallback 值）。"""
         return {
             "shot_function": "SENSORY_INSERT",
+            "shot_scale": "unknown",
             "sensory_wet_heat": None,
             "sensory_mood_intensity": None,
             "motion_amount": "subtle",
@@ -585,10 +607,18 @@ class OllamaVLMAdapter(VLMAdapter):
             parsed.get("emotion"), _VALID_EMOTION, "neutral", "emotional_tone")
         action = _vocab(
             parsed.get("action"), _VALID_ACTION, "sensory", "action_type")
+        shot_scale_raw = parsed.get("shot_scale")
+        shot_scale = (
+            shot_scale_raw
+            if isinstance(shot_scale_raw, str)
+            and shot_scale_raw in _VALID_SHOT_SCALES
+            else "unknown"
+        )
 
         return {
             # 与 analyze_frame 同形的基础字段
             "shot_function": shot_function,
+            "shot_scale": shot_scale,
             "sensory_wet_heat": _norm_float(parsed.get("sensory_wet_heat")),
             "sensory_mood_intensity": _norm_float(
                 parsed.get("sensory_mood_intensity")),

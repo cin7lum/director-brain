@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.19"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.20"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -2270,6 +2270,20 @@ def test_segment_request_states_exact_cardinality():
     assert "exactly 32 input shots" in prompt
     assert "exactly 32 emotional_trajectory entries" in prompt
     assert "indices 0 through 31" in prompt
+
+
+def test_project_shot_prompt_includes_unverified_visual_function_and_scale():
+    prompt = narrative_analyzer._project_segment_user(
+        "Synthetic brief", 1, [{
+            "scene_description": "A worker handles a tool.",
+            "shot_function": "DETAIL",
+            "shot_scale": "close",
+        }],
+    )
+    assert "visual_function: DETAIL" in prompt
+    assert "framing_scale: close" in prompt
+    assert "uncertain visual-model observations" in (
+        narrative_analyzer._PROJECT_NARRATIVE_SEGMENT_PROMPT)
 
 
 def test_segment_prompt_requires_structural_signature_self_check():

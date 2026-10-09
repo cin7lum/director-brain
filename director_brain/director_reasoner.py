@@ -844,7 +844,7 @@ def _build_candidates(
 
     若传入 ``vlm_obs``，从中筛选 ``claim_kind == MODEL_OBSERVATION`` 的 VLM
     语义观测，按 ``media_asset_id`` 建立 claim 映射，把
-    ``shot_function / proposed_role_v2 / motion_amount / importance`` 与
+    ``shot_function / shot_scale / proposed_role_v2 / motion_amount / importance`` 与
     P3-1 深度语义（``narrative_role / emotional_tone / action_type /
     scene_description``）写入 candidate；无对应 VLM 观测时这些字段为
     ``None``（按无语义处理，行为与技术路径一致）。
@@ -2698,6 +2698,8 @@ class LLMDirectorReasoner(DirectorReasoner):
             summary = {
                 "scene_description": claim.get("scene_description")
                     or claim.get("frame_description"),
+                "shot_function": claim.get("shot_function"),
+                "shot_scale": claim.get("shot_scale"),
                 "action_type": claim.get("action_type"),
                 "emotional_tone": claim.get("emotional_tone"),
                 "narrative_role": claim.get("narrative_role")

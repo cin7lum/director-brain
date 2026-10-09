@@ -48,6 +48,7 @@ def _claim_payload(vlm_result: dict) -> dict:
     """从 VLM 结果提取需要序列化到 claim 的语义字段。"""
     return {
         "shot_function": vlm_result.get("shot_function"),
+        "shot_scale": vlm_result.get("shot_scale", "unknown"),
         "motion_amount": vlm_result.get("motion_amount"),
         "proposed_role_v2": vlm_result.get("proposed_role_v2"),
         "frame_description": vlm_result.get("frame_description", ""),

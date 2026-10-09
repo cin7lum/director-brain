@@ -39,6 +39,7 @@ def _shot(index: int = 0, in_us: int = 0, out_us: int = 2_000_000) -> dict:
 def _vlm_success(**overrides) -> dict:
     base = {
         "shot_function": "ACTION",
+        "shot_scale": "medium",
         "sensory_wet_heat": 0.3,
         "sensory_mood_intensity": 0.8,
         "motion_amount": "burst",
@@ -94,6 +95,7 @@ class TestVlmResultToObservation:
         obs = vlm_result_to_observation(_vlm_success(), _shot(), "/tmp/frame.jpg")
         claim = json.loads(obs.claim)
         assert claim["shot_function"] == "ACTION"
+        assert claim["shot_scale"] == "medium"
         assert claim["motion_amount"] == "burst"
         assert claim["proposed_role_v2"] == "hero"
         assert claim["frame_description"] == "一个角色在奔跑"
