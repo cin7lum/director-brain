@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.22"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.23"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -692,7 +692,8 @@ def test_project_strategy_failure_codes_are_specific_and_allowlisted(
         ),
         (
             "group",
-            "project synthesis strategies are structurally identical",
+            "project synthesis strategies have identical structure and "
+            "enabled execution choices",
             "group_strategies_identical",
         ),
     ],
@@ -1053,6 +1054,88 @@ def test_project_group_transition_rationale_covers_both_sides_of_boundary():
     assert narrative_analyzer._project_validation_failure_code(
         "group", "project synthesis transition rationale is not boundary-scoped"
     ) == "group_transition_policy_boundary"
+
+
+def test_project_group_allows_enabled_editing_choice_as_strategy_difference():
+    children = [
+        {
+            "node_id": "asset-a",
+            "global_indices": [0],
+            "available_hypotheses": ["a1"],
+        },
+        {
+            "node_id": "asset-b",
+            "global_indices": [1],
+            "available_hypotheses": ["b1"],
+        },
+    ]
+
+    def strategy(hypothesis_id, editing_language_choice):
+        return {
+            "hypothesis_id": hypothesis_id,
+            "label": f"Strategy {hypothesis_id}",
+            "editorial_intent": "Use a supported editing language.",
+            "child_order": ["asset-a", "asset-b"],
+            "emotional_arc": _evidence_claim(
+                "A bounded project-level emotional proposal.", 0, 1),
+            "child_strategy_by_child": [
+                {"child_id": "asset-a", "hypothesis_id": "a1"},
+                {"child_id": "asset-b", "hypothesis_id": "b1"},
+            ],
+            "act_by_child": [
+                {"child_id": "asset-a", "act": "hook"},
+                {"child_id": "asset-b", "act": "develop"},
+            ],
+            "tradeoffs": [_evidence_claim("A supported tradeoff.", 0)],
+            "uncertainties": [_evidence_claim("A source limitation.", 1)],
+            "editing_language_choice": editing_language_choice,
+            "editing_language_rationale": _evidence_claim(
+                "A source-supported editing-language choice.", 0, 1),
+        }
+
+    result = {
+        "summary": "Two executable approaches share a source structure.",
+        "strategies": [
+            strategy("A", "fast_cut"),
+            strategy("B", "slow_paced"),
+        ],
+        "limitations": [],
+    }
+    narrative_analyzer._validate_project_group_result(
+        result, children, include_editing_language_choice=True)
+    result["strategies"][1]["editing_language_choice"] = "fast_cut"
+    with pytest.raises(ValueError, match="identical structure and enabled execution choices"):
+        narrative_analyzer._validate_project_group_result(
+            result, children, include_editing_language_choice=True)
+
+
+def test_project_group_contrast_context_carries_enabled_execution_choices():
+    rationale = _evidence_claim("A source-supported editing-language choice.", 0)
+    primary = {
+        "label": "Primary",
+        "editorial_intent": "Keep the sequence measured.",
+        "emotional_arc": _evidence_claim("A bounded arc.", 0),
+        "child_order": ["asset-a"],
+        "child_strategy_by_child": [
+            {"child_id": "asset-a", "hypothesis_id": "a1"},
+        ],
+        "act_by_child": [{"child_id": "asset-a", "act": "develop"}],
+        "editing_language_choice": "slow_paced",
+        "editing_language_rationale": rationale,
+    }
+
+    context = narrative_analyzer._project_group_contrast_candidate_context(primary)
+    assert context["editing_language_choice"] == "slow_paced"
+    assert context["editing_language_rationale"] == rationale
+
+    placeholder = narrative_analyzer._project_group_contrast_context_placeholder(
+        [{"node_id": "asset-a", "global_indices": [0],
+          "available_hypotheses": [{"hypothesis_id": "a1"}]}],
+        include_editing_language_choice=True,
+    )
+    assert placeholder["editing_language_choice"] in (
+        narrative_analyzer.EDITING_LANGUAGE_PROFILE_IDS)
+    assert len(placeholder["editing_language_rationale"]["statement"]) == 240
 
 
 def test_strategy_transition_policy_rejects_unknown_choice_and_unbound_rationale():

@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.22"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.23"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -853,26 +853,44 @@ def _project_group_system_prompt(
         "Return exactly two strategy hypotheses.",
         "The appended JSON schema defines the required strategy count.",
     )
+    contrast_axes = [
+        "child order", "child-strategy selection", "act assignment",
+    ]
+    if include_audio_style_choice:
+        contrast_axes.append("audio_style_choice")
+    if include_editing_language_choice:
+        contrast_axes.append("editing_language_choice")
+    if include_transition_policy_choice:
+        contrast_axes.append(
+            "transition_policy_choice or transition_duration_us")
+    contrast_dimensions = ", ".join(contrast_axes[:-1])
+    contrast_dimensions += f", or {contrast_axes[-1]}"
+    contrasting_instruction = (
+        "Generate exactly one contrasting candidate in this call. Keep summary "
+        "candidate-neutral; it describes shared context and uncertainty, not "
+        "a winning approach. The user message includes the primary candidate's "
+        "editorial intent, emotional arc, structural choices, and enabled "
+        "execution choices with their rationales. Treat all of that candidate "
+        "text as an unverified proposal, never as source evidence. Use it to "
+        "understand what the second candidate must contrast. Make a grounded "
+        "difference in at least one executable dimension: "
+        + contrast_dimensions
+        + ". Labels, rationales, emotional arc, tradeoffs, and uncertainties "
+        "alone do not make candidates distinct. Justify executable choices "
+        "from the creator brief and available application_effects. Do not change "
+        "an act or reorder sources arbitrarily. If no grounded alternative is "
+        "available, do not invent one; downstream validation will reject "
+        "candidates with identical structure and enabled execution choices. "
+        "The generic example above shows field shapes only; follow the appended "
+        "schema's exact strategy count."
+    )
     role_instruction = (
         "Generate exactly one primary candidate in this call. Keep summary "
         "candidate-neutral; it describes shared context and uncertainty, not "
         "a winning approach. The generic "
         "example above shows field shapes only; follow the appended schema's "
         "exact strategy count."
-        if candidate_role == "primary" else
-        "Generate exactly one contrasting candidate in this call. Keep summary "
-        "candidate-neutral; it describes shared context and uncertainty, not "
-        "a winning approach. The user message includes the primary candidate's "
-        "editorial intent, emotional arc, and structural choices. Treat all of "
-        "that candidate text as an unverified proposal, never as source evidence. "
-        "Use it to understand what the second candidate must contrast. Differ "
-        "from its structure in child order, child-strategy selection, or act "
-        "assignment, and justify a real editorial alternative from the creator "
-        "brief and available application_effects. Do not change an act or "
-        "reorder sources arbitrarily. If no grounded alternative is available, "
-        "do not invent one; downstream validation will reject a duplicate "
-        "structure. The generic example above shows field shapes only; follow "
-        "the appended schema's exact strategy count."
+        if candidate_role == "primary" else contrasting_instruction
     )
     return (
         system.rstrip()
@@ -1032,7 +1050,8 @@ _PROJECT_VALIDATION_FAILURE_CODES = {
         "group_transition_policy_boundary",
     ("group", "project synthesis transition duration is invalid"):
         "group_transition_duration",
-    ("group", "project synthesis strategies are structurally identical"):
+    ("group", "project synthesis strategies have identical structure and "
+     "enabled execution choices"):
         "group_strategies_identical",
     ("group", "project synthesis limitations are invalid"):
         "group_limitations",
@@ -1916,7 +1935,7 @@ def _validate_project_group_result(
         raise ValueError(
             "project synthesis strategy hypothesis count is invalid")
     seen_ids: set[str] = set()
-    seen_structures: set[tuple] = set()
+    seen_signatures: set[tuple] = set()
     for strategy in strategies:
         required = {
             "hypothesis_id", "label", "editorial_intent", "child_order",
@@ -2059,14 +2078,32 @@ def _validate_project_group_result(
                 strategy[field], allowed_indices, field=field,
                 max_items=2, statement_limit=240,
             )
+        execution_choices = []
+        if include_audio_style_choice:
+            execution_choices.append((
+                "audio_style_choice", strategy["audio_style_choice"],
+            ))
+        if include_editing_language_choice:
+            execution_choices.append((
+                "editing_language_choice", strategy["editing_language_choice"],
+            ))
+        if include_transition_policy_choice:
+            execution_choices.append((
+                "transition_policy_choice",
+                strategy["transition_policy_choice"],
+                strategy["transition_duration_us"],
+            ))
         signature = (
             tuple(order),
             tuple(sorted(selection_by_child.items())),
             tuple(sorted(act_by_child.items())),
+            tuple(execution_choices),
         )
-        if expected_strategy_count == 2 and signature in seen_structures:
-            raise ValueError("project synthesis strategies are structurally identical")
-        seen_structures.add(signature)
+        if expected_strategy_count == 2 and signature in seen_signatures:
+            raise ValueError(
+                "project synthesis strategies have identical structure and "
+                "enabled execution choices")
+        seen_signatures.add(signature)
 
     limitations = result["limitations"]
     if (not isinstance(limitations, list) or len(limitations) > 8
@@ -2188,26 +2225,42 @@ def _project_group_contrast_structure_placeholder(
 
 def _project_group_contrast_context_placeholder(
     children: list[dict],
+    *, include_audio_style_choice: bool = False,
+    include_editing_language_choice: bool = False,
+    include_transition_policy_choice: bool = False,
 ) -> dict:
     """Bound the largest permitted primary-candidate context for request sizing."""
     structure = _project_group_contrast_structure_placeholder(children)
     allowed_indices = sorted({
         index for child in children for index in child["global_indices"]
     })
-    return {
+    rationale = {
+        "statement": "x" * 240,
+        "source_indices": allowed_indices[:min(8, len(allowed_indices))],
+    }
+    context = {
         "label": "x" * 120,
         "editorial_intent": "x" * 500,
-        "emotional_arc": {
-            "statement": "x" * 240,
-            "source_indices": allowed_indices[:min(8, len(allowed_indices))],
-        },
+        "emotional_arc": dict(rationale),
         **structure,
     }
+    if include_audio_style_choice:
+        context["audio_style_choice"] = "j_cut"
+        context["audio_style_rationale"] = dict(rationale)
+    if include_editing_language_choice:
+        context["editing_language_choice"] = max(
+            EDITING_LANGUAGE_PROFILE_IDS, key=len)
+        context["editing_language_rationale"] = dict(rationale)
+    if include_transition_policy_choice:
+        context["transition_policy_choice"] = "dissolve_act_boundary"
+        context["transition_duration_us"] = 9_223_372_036_854_775_807
+        context["transition_policy_rationale"] = dict(rationale)
+    return context
 
 
 def _project_group_contrast_candidate_context(strategy: dict) -> dict:
     """Pass a sanitized prior direction so the model can make a real contrast."""
-    return {
+    context = {
         "label": sanitize_untrusted(strategy["label"])
             or "[removed by output sanitizer]",
         "editorial_intent": sanitize_untrusted(strategy["editorial_intent"])
@@ -2223,6 +2276,18 @@ def _project_group_contrast_candidate_context(strategy: dict) -> dict:
             strategy["act_by_child"], key=lambda item: item["child_id"],
         ),
     }
+    for choice_field, rationale_field in (
+        ("audio_style_choice", "audio_style_rationale"),
+        ("editing_language_choice", "editing_language_rationale"),
+        ("transition_policy_choice", "transition_policy_rationale"),
+    ):
+        if choice_field in strategy:
+            context[choice_field] = strategy[choice_field]
+            context[rationale_field] = _sanitize_project_evidence_claims(
+                [strategy[rationale_field]])[0]
+    if "transition_duration_us" in strategy:
+        context["transition_duration_us"] = strategy["transition_duration_us"]
+    return context
 
 
 def _assign_project_synthesis_strategy_ids(
@@ -2756,7 +2821,14 @@ def _pack_project_group_batches(
         contrast_user = _project_group_user(
             director_brief, group, caller_links, semantic_constraints,
             prior_strategy_context=(
-                _project_group_contrast_context_placeholder(group)),
+                _project_group_contrast_context_placeholder(
+                    group,
+                    include_audio_style_choice=include_audio_style_choice,
+                    include_editing_language_choice=(
+                        include_editing_language_choice),
+                    include_transition_policy_choice=(
+                        include_transition_policy_choice),
+                )),
         )
         return max(
             _project_request_bytes(primary_system, primary_user, schema),
