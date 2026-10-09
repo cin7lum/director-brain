@@ -2,7 +2,7 @@
 """跨镜头叙事理解器（结构化分析库函数；能力准入由调用方负责）。
 
 输入全部镜头的语义观测序列（scene_description / shot_function /
-shot_scale / emotional_tone / action_type / importance），一次 LLM 综合调用产出：
+shot_scale / emotional_tone / action_type / importance），经有界分层调用综合产出：
 
 - **叙事弧**：这些镜头连在一起讲了什么故事
 - **情绪轨迹**：每镜头的情绪标签（calm→tense→climax→resolution）
@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.20"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.21"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -50,6 +50,8 @@ _PROJECT_NARRATIVE_MAX_OUTPUT_TOKENS = 4096
 # flat path bounded so its worst-case completion stays within the 4,096-token
 # cap. Leaf responses carry the same per-shot emotion and rationale arrays, so
 # keep their shot ceiling at the same bound; larger projects use more leaves.
+# Group strategies are generated one at a time so the second candidate can
+# condition on the first without doubling an individual completion.
 _PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS = 16
 _PROJECT_NARRATIVE_SEGMENT_MAX_SHOTS = 16
 _PROJECT_NARRATIVE_GROUP_MAX_CHILDREN = 16
@@ -834,6 +836,7 @@ def _project_group_system_prompt(
     include_editing_language_choice: bool,
     include_transition_policy_choice: bool = False,
     assess_semantic_constraints: bool = False,
+    candidate_role: str = "primary",
 ) -> str:
     system = _project_strategy_claim_system_prompt(_PROJECT_NARRATIVE_GROUP_PROMPT)
     if include_audio_style_choice:
@@ -844,11 +847,37 @@ def _project_group_system_prompt(
         system = _project_transition_policy_choice_system_prompt(system)
     if assess_semantic_constraints:
         system = _project_constraint_review_system_prompt(system)
+    if candidate_role not in {"primary", "contrasting"}:
+        raise ValueError("project group candidate role is invalid")
+    system = system.replace(
+        "Return exactly two strategy hypotheses.",
+        "The appended JSON schema defines the required strategy count.",
+    )
+    role_instruction = (
+        "Generate exactly one primary candidate in this call. Keep summary "
+        "candidate-neutral; it describes shared context and uncertainty, not "
+        "a winning approach. The generic "
+        "example above shows field shapes only; follow the appended schema's "
+        "exact strategy count."
+        if candidate_role == "primary" else
+        "Generate exactly one contrasting candidate in this call. Keep summary "
+        "candidate-neutral; it describes shared context and uncertainty, not "
+        "a winning approach. The user "
+        "message includes the primary candidate's prior structural choices. "
+        "Differ from those choices in child order, child-strategy selection, "
+        "or act assignment, using the creator brief and available "
+        "application_effects to justify a real editorial alternative. Do not "
+        "change an act or reorder sources arbitrarily. If no grounded "
+        "alternative is available, do not invent one; downstream validation "
+        "will reject a duplicate structure. The generic example above shows "
+        "field shapes only; follow the appended schema's exact strategy count."
+    )
     return (
         system.rstrip()
         + "\n\nFor each child strategy selection, copy a hypothesis_id that is "
         "listed under that same child_id's available_hypotheses. Do not use "
-        "another child's hypothesis_id."
+        "another child's hypothesis_id.\n\n"
+        + role_instruction
     )
 
 
@@ -1386,11 +1415,14 @@ def _project_single_response_schema(
 
 
 def _project_group_response_schema(
-    children: list[dict], *, include_audio_style_choice: bool = False,
+    children: list[dict], *, strategy_count: int = 2,
+    include_audio_style_choice: bool = False,
     include_editing_language_choice: bool = False,
     include_transition_policy_choice: bool = False,
     semantic_constraints: list[dict] | None = None,
 ) -> dict:
+    if type(strategy_count) is not int or strategy_count not in {1, 2}:
+        raise ValueError("project group schema strategy count is invalid")
     child_ids = [child["node_id"] for child in children]
     if not child_ids or len(child_ids) > _PROJECT_NARRATIVE_GROUP_MAX_CHILDREN:
         raise ValueError("project group schema child count is outside its bound")
@@ -1558,8 +1590,8 @@ def _project_group_response_schema(
             },
             "strategies": {
                 "type": "array",
-                "minItems": 2,
-                "maxItems": 2,
+                "minItems": strategy_count,
+                "maxItems": strategy_count,
                 "items": strategy,
             },
             "limitations": {
@@ -1862,6 +1894,7 @@ def _validate_project_group_result(
     include_editing_language_choice: bool = False,
     include_transition_policy_choice: bool = False,
     semantic_constraints: list[dict] | None = None,
+    expected_strategy_count: int = 2,
 ) -> None:
     if (not isinstance(result, dict)
             or not {"summary", "strategies", "limitations"} <= set(result)):
@@ -1874,8 +1907,12 @@ def _validate_project_group_result(
         index for child in children for index in child["global_indices"]
     }
     strategies = result["strategies"]
-    if not isinstance(strategies, list) or len(strategies) != 2:
-        raise ValueError("project synthesis requires exactly two hypotheses")
+    if (type(expected_strategy_count) is not int
+            or expected_strategy_count not in {1, 2}
+            or not isinstance(strategies, list)
+            or len(strategies) != expected_strategy_count):
+        raise ValueError(
+            "project synthesis strategy hypothesis count is invalid")
     seen_ids: set[str] = set()
     seen_structures: set[tuple] = set()
     for strategy in strategies:
@@ -2025,7 +2062,7 @@ def _validate_project_group_result(
             tuple(sorted(selection_by_child.items())),
             tuple(sorted(act_by_child.items())),
         )
-        if signature in seen_structures:
+        if expected_strategy_count == 2 and signature in seen_structures:
             raise ValueError("project synthesis strategies are structurally identical")
         seen_structures.add(signature)
 
@@ -2041,6 +2078,7 @@ def _project_group_user(
     children: list[dict],
     caller_links: list[dict],
     semantic_constraints: list[dict] | None = None,
+    prior_strategy_structure: dict | None = None,
 ) -> str:
     blocks = []
     for child in children:
@@ -2098,20 +2136,72 @@ def _project_group_user(
             "do not claim that the asserted identities or relationships are true.\n"
             + json.dumps(unverified_links, ensure_ascii=False, separators=(",", ":"))
         )
+    if prior_strategy_structure is not None:
+        user += (
+            "\n\nPrimary candidate structure (unverified model proposal; "
+            "use only as a structural contrast reference, never as source "
+            "evidence):\n"
+            + json.dumps(
+                prior_strategy_structure,
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+        )
     return user
 
 
-def _assign_project_synthesis_strategy_ids(result: object) -> object:
+def _project_group_contrast_structure_placeholder(
+    children: list[dict],
+) -> dict:
+    """Return the bounded largest-shape structural reference for preflight."""
+    child_ids = [child["node_id"] for child in children]
+    selections = []
+    acts = []
+    for child in children:
+        available = child.get("available_hypotheses", {})
+        if isinstance(available, dict):
+            hypothesis_ids = list(available)
+        elif isinstance(available, list):
+            hypothesis_ids = [
+                item.get("hypothesis_id")
+                for item in available if isinstance(item, dict)
+            ]
+        else:
+            hypothesis_ids = []
+        if not hypothesis_ids or any(not isinstance(item, str)
+                                     for item in hypothesis_ids):
+            raise ValueError(
+                "project group contrast reference lacks child hypotheses")
+        selections.append({
+            "child_id": child["node_id"],
+            "hypothesis_id": max(hypothesis_ids, key=len),
+        })
+        acts.append({"child_id": child["node_id"], "act": "develop"})
+    return {
+        "child_order": child_ids,
+        "child_strategy_by_child": selections,
+        "act_by_child": acts,
+    }
+
+
+def _assign_project_synthesis_strategy_ids(
+    result: object, *, start_index: int = 0,
+) -> object:
     """Assign stable IDs to project strategies; these IDs carry no semantics."""
-    if not isinstance(result, dict):
+    if (not isinstance(result, dict) or type(start_index) is not int
+            or not 0 <= start_index < len(_PROJECT_SYNTHESIS_STRATEGY_IDS)):
         return result
     strategies = result.get("strategies")
-    if not isinstance(strategies, list) or len(strategies) != len(
-            _PROJECT_SYNTHESIS_STRATEGY_IDS):
+    if (not isinstance(strategies, list) or not strategies
+            or start_index + len(strategies) > len(
+                _PROJECT_SYNTHESIS_STRATEGY_IDS)):
         return result
     assigned = []
     for strategy, hypothesis_id in zip(
-            strategies, _PROJECT_SYNTHESIS_STRATEGY_IDS):
+            strategies,
+            _PROJECT_SYNTHESIS_STRATEGY_IDS[
+                start_index:start_index + len(strategies)],
+    ):
         if not isinstance(strategy, dict):
             assigned.append(strategy)
             continue
@@ -2315,30 +2405,81 @@ def _analyze_project_group(
     if set(source_asset_group_by_index) != set(child_indexes):
         raise ValueError(
             "project synthesis source-asset group mapping lost a source")
-    user = _project_group_user(
-        director_brief, children, caller_links, semantic_constraints)
     input_evidence_ref_indexes = sorted(child_indexes)
-    system = _project_group_system_prompt(
+    response_schema = _project_group_response_schema(
+        children, strategy_count=1,
         include_audio_style_choice=include_audio_style_choice,
         include_editing_language_choice=include_editing_language_choice,
         include_transition_policy_choice=include_transition_policy_choice,
-        assess_semantic_constraints=semantic_constraints is not None,
-    )
-    result = _post_project_narrative_json(
-        base_url, api_key, model,
-        system,
-        user,
-        timeout=timeout, temperature=temperature,
-        call_stage="project_synthesis",
-        provider_call_provenance=provider_call_provenance,
-        input_evidence_ref_indexes=input_evidence_ref_indexes,
-        response_schema=_project_group_response_schema(
-            children, include_audio_style_choice=include_audio_style_choice,
+        semantic_constraints=semantic_constraints)
+
+    def generate_candidate(
+        candidate_role: str,
+        candidate_id_index: int,
+        prior_structure: dict | None = None,
+    ) -> dict:
+        system = _project_group_system_prompt(
+            include_audio_style_choice=include_audio_style_choice,
             include_editing_language_choice=include_editing_language_choice,
             include_transition_policy_choice=include_transition_policy_choice,
-            semantic_constraints=semantic_constraints),
-        runtime_binding_verifier=runtime_binding_verifier)
-    result = _assign_project_synthesis_strategy_ids(result)
+            assess_semantic_constraints=semantic_constraints is not None,
+            candidate_role=candidate_role,
+        )
+        user = _project_group_user(
+            director_brief, children, caller_links, semantic_constraints,
+            prior_strategy_structure=prior_structure,
+        )
+        candidate = _post_project_narrative_json(
+            base_url, api_key, model,
+            system,
+            user,
+            timeout=timeout, temperature=temperature,
+            call_stage="project_synthesis",
+            provider_call_provenance=provider_call_provenance,
+            input_evidence_ref_indexes=input_evidence_ref_indexes,
+            response_schema=response_schema,
+            runtime_binding_verifier=runtime_binding_verifier)
+        candidate = _assign_project_synthesis_strategy_ids(
+            candidate, start_index=candidate_id_index)
+        try:
+            _validate_project_group_result(
+                candidate, children,
+                include_audio_style_choice=include_audio_style_choice,
+                include_editing_language_choice=include_editing_language_choice,
+                include_transition_policy_choice=include_transition_policy_choice,
+                semantic_constraints=semantic_constraints,
+                expected_strategy_count=1,
+            )
+        except ValueError as exc:
+            failure = LLMStructuredOutputError(
+                "project narrative provider returned invalid synthesis output",
+                failure_code=_project_validation_failure_code("group", str(exc)),
+            )
+            failure.failure_stage = "project_synthesis"
+            failure.provider_call_count = len(provider_call_provenance)
+            raise failure from None
+        return candidate
+
+    primary = generate_candidate("primary", 0)
+    primary_strategy = primary["strategies"][0]
+    prior_structure = {
+        "child_order": list(primary_strategy["child_order"]),
+        "child_strategy_by_child": sorted(
+            primary_strategy["child_strategy_by_child"],
+            key=lambda item: item["child_id"],
+        ),
+        "act_by_child": sorted(
+            primary_strategy["act_by_child"],
+            key=lambda item: item["child_id"],
+        ),
+    }
+    contrasting = generate_candidate("contrasting", 1, prior_structure)
+    result = {
+        "summary": primary["summary"],
+        "strategies": [primary_strategy, contrasting["strategies"][0]],
+        "limitations": list(dict.fromkeys(
+            primary["limitations"] + contrasting["limitations"])),
+    }
     try:
         _validate_project_group_result(
             result, children,
@@ -2352,6 +2493,7 @@ def _analyze_project_group(
             failure_code=_project_validation_failure_code("group", str(exc)),
         )
         failure.failure_stage = "project_synthesis"
+        failure.provider_call_count = len(provider_call_provenance)
         raise failure from None
     child_by_id = {child["node_id"]: child for child in children}
     node_strategies = []
@@ -2559,57 +2701,49 @@ def _pack_project_group_batches(
 ) -> list[list[dict]]:
     batches: list[list[dict]] = []
     current: list[dict] = []
+
+    def max_candidate_request_bytes(group: list[dict]) -> int:
+        schema = _project_group_response_schema(
+            group, strategy_count=1,
+            include_audio_style_choice=include_audio_style_choice,
+            include_editing_language_choice=include_editing_language_choice,
+            include_transition_policy_choice=include_transition_policy_choice,
+            semantic_constraints=semantic_constraints,
+        )
+        prompt_options = {
+            "include_audio_style_choice": include_audio_style_choice,
+            "include_editing_language_choice": include_editing_language_choice,
+            "include_transition_policy_choice": include_transition_policy_choice,
+            "assess_semantic_constraints": semantic_constraints is not None,
+        }
+        primary_system = _project_group_system_prompt(
+            **prompt_options, candidate_role="primary")
+        primary_user = _project_group_user(
+            director_brief, group, caller_links, semantic_constraints)
+        contrast_system = _project_group_system_prompt(
+            **prompt_options, candidate_role="contrasting")
+        contrast_user = _project_group_user(
+            director_brief, group, caller_links, semantic_constraints,
+            prior_strategy_structure=(
+                _project_group_contrast_structure_placeholder(group)),
+        )
+        return max(
+            _project_request_bytes(primary_system, primary_user, schema),
+            _project_request_bytes(contrast_system, contrast_user, schema),
+        )
+
     for child in children:
         candidate = current + [child]
         too_many = len(candidate) > _PROJECT_NARRATIVE_GROUP_MAX_CHILDREN
         too_large = (
-            not too_many
-            and _project_request_bytes(
-                _project_group_system_prompt(
-                    include_audio_style_choice=include_audio_style_choice,
-                    include_editing_language_choice=(
-                        include_editing_language_choice),
-                    include_transition_policy_choice=(
-                        include_transition_policy_choice),
-                    assess_semantic_constraints=(
-                        semantic_constraints is not None),
-                ),
-                _project_group_user(
-                    director_brief, candidate, caller_links, semantic_constraints),
-                _project_group_response_schema(
-                    candidate,
-                    include_audio_style_choice=include_audio_style_choice,
-                    include_editing_language_choice=(
-                        include_editing_language_choice),
-                    include_transition_policy_choice=(
-                        include_transition_policy_choice),
-                    semantic_constraints=semantic_constraints),
-            ) > _PROJECT_NARRATIVE_MAX_REQUEST_BYTES
+            not too_many and max_candidate_request_bytes(candidate)
+            > _PROJECT_NARRATIVE_MAX_REQUEST_BYTES
         )
         if (too_many or too_large) and current:
             batches.append(current)
             current = [child]
-            if _project_request_bytes(
-                    _project_group_system_prompt(
-                        include_audio_style_choice=include_audio_style_choice,
-                        include_editing_language_choice=(
-                            include_editing_language_choice),
-                        include_transition_policy_choice=(
-                            include_transition_policy_choice),
-                        assess_semantic_constraints=(
-                            semantic_constraints is not None),
-                    ),
-                    _project_group_user(
-                        director_brief, current, caller_links, semantic_constraints),
-                    _project_group_response_schema(
-                        current,
-                        include_audio_style_choice=include_audio_style_choice,
-                        include_editing_language_choice=(
-                            include_editing_language_choice),
-                        include_transition_policy_choice=(
-                            include_transition_policy_choice),
-                        semantic_constraints=semantic_constraints),
-            ) > _PROJECT_NARRATIVE_MAX_REQUEST_BYTES:
+            if (max_candidate_request_bytes(current)
+                    > _PROJECT_NARRATIVE_MAX_REQUEST_BYTES):
                 raise LLMInputCapacityError(
                     "project summaries or brief exceed safe synthesis input capacity")
         elif too_many or too_large:
@@ -2755,7 +2889,7 @@ def _analyze_project_narrative_hierarchically(
                 runtime_binding_verifier=runtime_binding_verifier,
             )
             next_node_number += 1
-            provider_calls += 1
+            provider_calls += 2
             all_nodes.append(node)
             reduced.append(node)
         current = reduced

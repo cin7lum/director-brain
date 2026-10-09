@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.20"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.21"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -1282,6 +1282,102 @@ def test_project_group_prompt_requires_child_scoped_hypothesis_ids():
     assert "assigns stable candidate IDs after parsing" in system
 
 
+def test_project_group_generates_one_contrasting_candidate_and_fails_closed_without_retry(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        narrative_analyzer, "_PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS", 1)
+    calls = []
+
+    def provider(_base_url, _api_key, _model, system, user, **_kwargs):
+        calls.append((system, user))
+        if system.startswith(narrative_analyzer._PROJECT_NARRATIVE_SEGMENT_PROMPT):
+            return json.dumps({
+                "summary": "A one-shot source segment.",
+                "emotional_trajectory": ["neutral"],
+                "key_moments": [],
+                "strategy_hypotheses": [{
+                    "hypothesis_id": "local-only",
+                    "label": "source order",
+                    "editorial_intent": "Keep the source observation in order.",
+                    "emotional_arc": _evidence_claim(
+                        "The single observation has no established arc.", 0),
+                    "suggested_order": [0],
+                    "source_rationales": [{
+                        "shot_idx": 0,
+                        "disposition": "include",
+                        "statement": "Keep the only supplied observation.",
+                        "source_indices": [0],
+                    }],
+                }],
+                "limitations": ["A single observation cannot establish an arc."],
+            })
+
+        if "Generate exactly one primary candidate" in system:
+            assert "Primary candidate structure" not in user
+        else:
+            assert "Generate exactly one contrasting candidate" in system
+            marker = (
+                "Primary candidate structure (unverified model proposal; "
+                "use only as a structural contrast reference, never as source "
+                "evidence):\n"
+            )
+            assert json.loads(user.split(marker, 1)[1]) == {
+                "child_order": ["segment-0001", "segment-0002"],
+                "child_strategy_by_child": [
+                    {"child_id": "segment-0001", "hypothesis_id": "local-only"},
+                    {"child_id": "segment-0002", "hypothesis_id": "local-only"},
+                ],
+                "act_by_child": [
+                    {"child_id": "segment-0001", "act": "hook"},
+                    {"child_id": "segment-0002", "act": "develop"},
+                ],
+            }
+
+        return json.dumps({
+            "summary": "A project-level summary.",
+            "strategies": [{
+                "label": "same structural proposal",
+                "editorial_intent": "Keep the two source segments in order.",
+                "emotional_arc": _evidence_claim(
+                    "A bounded project-level emotional proposal.", 0, 1),
+                "child_order": ["segment-0001", "segment-0002"],
+                "child_strategy_by_child": [
+                    {"child_id": "segment-0001", "hypothesis_id": "local-only"},
+                    {"child_id": "segment-0002", "hypothesis_id": "local-only"},
+                ],
+                "act_by_child": [
+                    {"child_id": "segment-0001", "act": "hook"},
+                    {"child_id": "segment-0002", "act": "develop"},
+                ],
+                "tradeoffs": [_evidence_claim("Preserves source order.", 0)],
+                "uncertainties": [_evidence_claim(
+                    "The sources do not establish cross-asset continuity.", 1)],
+            }],
+            "limitations": [],
+        })
+
+    monkeypatch.setattr(narrative_analyzer, "post_chat_json", provider)
+    with pytest.raises(narrative_analyzer.LLMStructuredOutputError) as exc_info:
+        narrative_analyzer.analyze_project_narrative(
+            [{"scene_description": "one observation"},
+             {"scene_description": "another observation"}],
+            asset_ids=["asset-a", "asset-b"],
+            shot_ids=["source-a", "source-b"],
+            base_url="http://localhost:11434/v1",
+            model="qwen2.5:7b",
+            api_key="ollama-local",
+            timeout=30,
+            temperature=0,
+            director_brief="Compare two evidence-grounded edit approaches.",
+        )
+
+    assert len(calls) == 4  # two leaf calls and one call per candidate
+    assert exc_info.value.failure_code == "group_strategies_identical"
+    assert exc_info.value.failure_stage == "project_synthesis"
+    assert exc_info.value.provider_call_count == 4
+
+
 def test_project_synthesis_strategy_ids_are_application_owned():
     provider_result = {
         "summary": "Two supported editorial alternatives.",
@@ -1592,88 +1688,99 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
         for suffix in (
             "\n\nOpen-ended creator constraints",
             "\n\nUnverified caller assertions",
+            "\n\nPrimary candidate structure",
         ):
             child_payload = child_payload.split(suffix, 1)[0]
         children = json.loads(child_payload)
         group_children_payloads.append(children)
+        is_contrasting_candidate = (
+            "Generate exactly one contrasting candidate" in system)
+        prior_structure = None
+        if is_contrasting_candidate:
+            marker = (
+                "Primary candidate structure (unverified model proposal; "
+                "use only as a structural contrast reference, never as source "
+                "evidence):\n"
+            )
+            prior_structure = json.loads(user.split(marker, 1)[1])
+        else:
+            assert "Generate exactly one primary candidate" in system
+            assert "Primary candidate structure" not in user
         child_ids = [item["child_id"] for item in children]
         source_indices = sorted({
             index for child in children for index in child["global_indices"]
         })
-        strategies = []
-        for hypothesis_id, order in (
-            ("A", child_ids),
-            ("B", list(reversed(child_ids))),
-        ):
-            strategy = {
-                "hypothesis_id": hypothesis_id,
-                "label": f"sequence {hypothesis_id}",
-                "editorial_intent": "Arrange supported segments with a distinct structure.",
-                "emotional_arc": _evidence_claim(
-                    "Shape the emotional release through the selected sequence.",
+        hypothesis_id = "B" if is_contrasting_candidate else "A"
+        order = list(reversed(child_ids)) if is_contrasting_candidate else child_ids
+        strategy = {
+            "label": f"sequence {hypothesis_id}",
+            "editorial_intent": "Arrange supported segments with a distinct structure.",
+            "emotional_arc": _evidence_claim(
+                "Shape the emotional release through the selected sequence.",
+                source_indices[0], source_indices[-1]),
+            "child_order": order,
+            "child_strategy_by_child": [{
+                "child_id": child["child_id"],
+                "hypothesis_id": child["available_hypotheses"][
+                    1 if hypothesis_id == "B" and index == 0
+                    and len(child["available_hypotheses"]) > 1 else 0][
+                    "hypothesis_id"],
+            } for index, child in enumerate(children)],
+            "act_by_child": [{
+                "child_id": child_id,
+                "act": "hook" if index == 0 else "develop",
+            } for index, child_id in enumerate(child_ids)],
+            "tradeoffs": [_evidence_claim(
+                "A different sequence foregrounds different moments.",
+                source_indices[0])],
+            "uncertainties": [_evidence_claim(
+                "Segment summaries do not establish factual relations.",
+                source_indices[-1])],
+        }
+        if prior_structure is not None:
+            assert prior_structure["child_order"] != strategy["child_order"]
+        if "For every strategy, include audio_style_choice" in system:
+            strategy.update({
+                "audio_style_choice": (
+                    "j_cut" if hypothesis_id == "A" else "l_cut"),
+                "audio_style_rationale": _evidence_claim(
+                    "A strategy-specific sound bridge proposal.",
                     source_indices[0], source_indices[-1]),
-                "child_order": order,
-                "child_strategy_by_child": [{
-                    "child_id": child["child_id"],
-                    "hypothesis_id": child["available_hypotheses"][
-                        1 if hypothesis_id == "B" and index == 0 else 0][
-                        "hypothesis_id"],
-                } for index, child in enumerate(children)],
-                "act_by_child": [{
-                    "child_id": child_id,
-                    "act": "hook" if index == 0 else "develop",
-                } for index, child_id in enumerate(child_ids)],
-                "tradeoffs": [_evidence_claim(
-                    "A different sequence foregrounds different moments.",
-                    source_indices[0])],
-                "uncertainties": [_evidence_claim(
-                    "Segment summaries do not establish factual relations.",
-                    source_indices[-1])],
-            }
-            if "For every strategy, include audio_style_choice" in system:
-                strategy.update({
-                    "audio_style_choice": (
-                        "j_cut" if hypothesis_id == "A" else "l_cut"),
-                    "audio_style_rationale": _evidence_claim(
-                        "A strategy-specific sound bridge proposal.",
-                        source_indices[0], source_indices[-1]),
-                })
-            if "For every strategy, include editing_language_choice" in system:
-                strategy.update({
-                    "editing_language_choice": (
-                        "fast_cut" if hypothesis_id == "A" else "slow_paced"),
-                    "editing_language_rationale": _evidence_claim(
-                        "A strategy-specific editing-language proposal.",
-                        source_indices[0], source_indices[-1]),
-                })
-            if "For every strategy, include transition_policy_choice" in system:
-                transition_refs = source_indices
-                strategy.update({
-                    "transition_policy_choice": (
-                        "dissolve_act_boundary" if hypothesis_id == "A" else "none"),
-                    "transition_duration_us": (
-                        620_000 if hypothesis_id == "A" else 0),
-                    "transition_policy_rationale": _evidence_claim(
-                        "A strategy-specific act-boundary proposal.",
-                        *transition_refs),
-                })
-            if "For every listed open-ended creator constraint" in system:
-                strategy["constraint_assessments"] = [{
-                    "constraint_ref": "must_include:0",
-                    "assessment": (
-                        "candidate_supported" if hypothesis_id == "A"
-                        else "unresolved"),
-                    "statement": (
-                        "One source summary suggests the requested moment."
-                        if hypothesis_id == "A"
-                        else "The summaries do not establish the requested moment."),
-                    "source_indices": (
-                        [source_indices[0]] if hypothesis_id == "A" else []),
-                }]
-            strategies.append(strategy)
+            })
+        if "For every strategy, include editing_language_choice" in system:
+            strategy.update({
+                "editing_language_choice": (
+                    "fast_cut" if hypothesis_id == "A" else "slow_paced"),
+                "editing_language_rationale": _evidence_claim(
+                    "A strategy-specific editing-language proposal.",
+                    source_indices[0], source_indices[-1]),
+            })
+        if "For every strategy, include transition_policy_choice" in system:
+            strategy.update({
+                "transition_policy_choice": (
+                    "dissolve_act_boundary" if hypothesis_id == "A" else "none"),
+                "transition_duration_us": (
+                    620_000 if hypothesis_id == "A" else 0),
+                "transition_policy_rationale": _evidence_claim(
+                    "A strategy-specific act-boundary proposal.",
+                    *source_indices),
+            })
+        if "For every listed open-ended creator constraint" in system:
+            strategy["constraint_assessments"] = [{
+                "constraint_ref": "must_include:0",
+                "assessment": (
+                    "candidate_supported" if hypothesis_id == "A"
+                    else "unresolved"),
+                "statement": (
+                    "One source summary suggests the requested moment."
+                    if hypothesis_id == "A"
+                    else "The summaries do not establish the requested moment."),
+                "source_indices": (
+                    [source_indices[0]] if hypothesis_id == "A" else []),
+            }]
         return json.dumps({
             "summary": "A project-level editorial possibility, not a factual chronology.",
-            "strategies": strategies,
+            "strategies": [strategy],
             "limitations": ["Cross-asset identity and causality are not established."],
             "provider_extension_field": "ignored by the bounded contract",
         })
@@ -1709,8 +1816,8 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
         }],
     )
 
-    assert len(captured) == 7  # four bounded source segments and three syntheses
-    assert len(group_children_payloads) == 3
+    assert len(captured) == 10  # four segments and two calls per synthesis node
+    assert len(group_children_payloads) == 6
     all_children_by_id = {
         item["child_id"]: item
         for payload in group_children_payloads
@@ -1767,7 +1874,7 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
                 }
                 for group in sorted(counts_by_group)
             ]
-    assert binding_checks == list(range(1, 15))
+    assert binding_checks == list(range(1, 21))
     assert all(
         (len((system + "\n" + user).encode("utf-8"))
          + len(narrative_analyzer._project_schema_text(
@@ -1813,12 +1920,13 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
             for suffix in (
                 "\n\nOpen-ended creator constraints",
                 "\n\nUnverified caller assertions",
+                "\n\nPrimary candidate structure",
             ):
                 child_payload = child_payload.split(suffix, 1)[0]
             child_count = len(json.loads(child_payload))
             strategies_schema = schema["properties"]["strategies"]
-            assert strategies_schema["minItems"] == 2
-            assert strategies_schema["maxItems"] == 2
+            assert strategies_schema["minItems"] == 1
+            assert strategies_schema["maxItems"] == 1
             child_order_schema = strategies_schema["items"]["properties"][
                 "child_order"]
             assert child_order_schema["minItems"] == child_count
@@ -1844,17 +1952,19 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
         "mode": "bounded_segment_then_project_synthesis",
         "leaf_segment_count": 4,
         "reduction_levels": 2,
-        "provider_call_count": 7,
+        "provider_call_count": 10,
         "max_request_bytes": 24576,
         "max_output_tokens_per_call": 4096,
     }
     call_provenance = result["provider_call_provenance"]
-    assert len(call_provenance) == 7
-    assert [item["sequence"] for item in call_provenance] == list(range(1, 8))
+    assert len(call_provenance) == 10
+    assert [item["sequence"] for item in call_provenance] == list(range(1, 11))
     assert [item["stage"] for item in call_provenance] == (
-        ["segment"] * 4 + ["project_synthesis"] * 3)
+        ["segment"] * 4 + ["project_synthesis"] * 6)
     assert [item["input_evidence_ref_indexes"] for item in call_provenance] == [
-        [0, 1], [2], [3, 4], [5], [0, 1, 2], [3, 4, 5], [0, 1, 2, 3, 4, 5],
+        [0, 1], [2], [3, 4], [5],
+        [0, 1, 2], [0, 1, 2], [3, 4, 5], [3, 4, 5],
+        [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5],
     ]
     assert all(
         item["runtime_binding_state"] == "verified"
