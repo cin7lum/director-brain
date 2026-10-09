@@ -117,6 +117,13 @@ from director_brain.project_story_link_ranking import (
 
 
 _SAFE_PROJECT_REASONER_FAILURE_CODES = PROJECT_NARRATIVE_FAILURE_CODES
+_UNCLASSIFIED_REASONER_VALUE_ERROR_CODE = (
+    "reasoner_value_error_unclassified"
+)
+_SAFE_PROJECT_REASONER_API_FAILURE_CODES = (
+    _SAFE_PROJECT_REASONER_FAILURE_CODES
+    | frozenset({_UNCLASSIFIED_REASONER_VALUE_ERROR_CODE})
+)
 _SAFE_PROJECT_REASONER_TRANSPORT_CODES = frozenset({
     "provider_connection_error",
     "provider_configuration_error",
@@ -224,6 +231,20 @@ _PROJECT_REASONER_FAILURE_RESPONSES = {
 }
 _PROJECT_SHADOW_COMPARISON_RESPONSES = {
     **_PROJECT_REASONER_FAILURE_RESPONSES,
+    500: {
+        "description": (
+            "The local project comparison failed with an unclassified error."
+        ),
+        "headers": {
+            "X-Director-Brain-Failure-Code": {
+                "description": "Fixed code for an unclassified ValueError.",
+                "schema": {
+                    "type": "string",
+                    "enum": [_UNCLASSIFIED_REASONER_VALUE_ERROR_CODE],
+                },
+            },
+        },
+    },
     409: {
         "description": (
             "The idempotency key conflicts, is still running, or has an "
@@ -1368,7 +1389,7 @@ def _record_project_director_shadow_failure(
         failure_code = headers.get(
             "X-Director-Brain-Failure-Code", "project_schema_invalid")
     elif isinstance(exc, ValueError):
-        failure_code = "project_evidence_inconsistent"
+        failure_code = _UNCLASSIFIED_REASONER_VALUE_ERROR_CODE
     else:
         failure_code = "internal_error"
 
@@ -1382,6 +1403,12 @@ def _record_project_director_shadow_failure(
         "context_id": context.context_id,
         "story_graph_id": graph.graph_id,
     }
+    if failure_code == _UNCLASSIFIED_REASONER_VALUE_ERROR_CODE:
+        detail["attribution_state"] = "unclassified"
+        exception_type = type(exc).__name__
+        if (isinstance(exception_type, str)
+                and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]{0,79}", exception_type)):
+            detail["exception_type"] = exception_type
     detail.update(_safe_project_reasoner_failure_diagnostics(exc))
 
     try:
@@ -1444,6 +1471,8 @@ def _replay_project_director_shadow_failure(
         status_code = 503
     elif failure_code in _SAFE_PROJECT_REASONER_FAILURE_CODES:
         status_code = 502
+    elif failure_code == _UNCLASSIFIED_REASONER_VALUE_ERROR_CODE:
+        status_code = 500
     elif failure_code == "project_evidence_inconsistent":
         status_code = 409
     elif failure_code == "internal_error":
@@ -1455,7 +1484,7 @@ def _replay_project_director_shadow_failure(
         )
 
     headers = {}
-    if (failure_code in _SAFE_PROJECT_REASONER_FAILURE_CODES
+    if (failure_code in _SAFE_PROJECT_REASONER_API_FAILURE_CODES
             or failure_code in _SAFE_PROJECT_REASONER_TRANSPORT_CODES):
         headers["X-Director-Brain-Failure-Code"] = failure_code
     raise HTTPException(
@@ -4263,6 +4292,21 @@ def project_director_shadow_strategy_comparison_endpoint(
                 graph=graph,
                 exc=exc,
             )
+            if (isinstance(exc, ValueError)
+                    and not isinstance(
+                        exc, (LLMInputCapacityError, LLMStructuredOutputError))):
+                raise HTTPException(
+                    status_code=500,
+                    detail=(
+                        "local project Director Reasoner failed with an "
+                        "unclassified error"
+                    ),
+                    headers={
+                        "X-Director-Brain-Failure-Code": (
+                            _UNCLASSIFIED_REASONER_VALUE_ERROR_CODE
+                        ),
+                    },
+                ) from None
             raise
         _require_current_project_sources(manifest)
 
@@ -4362,9 +4406,6 @@ def project_director_shadow_strategy_comparison_endpoint(
             detail="local project Director Reasoner returned invalid structured output",
             headers=_safe_project_reasoner_failure_headers(exc),
         ) from exc
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=409, detail="project shadow strategy evidence is inconsistent") from exc
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"项目请求失败，关联编号 {corr}") from exc
     finally:

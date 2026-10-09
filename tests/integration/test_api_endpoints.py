@@ -1081,6 +1081,71 @@ def test_project_manifest_and_multi_asset_context_persist_with_source_bindings(
         for item in failed_attempts
     )
 
+    unclassified_generator_calls = 0
+    private_value_error_marker = "PRIVATE_VALUE_ERROR_DETAIL_MUST_NOT_LEAK"
+
+    def fail_with_unclassified_value_error(*args, **kwargs):
+        nonlocal unclassified_generator_calls
+        unclassified_generator_calls += 1
+        raise ValueError(private_value_error_marker)
+
+    monkeypatch.setattr(
+        api_main, "generate_project_shadow_strategy_options",
+        fail_with_unclassified_value_error,
+    )
+    unclassified_failure_request = {
+        "manifest_revision": 1,
+        "target_duration_us": 1_600_000,
+        "intent_text": "PRIVATE_UNCLASSIFIED_INTENT_MUST_NOT_LEAK",
+        "idempotency_key": "project-shadow-comparison-unclassified-value-001",
+    }
+    unclassified_failure_response = local_client.post(
+        "/v1/projects/project-01/director-plans:compare-shadow-strategies",
+        json=unclassified_failure_request,
+    )
+    assert unclassified_failure_response.status_code == 500
+    unclassified_failure_code = "reasoner_value_error_unclassified"
+    assert unclassified_failure_response.headers[
+        "X-Director-Brain-Failure-Code"] == unclassified_failure_code
+    assert private_value_error_marker not in unclassified_failure_response.text
+    assert "PRIVATE_UNCLASSIFIED_INTENT_MUST_NOT_LEAK" not in (
+        unclassified_failure_response.text)
+
+    failure_ledger = _envelope_data(local_client.get(
+        "/v1/projects/project-01/decision-ledger"))
+    unclassified_entries = [
+        item for item in failure_ledger["entries"]
+        if item["action"] == "director_strategy_comparison_failed"
+        and item["decision_id"] == api_main._project_director_shadow_comparison_id(
+            "project-01", unclassified_failure_request["idempotency_key"])
+    ]
+    assert len(unclassified_entries) == 1
+    unclassified_detail = unclassified_entries[0]["detail"]
+    assert unclassified_detail["failure_code"] == unclassified_failure_code
+    assert unclassified_detail["stage"] == "reasoner_generation"
+    assert unclassified_detail["attribution_state"] == "unclassified"
+    assert unclassified_detail["exception_type"] == "ValueError"
+    assert "provider_failure_stage" not in unclassified_detail
+    assert private_value_error_marker not in json.dumps(unclassified_entries[0])
+    assert "PRIVATE_UNCLASSIFIED_INTENT_MUST_NOT_LEAK" not in json.dumps(
+        unclassified_entries[0])
+
+    unclassified_replay = local_client.post(
+        "/v1/projects/project-01/director-plans:compare-shadow-strategies",
+        json=unclassified_failure_request,
+    )
+    assert unclassified_replay.status_code == 500
+    assert unclassified_replay.headers[
+        "X-Director-Brain-Failure-Code"] == unclassified_failure_code
+    assert private_value_error_marker not in unclassified_replay.text
+    assert unclassified_generator_calls == 1
+    documented_unclassified_header = api_main.app.openapi()["paths"][
+        "/v1/projects/{project_id}/director-plans:compare-shadow-strategies"
+    ]["post"]["responses"]["500"]["headers"][
+        "X-Director-Brain-Failure-Code"]
+    assert documented_unclassified_header["schema"]["enum"] == [
+        unclassified_failure_code]
+
     def fake_shadow_comparison(
         brief, manifest, context, graph, observations, **kwargs,
     ):
