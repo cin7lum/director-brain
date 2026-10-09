@@ -1,0 +1,37 @@
+{
+  "probe_id": "ollama-qwen25-uniqueitems-01",
+  "observed_at_utc": "2026-10-09T12:31:04.0778746Z",
+  "source_commit": "508acd47c842e983049594c9d645d8e0e499501e",
+  "runtime": {
+    "endpoint": "127.0.0.1:11434",
+    "ollama_version": "0.32.14"
+  },
+  "model": {
+    "name": "qwen2.5:7b",
+    "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e"
+  },
+  "schema": {
+    "type": "object",
+    "required": [
+      "values"
+    ],
+    "additionalProperties": false,
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "const": 0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true
+    }
+  },
+  "request": "Return exactly {\"values\":[0,0]} with two identical zero values. Do not explain.",
+  "response": "{\"values\":[0,0]}",
+  "finish_reason": "stop",
+  "prompt_tokens": 55,
+  "completion_tokens": 8,
+  "observed_uniqueItems_violation": true,
+  "scope": "One local Qwen2.5:7b/Ollama 0.32.14 schema probe. Establishes that this response path did not enforce this uniqueItems constraint in this run; not a universal statement about other versions or schemas."
+}
