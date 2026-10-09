@@ -922,6 +922,30 @@ _PROJECT_VALIDATION_FAILURE_CODES = {
         "segment_emotions",
     ("segment", "segment order must contain every local index exactly once"):
         "segment_order",
+    ("segment", "segment strategy order must contain every local index exactly once"):
+        "segment_order",
+    ("segment", "segment has an invalid local strategy hypothesis count"):
+        "segment_strategy_count",
+    ("segment", "segment strategy fields are invalid"):
+        "segment_strategy_fields",
+    ("segment", "segment strategy hypothesis ID is invalid"):
+        "segment_strategy_id",
+    ("segment", "segment strategy label is invalid"):
+        "segment_strategy_label",
+    ("segment", "segment strategy editorial_intent is invalid"):
+        "segment_strategy_editorial_intent",
+    ("segment", "project strategy source_rationales must cover every source exactly once"):
+        "segment_source_rationale_coverage",
+    ("segment", "project strategy source_rationales fields are invalid"):
+        "segment_source_rationale_fields",
+    ("segment", "project strategy source_rationales focus source is invalid"):
+        "segment_source_rationale_source",
+    ("segment", "project strategy source_rationales disposition is invalid"):
+        "segment_source_rationale_disposition",
+    ("segment", "project strategy source_rationales statement is invalid"):
+        "segment_source_rationale_statement",
+    ("segment", "project strategy source_rationales evidence references are invalid"):
+        "segment_source_rationale_evidence",
     ("segment", "segment strategy hypotheses are structurally identical"):
         "segment_strategies_identical",
     ("segment", "segment key moments are invalid"): "segment_key_moments",

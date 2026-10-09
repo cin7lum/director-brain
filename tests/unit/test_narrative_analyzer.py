@@ -2115,7 +2115,13 @@ def test_project_segment_short_emotion_array_fails_closed_safely(
     "failure_kind,expected_code",
     [("short", "segment_emotions"), ("parse", "project_json_parse"),
      ("transport", "provider_connection_error"),
-     ("truncated", "provider_output_truncated")],
+     ("truncated", "provider_output_truncated"),
+     ("strategy_count", "segment_strategy_count"),
+     ("strategy_fields", "segment_strategy_fields"),
+     ("strategy_order", "segment_order"),
+     ("rationale_coverage", "segment_source_rationale_coverage"),
+     ("rationale_source", "segment_source_rationale_source"),
+     ("rationale_evidence", "segment_source_rationale_evidence")],
 )
 def test_project_failure_context_counts_prior_calls_without_retry(
     monkeypatch, failure_kind, expected_code,
@@ -2137,9 +2143,10 @@ def test_project_failure_context_counts_prior_calls_without_retry(
             if failure_kind == "truncated":
                 raise LLMStructuredOutputError("token limit", failure_code=expected_code)
         count = kwargs["response_schema"]["properties"]["emotional_trajectory"]["minItems"]
-        return json.dumps({
+        result = {
             "summary": "private_marker",
-            "emotional_trajectory": ["x"] * (1 if calls == 2 else count),
+            "emotional_trajectory": ["x"] * (
+                1 if calls == 2 and failure_kind == "short" else count),
             "key_moments": [],
             "strategy_hypotheses": [{
                 "hypothesis_id": name,
@@ -2151,7 +2158,22 @@ def test_project_failure_context_counts_prior_calls_without_retry(
             } for name, order in [("A", list(range(count))),
                                   ("B", list(reversed(range(count))))]],
             "limitations": [],
-        })
+        }
+        if calls == 2:
+            options = result["strategy_hypotheses"]
+            if failure_kind == "strategy_count":
+                options.pop()
+            elif failure_kind == "strategy_fields":
+                options[0]["unknown"] = "private_marker"
+            elif failure_kind == "strategy_order":
+                options[0]["suggested_order"] = [0, 0]
+            elif failure_kind == "rationale_coverage":
+                options[0]["source_rationales"].pop()
+            elif failure_kind == "rationale_source":
+                options[0]["source_rationales"][1]["shot_idx"] = 0
+            elif failure_kind == "rationale_evidence":
+                options[0]["source_rationales"][0]["source_indices"] = [1]
+        return json.dumps(result)
 
     monkeypatch.setattr(narrative_analyzer, "post_chat_json", provider)
     with pytest.raises((LLMStructuredOutputError, LLMTransportError)) as exc_info:
