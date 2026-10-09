@@ -3,8 +3,9 @@
 当前默认推理器为 :class:`HeuristicDirectorReasoner`（确定性算法：基于
 blur_score × vlm_multiplier 排序 + 四幕选片）。:class:`LLMDirectorReasoner` 可在
 本地 Ollama 上生成叙事候选，但独立通路 ``director_strategy_reasoning`` 仍为
-SHADOW；正式入口 fail-closed，比较入口只输出不可确认的 Plan/EDL。当前实现只
-覆盖单素材，产品质量 NOT_PROVEN。
+SHADOW；正式入口在通路准入前 fail-closed，多素材比较入口输出不可确认的
+Plan/EDL。当前项目级 Reasoner 已支持多素材分层推理，但真实项目质量、跨项目
+泛化与产品质量仍 NOT_PROVEN。
 
 时间统一微秒，timebase=1_000_000。
 
