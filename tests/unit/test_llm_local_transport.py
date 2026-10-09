@@ -9,7 +9,43 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from director_brain.llm_adapter import LLMAdapter, LLMTransportError, post_chat_json
+from director_brain.llm_adapter import (
+    LLMAdapter, LLMStructuredOutputError, LLMTransportError, post_chat_json,
+)
+
+
+def test_structured_chat_rejects_token_limit_even_when_content_is_valid_json():
+    class ModelHandler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            self.server.call_count += 1
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "choices": [{
+                    "finish_reason": "length",
+                    "message": {"content": '{"private_marker":true}'},
+                }],
+            }).encode())
+
+        def log_message(self, *_args):
+            pass
+
+    server, thread = _serve(ModelHandler)
+    server.call_count = 0
+    try:
+        with pytest.raises(LLMStructuredOutputError) as exc_info:
+            post_chat_json(
+                f"http://127.0.0.1:{server.server_port}/v1",
+                "local-only", "test-model", "system", "user",
+                response_schema={"type": "object"},
+            )
+        assert exc_info.value.failure_code == "provider_output_truncated"
+        assert "private_marker" not in str(exc_info.value)
+        assert server.call_count == 1
+    finally:
+        _stop(server, thread)
 
 
 def _serve(handler_type):

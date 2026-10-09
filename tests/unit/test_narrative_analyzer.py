@@ -222,7 +222,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.11"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.12"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -2064,11 +2064,14 @@ def test_reasoner_missing_provider_credentials_fails_before_provider_call(
     assert provider_calls == []
 
 
-def test_project_segment_short_emotion_array_fails_closed_safely(monkeypatch):
+@pytest.mark.parametrize("expected_count", [2, 32])
+def test_project_segment_short_emotion_array_fails_closed_safely(
+    monkeypatch, expected_count,
+):
     monkeypatch.setattr(
-        narrative_analyzer, "_PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS", 2)
+        narrative_analyzer, "_PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS", expected_count)
     monkeypatch.setattr(
-        narrative_analyzer, "_PROJECT_NARRATIVE_SEGMENT_MAX_SHOTS", 2)
+        narrative_analyzer, "_PROJECT_NARRATIVE_SEGMENT_MAX_SHOTS", expected_count)
     call_count = 0
 
     def short_emotion_array(*args, **kwargs):
@@ -2076,7 +2079,7 @@ def test_project_segment_short_emotion_array_fails_closed_safely(monkeypatch):
         call_count += 1
         return json.dumps({
             "summary": "Synthetic contract fixture.",
-            "emotional_trajectory": ["x"],
+            "emotional_trajectory": ["x"] * (2 if expected_count == 32 else 1),
             "key_moments": [],
             "strategy_hypotheses": [],
             "limitations": [],
@@ -2088,13 +2091,10 @@ def test_project_segment_short_emotion_array_fails_closed_safely(monkeypatch):
         match="invalid segment output",
     ) as exc_info:
         narrative_analyzer.analyze_project_narrative(
-            [
-                {"scene_description": "Synthetic A"},
-                {"scene_description": "Synthetic B"},
-                {"scene_description": "Synthetic C"},
-            ],
-            asset_ids=["asset-a", "asset-a", "asset-b"],
-            shot_ids=["shot-a1", "shot-a2", "shot-b1"],
+            [{"scene_description": "Synthetic input"}]
+            * (expected_count + 1),
+            asset_ids=["asset-a"] * expected_count + ["asset-b"],
+            shot_ids=[f"shot-{index}" for index in range(expected_count + 1)],
             base_url="http://localhost:11434/v1",
             model="qwen2.5:7b",
             api_key="ollama-local",
@@ -2105,8 +2105,77 @@ def test_project_segment_short_emotion_array_fails_closed_safely(monkeypatch):
 
     assert call_count == 1
     assert exc_info.value.failure_code == "segment_emotions"
+    assert exc_info.value.provider_call_count == 1
+    assert exc_info.value.failure_stage == "segment"
     assert "Synthetic contract fixture" not in str(exc_info.value)
     assert exc_info.value.__cause__ is None
+
+
+@pytest.mark.parametrize(
+    "failure_kind,expected_code",
+    [("short", "segment_emotions"), ("parse", "project_json_parse"),
+     ("transport", "provider_connection_error"),
+     ("truncated", "provider_output_truncated")],
+)
+def test_project_failure_context_counts_prior_calls_without_retry(
+    monkeypatch, failure_kind, expected_code,
+):
+    from director_brain.llm_adapter import LLMTransportError
+
+    monkeypatch.setattr(narrative_analyzer, "_PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS", 2)
+    monkeypatch.setattr(narrative_analyzer, "_PROJECT_NARRATIVE_SEGMENT_MAX_SHOTS", 2)
+    calls = 0
+
+    def provider(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            if failure_kind == "parse":
+                return "private_marker malformed json"
+            if failure_kind == "transport":
+                raise LLMTransportError("connection failed", failure_code=expected_code)
+            if failure_kind == "truncated":
+                raise LLMStructuredOutputError("token limit", failure_code=expected_code)
+        count = kwargs["response_schema"]["properties"]["emotional_trajectory"]["minItems"]
+        return json.dumps({
+            "summary": "private_marker",
+            "emotional_trajectory": ["x"] * (1 if calls == 2 else count),
+            "key_moments": [],
+            "strategy_hypotheses": [{
+                "hypothesis_id": name,
+                "label": name,
+                "editorial_intent": "Synthetic contract fixture",
+                "emotional_arc": _evidence_claim("Synthetic arc", 0),
+                "suggested_order": order,
+                "source_rationales": _source_rationales(count),
+            } for name, order in [("A", list(range(count))),
+                                  ("B", list(reversed(range(count))))]],
+            "limitations": [],
+        })
+
+    monkeypatch.setattr(narrative_analyzer, "post_chat_json", provider)
+    with pytest.raises((LLMStructuredOutputError, LLMTransportError)) as exc_info:
+        narrative_analyzer.analyze_project_narrative(
+            [{"scene_description": "Synthetic input"}] * 5,
+            asset_ids=["asset-a"] * 4 + ["asset-b"],
+            shot_ids=[f"shot-{index}" for index in range(5)],
+            base_url="http://localhost:11434/v1", model="qwen2.5:7b",
+            api_key="local", timeout=30, temperature=0,
+            director_brief="Synthetic brief",
+        )
+    assert calls == exc_info.value.provider_call_count == 2
+    assert exc_info.value.failure_stage == "segment"
+    assert exc_info.value.failure_code == expected_code
+    assert "private_marker" not in str(exc_info.value)
+
+
+def test_segment_request_states_exact_cardinality():
+    prompt = narrative_analyzer._project_segment_user(
+        "Synthetic brief", 1, [{"scene_description": "Synthetic input"}] * 32,
+    )
+    assert "exactly 32 input shots" in prompt
+    assert "exactly 32 emotional_trajectory entries" in prompt
+    assert "indices 0 through 31" in prompt
 
 
 def test_project_segment_schema_requires_one_emotion_entry_per_shot():

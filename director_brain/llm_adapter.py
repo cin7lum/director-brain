@@ -282,7 +282,13 @@ def post_chat_json(
                     and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}", value)
                 ):
                     response_metadata[target_key] = value
-        return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+        choice = (data.get("choices") or [{}])[0]
+        if response_schema is not None and choice.get("finish_reason") == "length":
+            raise LLMStructuredOutputError(
+                "structured provider output reached its token limit",
+                failure_code="provider_output_truncated",
+            )
+        return choice.get("message", {}).get("content", "")
 
     payload = {
         "model": model,
@@ -331,7 +337,7 @@ def post_chat_json(
             f"chat connection failed: {e}",
             failure_code="provider_connection_error",
         ) from e
-    except LLMTransportError:
+    except (LLMTransportError, LLMStructuredOutputError):
         raise
     except Exception as e:
         raise LLMTransportError(
