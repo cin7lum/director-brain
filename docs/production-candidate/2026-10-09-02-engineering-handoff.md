@@ -4,8 +4,8 @@
 
 ## 仓库与当前验证
 
-- 权威仓库：`cin7lum/director-brain`。本地开发分支：`codex/02-production-candidate`；当前实现提交：`82f6af964baee75d39ff565472c412352ea512d3`（`fix(reasoner): require schema-backed strategy contrast`）。本地 `origin/codex/02-production-candidate` 最后已知为 `2de2b4dc991f5032338ac16f351105dddc8ac5ff`，`origin/master` 最后已知为 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`。2026-10-09 `git fetch` 因 GitHub HTTPS 连接重置失败；远端最新提交尚未重新确认。
-- 当前实现提交的本地完整回归：**985 passed / 6 skipped / 8 warnings**。环境为 Python 3.12.8、pytest 8.4.2、FastAPI 0.143.0、Starlette 1.7.0、httpx2 2.13.1、Pydantic 2.14.0、httpx 0.28.1；FastAPI/httpx2 按项目声明范围装入临时测试环境。该仓库没有锁文件；这不是 GitHub Actions 结果。`.github/workflows/ci.yml` 的当前分支 CI 尚未确认。
+- 权威仓库：`cin7lum/director-brain`。本地开发分支：`codex/02-production-candidate`；当前 HEAD 为文档提交 `bdae0e01ba0626ffd544968a9c55501f2f1dcab4`，父提交/源码实现为 `82f6af964baee75d39ff565472c412352ea512d3`。2026-10-09 普通快进 push 成功；push 输出与 `git ls-remote` 均确认开发分支指向 `bdae0e0`，`master` 指向 `b556abc95add61e4f1d5ff5362f679e3cbcdb5bf`。此前一次 fetch 连接重置，但之后远端分支已直接核验。
+- 精确 HEAD `bdae0e01ba0626ffd544968a9c55501f2f1dcab4` 的本机全套回归：**985 passed / 6 skipped / 8 warnings，243.88 秒**；该提交只改文档，源码实现仍为父提交 `82f6af9`。测试环境为 Python 3.12.8、pytest 8.4.2、FastAPI 0.143.0、Starlette 1.7.0、httpx2 2.13.1、Pydantic 2.14.0、httpx 0.28.1；依赖安装在临时环境，仓库无锁文件。本次 GitHub check-runs 查询为 0；活跃的 `.github/workflows/ci.yml` 仅响应 push 到 master 和 pull_request，因此这是本机复现，不是 GitHub Actions 结果。
 - 旧记录必须分开看：2026-10-08 dirty worktree 的 **888/6/8** 与历史 master CI 的 **602/8** 都不是当前开发分支结果。
 - 历史未跟踪文件、用户卡片、Evidence、数据集材料、数据库、缓存和环境文件继续留在本机；本次没有用 `git add -A`，没有覆盖或清理它们。Evidence 目录被 Git 忽略，不含于公开仓库提交。
 
@@ -36,4 +36,4 @@
 - 完整项目容量审计：`evidence/P2_PROJECT_DIRECTOR_REASONER_CAPACITY_AUDIT/attempt-01/` 与 `attempt-02/`。
 - 32 镜头当前 schema 静态输出容量探针：`evidence/P2_SEGMENT_OUTPUT_CAPACITY_2026-10-09/attempt-01/`。
 - 当前 32 镜头合成分层运行：`evidence/P2_CURRENT_32_SHOT_SYNTHETIC_HIERARCHICAL_2026-10-09/attempt-01/`。
-- 最近完整本地测试及 P2 修复记录：`docs/plans/2026-10-09-p2-response-contract.md`。旧 P1/P2 Evidence 保存在本机；不得用本文档替代其原始回执。
+- 当前提交本机完整测试回执：`evidence/P2_CURRENT_COMMIT_FULL_SUITE_2026-10-09/attempt-01/`（只含运行元数据与摘要，没有完整 stdout）。P2 修复及根因边界：`docs/plans/2026-10-09-p2-response-contract.md`。旧 P1/P2 Evidence 保存在本机；不得用本文档替代其原始回执。
