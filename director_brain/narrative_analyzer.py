@@ -144,7 +144,7 @@ Rules:
 - only include sources may enter the strategy EDL; preserve their relative suggested_order and never restore an excluded source as planner fallback
 - each project strategy must include at least two sources
 - If act_boundaries is non-empty, its inclusive ranges must cover every input shot exactly once with no gaps or overlaps. Apply this separately to the project summary and each strategy hypothesis; return [] when the evidence does not support a boundary.
-- strategy hypotheses must differ in shot order, source disposition, or act structure; different wording alone is not a different strategy
+- strategy hypotheses must differ in shot order, source disposition, act structure, or an enabled execution choice; different wording alone is not a different strategy
 - each strategy must state at least one concrete tradeoff and one uncertainty
 - emotional_trajectory contains one label per input shot, in input order
 - do not compare source timestamps or imply a shared clock across assets
@@ -747,11 +747,29 @@ def _validate_project_strategy_hypotheses(
             (item["shot_idx"], item["disposition"])
             for item in option["source_rationales"]
         ))
-        signature = (tuple(order), boundary_signature, disposition_signature)
+        execution_choices = []
+        if include_audio_style_choice:
+            execution_choices.append((
+                "audio_style_choice", option["audio_style_choice"],
+            ))
+        if include_editing_language_choice:
+            execution_choices.append((
+                "editing_language_choice", option["editing_language_choice"],
+            ))
+        if include_transition_policy_choice:
+            execution_choices.append((
+                "transition_policy_choice",
+                option["transition_policy_choice"],
+                option["transition_duration_us"],
+            ))
+        signature = (
+            tuple(order), boundary_signature, disposition_signature,
+            tuple(execution_choices),
+        )
         if signature in structures:
             raise ValueError(
                 "project strategy hypotheses must differ in shot order, source "
-                "disposition, or act structure")
+                "disposition, act structure, or enabled execution choice")
         structures.add(signature)
 
 
@@ -1084,7 +1102,7 @@ _PROJECT_VALIDATION_FAILURE_CODES = {
     (
         "project",
         "project strategy hypotheses must differ in shot order, source "
-        "disposition, or act structure",
+        "disposition, act structure, or enabled execution choice",
     ): "project_strategies_identical",
     (
         "group",

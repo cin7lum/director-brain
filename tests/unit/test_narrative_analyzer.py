@@ -687,7 +687,7 @@ def test_project_strategy_failure_codes_are_specific_and_allowlisted(
         (
             "project",
             "project strategy hypotheses must differ in shot order, source "
-            "disposition, or act structure",
+            "disposition, act structure, or enabled execution choice",
             "project_strategies_identical",
         ),
         (
@@ -884,6 +884,24 @@ def test_strategy_editing_language_choice_rejects_unknown_profile_and_evidence()
     response["strategy_hypotheses"][0]["editing_language_rationale"] = (
         _evidence_claim("Out-of-scope evidence is rejected.", 9))
     with pytest.raises(ValueError, match="evidence references"):
+        narrative_analyzer._validate_project_strategy_hypotheses(
+            response, 3, include_editing_language_choice=True)
+
+
+def test_project_strategy_uniqueness_includes_enabled_editing_language_choice():
+    response = _narrative()
+    first, second = response["strategy_hypotheses"]
+    second["suggested_order"] = list(first["suggested_order"])
+    for option, choice in ((first, "fast_cut"), (second, "slow_paced")):
+        option["editing_language_choice"] = choice
+        option["editing_language_rationale"] = _evidence_claim(
+            f"The source supports the {choice} approach.", 0, 1)
+
+    narrative_analyzer._validate_project_strategy_hypotheses(
+        response, 3, include_editing_language_choice=True)
+
+    second["editing_language_choice"] = "fast_cut"
+    with pytest.raises(ValueError, match="project strategy hypotheses must differ"):
         narrative_analyzer._validate_project_strategy_hypotheses(
             response, 3, include_editing_language_choice=True)
 
