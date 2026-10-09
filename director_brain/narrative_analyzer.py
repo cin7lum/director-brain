@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.16"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.19"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -53,6 +53,7 @@ _PROJECT_NARRATIVE_MAX_OUTPUT_TOKENS = 4096
 _PROJECT_NARRATIVE_SINGLE_CALL_MAX_SHOTS = 16
 _PROJECT_NARRATIVE_SEGMENT_MAX_SHOTS = 16
 _PROJECT_NARRATIVE_GROUP_MAX_CHILDREN = 16
+_PROJECT_SYNTHESIS_STRATEGY_IDS = ("project-A", "project-B")
 
 _DIRECTOR_BRIEF_USER_LABEL = (
     "Director Brief (creator_direction is the user's editorial goal; "
@@ -154,16 +155,16 @@ The creator brief supplies the user's editorial direction for this segment. Asse
 Return only JSON with these required fields:
 {"summary":"one concise editorial summary","emotional_trajectory":["one short label per input shot"],"key_moments":[{"shot_idx":0,"why":"brief reason"}],"strategy_hypotheses":[{"hypothesis_id":"local-A","label":"short label","editorial_intent":"local approach","emotional_arc":{"statement":"intended local progression","source_indices":[0]},"suggested_order":[0,1],"source_rationales":[{"shot_idx":0,"disposition":"include","statement":"why this source is included","source_indices":[0]},{"shot_idx":1,"disposition":"include","statement":"why this source is included","source_indices":[1]}]},{"hypothesis_id":"local-B","label":"different local label","editorial_intent":"different local approach","emotional_arc":{"statement":"a different intended progression","source_indices":[1]},"suggested_order":[1,0],"source_rationales":[{"shot_idx":0,"disposition":"include","statement":"why this source is included","source_indices":[0]},{"shot_idx":1,"disposition":"include","statement":"why this source is included","source_indices":[1]}]}],"limitations":["uncertainty"]}
 
-For one-shot segments, return one strategy_hypothesis because no distinct order is possible. For multi-shot segments, return one or two unranked local strategy hypotheses. Each order must contain every local shot index exactly once. Each hypothesis must include exactly one source_rationale per local shot: `shot_idx` must be distinct across those rationales and the set of values must equal all local indices from 0 through N-1. If N shots are supplied, return N rationale entries; the two-shot example below shows both entries. Before returning, verify exact source coverage and no repeated focus index. Return a second hypothesis only when the supplied evidence and creator direction support a materially different local structure. Compare `suggested_order` and the set of included local shot indices in `source_rationales`; different labels, wording, emotional arcs, tradeoffs, or uncertainties alone do not count. Align each rationale with the actual structural choice. Do not change order or source disposition merely to manufacture a contrast. If only one local structure is supportable, return that one structure and state the limitation; do not invent a source fact or relationship. Each hypothesis must include one concise evidence-linked emotional_arc describing its intended emotional progression, not audience response. For each source rationale, set disposition to include or exclude, explain the choice, include the focus shot_idx in source_indices, and cite no more than four supplied local indices. The final project EDL can use only include sources; an excluded source is never restored by planner fallback. Keep each source rationale to one short sentence (at most 120 characters). Keep summary concise. Return no more than eight key moments, each with a short reason; return an empty list when none is supported. Do not invent cross-asset facts."""
+For one-shot segments, return one strategy_hypothesis because no distinct order is possible. For multi-shot segments, return one or two unranked local strategy hypotheses. Each order must contain every local shot index exactly once. Each hypothesis must include exactly one source_rationale per local shot: `shot_idx` must be distinct across those rationales and the set of values must equal all local indices from 0 through N-1. If N shots are supplied, return N rationale entries; the two-shot example below shows both entries. Before returning, verify exact source coverage and no repeated focus index. Return a second hypothesis only when the supplied evidence and creator direction support a materially different local structure. Compare `suggested_order` and the set of included local shot indices in `source_rationales`; different labels, wording, emotional arcs, tradeoffs, or uncertainties alone do not count. Align each rationale with the actual structural choice. Do not change order or source disposition merely to manufacture a contrast. If only one local structure is supportable, return that one structure and state the limitation; do not invent a source fact or relationship. Each hypothesis must include one concise evidence-linked emotional_arc describing its intended emotional progression, not audience response. For each source rationale, set disposition to include or exclude and explain the choice. Treat its `shot_idx` as the primary source: unless the statement relies on another shot, set `source_indices` to `[shot_idx]`. If other shots are needed as supporting evidence, include them in addition to the focus index, and cite no more than four supplied local indices. The final project EDL can use only include sources; an excluded source is never restored by planner fallback. Keep each source rationale to one short sentence (at most 120 characters). Keep summary concise. Return no more than eight key moments, each with a short reason; return an empty list when none is supported. Do not invent cross-asset facts."""
 
 _PROJECT_NARRATIVE_GROUP_PROMPT = """You are composing an editorial hypothesis from bounded source-segment summaries.
 
 Summaries are model-derived hypotheses, not verified facts. Source assets have independent clocks. Do not infer cross-asset identity, event, place, continuity, action-reaction, or causality. The caller may supply unverified labels; they are optional context, never proof. Do not rank the strategies or declare a winner.
 
 Return only JSON with exactly these fields:
-{"summary":"concise project-level editorial arc or uncertainty","strategies":[{"hypothesis_id":"A","label":"short label","editorial_intent":"concise intent","emotional_arc":{"statement":"intended project emotional progression","source_indices":[0]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"concrete tradeoff","source_indices":[0]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[0]}]},{"hypothesis_id":"B","label":"different label","editorial_intent":"different intent","emotional_arc":{"statement":"a different intended progression","source_indices":[1]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"different tradeoff","source_indices":[1]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[1]}]}],"limitations":["what the summaries cannot establish"]}
+{"summary":"concise project-level editorial arc or uncertainty","strategies":[{"label":"short label","editorial_intent":"concise intent","emotional_arc":{"statement":"intended project emotional progression","source_indices":[0]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"concrete tradeoff","source_indices":[0]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[0]}]},{"label":"different label","editorial_intent":"different intent","emotional_arc":{"statement":"a different intended progression","source_indices":[1]},"child_order":["segment-0001"],"child_strategy_by_child":[{"child_id":"segment-0001","hypothesis_id":"local"}],"act_by_child":[{"child_id":"segment-0001","act":"hook|develop|peak|resolve"}],"tradeoffs":[{"statement":"different tradeoff","source_indices":[1]}],"uncertainties":[{"statement":"specific uncertainty","source_indices":[1]}]}],"limitations":["what the summaries cannot establish"]}
 
-Return exactly two strategy hypotheses. Each strategy must contain one evidence-linked emotional_arc for its intended project-level progression; it is an editorial proposal, not a verified audience response. Each child_order must contain every supplied child ID once. Each strategy must select exactly one listed hypothesis for each child and assign one allowed act to each child. The strategies must differ in child order, child-strategy selection, or act assignment; different wording alone is insufficient. Each available child hypothesis includes an application_effect: segment effects show the exact included-source order and excluded-source indices; synthesized effects show the ordered child/hypothesis/act choices and total included/excluded counts. Both effect forms include per-source-asset-group counts that show the mechanical coverage consequences of those choices. Use them when selecting child hypotheses, preserve their include/exclude dispositions, and do not assume equal asset coverage is required unless the Brief says so. Group numbers are manifest-order evidence groups, not chronology, identity, or proof of quality. These are structural consequences of unverified hypotheses, not semantic truth; do not invent per-shot facts absent from child summaries. Global source indices are evidence references, not timestamps or a shared clock. Keep all prose concise. Never state that a cross-asset relationship was verified."""
+Return exactly two strategy hypotheses. Do not include a project-level `hypothesis_id`; Director Brain assigns stable candidate IDs after parsing. Each strategy must contain one evidence-linked emotional_arc for its intended project-level progression; it is an editorial proposal, not a verified audience response. Each child_order must contain every supplied child ID once. Each strategy must select exactly one listed hypothesis for each child and assign one allowed act to each child. The strategies must differ in child order, child-strategy selection, or act assignment; different wording alone is insufficient. Each available child hypothesis includes an application_effect: segment effects show the exact included-source order and excluded-source indices; synthesized effects show the ordered child/hypothesis/act choices and total included/excluded counts. Both effect forms include per-source-asset-group counts that show the mechanical coverage consequences of those choices. Use them when selecting child hypotheses, preserve their include/exclude dispositions, and do not assume equal asset coverage is required unless the Brief says so. Group numbers are manifest-order evidence groups, not chronology, identity, or proof of quality. These are structural consequences of unverified hypotheses, not semantic truth; do not invent per-shot facts absent from child summaries. Global source indices are evidence references, not timestamps or a shared clock. Keep all prose concise. Never state that a cross-asset relationship was verified."""
 
 _CREATOR_DIRECTION_POLICY = """
 
@@ -1459,7 +1460,7 @@ def _project_group_response_schema(
         },
     }
     strategy_required = [
-        "hypothesis_id", "label", "editorial_intent", "child_order",
+        "label", "editorial_intent", "child_order",
         "emotional_arc", "child_strategy_by_child", "act_by_child",
         "tradeoffs", "uncertainties",
     ]
@@ -1468,12 +1469,6 @@ def _project_group_response_schema(
     strategy = {
         "type": "object",
         "properties": {
-            "hypothesis_id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 48,
-                "pattern": r"^[A-Za-z0-9][A-Za-z0-9_-]{0,47}$",
-            },
             "label": {
                 "type": "string",
                 "minLength": 1,
@@ -2092,6 +2087,28 @@ def _project_group_user(
     return user
 
 
+def _assign_project_synthesis_strategy_ids(result: object) -> object:
+    """Assign stable IDs to project strategies; these IDs carry no semantics."""
+    if not isinstance(result, dict):
+        return result
+    strategies = result.get("strategies")
+    if not isinstance(strategies, list) or len(strategies) != len(
+            _PROJECT_SYNTHESIS_STRATEGY_IDS):
+        return result
+    assigned = []
+    for strategy, hypothesis_id in zip(
+            strategies, _PROJECT_SYNTHESIS_STRATEGY_IDS):
+        if not isinstance(strategy, dict):
+            assigned.append(strategy)
+            continue
+        candidate = dict(strategy)
+        candidate["hypothesis_id"] = hypothesis_id
+        assigned.append(candidate)
+    normalized = dict(result)
+    normalized["strategies"] = assigned
+    return normalized
+
+
 def _build_project_leaf_nodes(
     semantics: list[dict],
     asset_ids: list[str],
@@ -2307,6 +2324,7 @@ def _analyze_project_group(
             include_transition_policy_choice=include_transition_policy_choice,
             semantic_constraints=semantic_constraints),
         runtime_binding_verifier=runtime_binding_verifier)
+    result = _assign_project_synthesis_strategy_ids(result)
     try:
         _validate_project_group_result(
             result, children,

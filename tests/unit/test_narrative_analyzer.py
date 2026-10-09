@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.16"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.19"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -1237,14 +1237,17 @@ def test_project_group_schema_matches_validator_text_and_object_bounds():
     schema = narrative_analyzer._project_group_response_schema(
         _group_schema_children())
     properties = schema["properties"]
-    strategy = properties["strategies"]["items"]
+    strategy_array = properties["strategies"]
+    strategy = strategy_array["items"]
+    assert strategy_array["minItems"] == 2
+    assert strategy_array["maxItems"] == 2
+    assert "hypothesis_id" not in strategy["properties"]
     strategy_properties = strategy["properties"]
 
     assert properties["summary"]["maxLength"] == 700
     assert properties["summary"]["pattern"] == r"\S"
     assert properties["limitations"]["maxItems"] == 8
     assert properties["limitations"]["items"]["maxLength"] == 240
-    assert strategy_properties["hypothesis_id"]["maxLength"] == 48
     assert strategy_properties["label"]["maxLength"] == 120
     assert strategy_properties["label"]["pattern"] == r"\S"
     assert strategy_properties["editorial_intent"]["maxLength"] == 500
@@ -1275,6 +1278,28 @@ def test_project_group_prompt_requires_child_scoped_hypothesis_ids():
 
     assert "listed under that same child_id's available_hypotheses" in system
     assert "Do not use another child's hypothesis_id" in system
+    assert "Do not include a project-level `hypothesis_id`" in system
+    assert "assigns stable candidate IDs after parsing" in system
+
+
+def test_project_synthesis_strategy_ids_are_application_owned():
+    provider_result = {
+        "summary": "Two supported editorial alternatives.",
+        "strategies": [
+            {"hypothesis_id": "duplicate", "label": "overview-led"},
+            {"hypothesis_id": "duplicate", "label": "detail-led"},
+        ],
+    }
+
+    result = narrative_analyzer._assign_project_synthesis_strategy_ids(
+        provider_result)
+
+    assert [item["hypothesis_id"] for item in result["strategies"]] == [
+        "project-A", "project-B"]
+    assert [item["label"] for item in result["strategies"]] == [
+        "overview-led", "detail-led"]
+    assert [item["hypothesis_id"] for item in provider_result["strategies"]] == [
+        "duplicate", "duplicate"]
 
 
 def test_project_evidence_claim_validation_rejects_unavailable_indices():
@@ -2258,6 +2283,7 @@ def test_segment_prompt_requires_structural_signature_self_check():
     assert "If only one local structure is supportable, return that one structure and state the limitation" in prompt
     assert "`shot_idx` must be distinct across those rationales" in prompt
     assert "Before returning, verify exact source coverage and no repeated focus index" in prompt
+    assert "unless the statement relies on another shot, set `source_indices` to `[shot_idx]`" in prompt
     assert '"shot_idx":0' in prompt
     assert '"shot_idx":1' in prompt
 
