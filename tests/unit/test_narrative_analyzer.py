@@ -237,7 +237,7 @@ def test_analyze_project_narrative_binds_indices_and_drops_relationship_claims(m
         "If act_boundaries is non-empty, its inclusive ranges must cover every "
         "input shot exactly once with no gaps or overlaps."
     ) in captured["system"]
-    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.21"
+    assert narrative_analyzer.PROJECT_NARRATIVE_PROMPT_VERSION == "2.22"
     assert "creator_direction" in captured["user"]
     assert "source_text" in captured["user"]
     assert result["suggested_order_resolved"] == [
@@ -1314,15 +1314,21 @@ def test_project_group_generates_one_contrasting_candidate_and_fails_closed_with
             })
 
         if "Generate exactly one primary candidate" in system:
-            assert "Primary candidate structure" not in user
+            assert "Primary candidate context" not in user
         else:
             assert "Generate exactly one contrasting candidate" in system
             marker = (
-                "Primary candidate structure (unverified model proposal; "
-                "use only as a structural contrast reference, never as source "
-                "evidence):\n"
+                "Primary candidate context (unverified model proposal; use "
+                "only to understand its editorial direction and construct a "
+                "contrast, never as source evidence):\n"
             )
             assert json.loads(user.split(marker, 1)[1]) == {
+                "label": "same structural proposal",
+                "editorial_intent": "Keep the two source segments in order.",
+                "emotional_arc": {
+                    "statement": "A bounded project-level emotional proposal.",
+                    "source_indices": [0, 1],
+                },
                 "child_order": ["segment-0001", "segment-0002"],
                 "child_strategy_by_child": [
                     {"child_id": "segment-0001", "hypothesis_id": "local-only"},
@@ -1688,24 +1694,24 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
         for suffix in (
             "\n\nOpen-ended creator constraints",
             "\n\nUnverified caller assertions",
-            "\n\nPrimary candidate structure",
+            "\n\nPrimary candidate context",
         ):
             child_payload = child_payload.split(suffix, 1)[0]
         children = json.loads(child_payload)
         group_children_payloads.append(children)
         is_contrasting_candidate = (
             "Generate exactly one contrasting candidate" in system)
-        prior_structure = None
+        prior_context = None
         if is_contrasting_candidate:
             marker = (
-                "Primary candidate structure (unverified model proposal; "
-                "use only as a structural contrast reference, never as source "
-                "evidence):\n"
+                "Primary candidate context (unverified model proposal; use "
+                "only to understand its editorial direction and construct a "
+                "contrast, never as source evidence):\n"
             )
-            prior_structure = json.loads(user.split(marker, 1)[1])
+            prior_context = json.loads(user.split(marker, 1)[1])
         else:
             assert "Generate exactly one primary candidate" in system
-            assert "Primary candidate structure" not in user
+            assert "Primary candidate context" not in user
         child_ids = [item["child_id"] for item in children]
         source_indices = sorted({
             index for child in children for index in child["global_indices"]
@@ -1737,8 +1743,13 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
                 "Segment summaries do not establish factual relations.",
                 source_indices[-1])],
         }
-        if prior_structure is not None:
-            assert prior_structure["child_order"] != strategy["child_order"]
+        if prior_context is not None:
+            assert prior_context["child_order"] != strategy["child_order"]
+            assert prior_context["label"] == "sequence A"
+            assert prior_context["editorial_intent"] == (
+                "Arrange supported segments with a distinct structure.")
+            assert prior_context["emotional_arc"]["source_indices"] == (
+                [source_indices[0], source_indices[-1]])
         if "For every strategy, include audio_style_choice" in system:
             strategy.update({
                 "audio_style_choice": (
@@ -1920,7 +1931,7 @@ def test_large_project_narrative_uses_bounded_hierarchy_and_preserves_all_refs(
             for suffix in (
                 "\n\nOpen-ended creator constraints",
                 "\n\nUnverified caller assertions",
-                "\n\nPrimary candidate structure",
+            "\n\nPrimary candidate context",
             ):
                 child_payload = child_payload.split(suffix, 1)[0]
             child_count = len(json.loads(child_payload))

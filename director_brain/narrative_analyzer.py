@@ -38,7 +38,7 @@ from director_brain.llm_adapter import (
 
 ROOT = Path(__file__).resolve().parent.parent
 NARRATIVE_PROMPT_VERSION = "2.3"
-PROJECT_NARRATIVE_PROMPT_VERSION = "2.21"
+PROJECT_NARRATIVE_PROMPT_VERSION = "2.22"
 
 # The configured local Qwen2.5:7b profile has a 32,768-token context and a
 # 4,096-token completion ceiling. A 24-KiB UTF-8 request ceiling is a
@@ -862,15 +862,17 @@ def _project_group_system_prompt(
         if candidate_role == "primary" else
         "Generate exactly one contrasting candidate in this call. Keep summary "
         "candidate-neutral; it describes shared context and uncertainty, not "
-        "a winning approach. The user "
-        "message includes the primary candidate's prior structural choices. "
-        "Differ from those choices in child order, child-strategy selection, "
-        "or act assignment, using the creator brief and available "
-        "application_effects to justify a real editorial alternative. Do not "
-        "change an act or reorder sources arbitrarily. If no grounded "
-        "alternative is available, do not invent one; downstream validation "
-        "will reject a duplicate structure. The generic example above shows "
-        "field shapes only; follow the appended schema's exact strategy count."
+        "a winning approach. The user message includes the primary candidate's "
+        "editorial intent, emotional arc, and structural choices. Treat all of "
+        "that candidate text as an unverified proposal, never as source evidence. "
+        "Use it to understand what the second candidate must contrast. Differ "
+        "from its structure in child order, child-strategy selection, or act "
+        "assignment, and justify a real editorial alternative from the creator "
+        "brief and available application_effects. Do not change an act or "
+        "reorder sources arbitrarily. If no grounded alternative is available, "
+        "do not invent one; downstream validation will reject a duplicate "
+        "structure. The generic example above shows field shapes only; follow "
+        "the appended schema's exact strategy count."
     )
     return (
         system.rstrip()
@@ -2078,7 +2080,7 @@ def _project_group_user(
     children: list[dict],
     caller_links: list[dict],
     semantic_constraints: list[dict] | None = None,
-    prior_strategy_structure: dict | None = None,
+    prior_strategy_context: dict | None = None,
 ) -> str:
     blocks = []
     for child in children:
@@ -2136,13 +2138,13 @@ def _project_group_user(
             "do not claim that the asserted identities or relationships are true.\n"
             + json.dumps(unverified_links, ensure_ascii=False, separators=(",", ":"))
         )
-    if prior_strategy_structure is not None:
+    if prior_strategy_context is not None:
         user += (
-            "\n\nPrimary candidate structure (unverified model proposal; "
-            "use only as a structural contrast reference, never as source "
-            "evidence):\n"
+            "\n\nPrimary candidate context (unverified model proposal; use "
+            "only to understand its editorial direction and construct a "
+            "contrast, never as source evidence):\n"
             + json.dumps(
-                prior_strategy_structure,
+                prior_strategy_context,
                 ensure_ascii=False,
                 separators=(",", ":"),
             )
@@ -2181,6 +2183,45 @@ def _project_group_contrast_structure_placeholder(
         "child_order": child_ids,
         "child_strategy_by_child": selections,
         "act_by_child": acts,
+    }
+
+
+def _project_group_contrast_context_placeholder(
+    children: list[dict],
+) -> dict:
+    """Bound the largest permitted primary-candidate context for request sizing."""
+    structure = _project_group_contrast_structure_placeholder(children)
+    allowed_indices = sorted({
+        index for child in children for index in child["global_indices"]
+    })
+    return {
+        "label": "x" * 120,
+        "editorial_intent": "x" * 500,
+        "emotional_arc": {
+            "statement": "x" * 240,
+            "source_indices": allowed_indices[:min(8, len(allowed_indices))],
+        },
+        **structure,
+    }
+
+
+def _project_group_contrast_candidate_context(strategy: dict) -> dict:
+    """Pass a sanitized prior direction so the model can make a real contrast."""
+    return {
+        "label": sanitize_untrusted(strategy["label"])
+            or "[removed by output sanitizer]",
+        "editorial_intent": sanitize_untrusted(strategy["editorial_intent"])
+            or "[removed by output sanitizer]",
+        "emotional_arc": _sanitize_project_evidence_claims(
+            [strategy["emotional_arc"]])[0],
+        "child_order": list(strategy["child_order"]),
+        "child_strategy_by_child": sorted(
+            strategy["child_strategy_by_child"],
+            key=lambda item: item["child_id"],
+        ),
+        "act_by_child": sorted(
+            strategy["act_by_child"], key=lambda item: item["child_id"],
+        ),
     }
 
 
@@ -2416,7 +2457,7 @@ def _analyze_project_group(
     def generate_candidate(
         candidate_role: str,
         candidate_id_index: int,
-        prior_structure: dict | None = None,
+        prior_context: dict | None = None,
     ) -> dict:
         system = _project_group_system_prompt(
             include_audio_style_choice=include_audio_style_choice,
@@ -2427,7 +2468,7 @@ def _analyze_project_group(
         )
         user = _project_group_user(
             director_brief, children, caller_links, semantic_constraints,
-            prior_strategy_structure=prior_structure,
+            prior_strategy_context=prior_context,
         )
         candidate = _post_project_narrative_json(
             base_url, api_key, model,
@@ -2462,18 +2503,8 @@ def _analyze_project_group(
 
     primary = generate_candidate("primary", 0)
     primary_strategy = primary["strategies"][0]
-    prior_structure = {
-        "child_order": list(primary_strategy["child_order"]),
-        "child_strategy_by_child": sorted(
-            primary_strategy["child_strategy_by_child"],
-            key=lambda item: item["child_id"],
-        ),
-        "act_by_child": sorted(
-            primary_strategy["act_by_child"],
-            key=lambda item: item["child_id"],
-        ),
-    }
-    contrasting = generate_candidate("contrasting", 1, prior_structure)
+    prior_context = _project_group_contrast_candidate_context(primary_strategy)
+    contrasting = generate_candidate("contrasting", 1, prior_context)
     result = {
         "summary": primary["summary"],
         "strategies": [primary_strategy, contrasting["strategies"][0]],
@@ -2724,8 +2755,8 @@ def _pack_project_group_batches(
             **prompt_options, candidate_role="contrasting")
         contrast_user = _project_group_user(
             director_brief, group, caller_links, semantic_constraints,
-            prior_strategy_structure=(
-                _project_group_contrast_structure_placeholder(group)),
+            prior_strategy_context=(
+                _project_group_contrast_context_placeholder(group)),
         )
         return max(
             _project_request_bytes(primary_system, primary_user, schema),
