@@ -1,0 +1,608 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "上游输入：带边界声明、资产顺序与权限证据的项目清单",
+  "schema": {
+    "$defs": {
+      "ProcessingRights": {
+        "additionalProperties": false,
+        "description": "Per-asset processing declaration; evidence is retained, never inferred.",
+        "properties": {
+          "state": {
+            "$ref": "#/$defs/RightsState",
+            "default": "unverified"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/RightsBasis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "evidence_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Ref"
+          },
+          "license_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "License Id"
+          },
+          "permission_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Permission Id"
+          },
+          "evidence_state": {
+            "const": "declared_unverified",
+            "default": "declared_unverified",
+            "title": "Evidence State",
+            "type": "string"
+          }
+        },
+        "title": "ProcessingRights",
+        "type": "object"
+      },
+      "ProjectAnalysisProfile": {
+        "description": "Versioned analysis path selected as part of a manifest revision.",
+        "enum": [
+          "deterministic_v1",
+          "local_vlm_shadow_v1",
+          "local_asr_shadow_v1"
+        ],
+        "title": "ProjectAnalysisProfile",
+        "type": "string"
+      },
+      "ProjectAsset": {
+        "additionalProperties": false,
+        "description": "One immutable source identity in a project manifest revision.",
+        "properties": {
+          "asset_id": {
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "source_ref": {
+            "minLength": 1,
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "source_identity_state": {
+            "default": "locally_verified",
+            "enum": [
+              "locally_verified",
+              "declared_unverified"
+            ],
+            "title": "Source Identity State",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-fA-F0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Content Hash"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Size Bytes"
+          },
+          "order": {
+            "minimum": 0,
+            "title": "Order",
+            "type": "integer"
+          },
+          "duration_us": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Us"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fps"
+          },
+          "r_frame_rate": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "R Frame Rate"
+          },
+          "avg_frame_rate": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Avg Frame Rate"
+          },
+          "stream_time_base": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stream Time Base"
+          },
+          "has_audio": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Has Audio"
+          },
+          "time_map": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectAssetTimeMap"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "probe_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Probe Ok"
+          },
+          "rights": {
+            "$ref": "#/$defs/ProcessingRights"
+          }
+        },
+        "required": [
+          "asset_id",
+          "source_ref",
+          "order",
+          "rights"
+        ],
+        "title": "ProjectAsset",
+        "type": "object"
+      },
+      "ProjectAssetTimeMap": {
+        "additionalProperties": false,
+        "description": "Source video/audio clocks without implying a shared project timeline.",
+        "properties": {
+          "container_start_time_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Container Start Time Seconds"
+          },
+          "video_stream": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStreamTiming"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "audio_streams": {
+            "items": {
+              "$ref": "#/$defs/ProjectStreamTiming"
+            },
+            "title": "Audio Streams",
+            "type": "array"
+          },
+          "mapping_state": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Mapping State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mapping_state"
+        ],
+        "title": "ProjectAssetTimeMap",
+        "type": "object"
+      },
+      "ProjectBoundaryBasis": {
+        "enum": [
+          "user_project_manifest",
+          "dataset_project_id",
+          "dataset_event_id",
+          "dataset_recording_id",
+          "production_package"
+        ],
+        "title": "ProjectBoundaryBasis",
+        "type": "string"
+      },
+      "ProjectStreamTiming": {
+        "additionalProperties": false,
+        "description": "One source stream's native clock and offset from the container origin.",
+        "properties": {
+          "stream_index": {
+            "minimum": 0,
+            "title": "Stream Index",
+            "type": "integer"
+          },
+          "codec_type": {
+            "enum": [
+              "video",
+              "audio"
+            ],
+            "title": "Codec Type",
+            "type": "string"
+          },
+          "codec_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Codec Name"
+          },
+          "time_base": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time Base"
+          },
+          "start_pts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start Pts"
+          },
+          "start_time_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start Time Seconds"
+          },
+          "duration_ts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Ts"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Seconds"
+          },
+          "sample_rate": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sample Rate"
+          },
+          "channels": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channels"
+          },
+          "channel_layout": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channel Layout"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "is_default": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Default"
+          },
+          "source_start_offset_numerator": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Start Offset Numerator"
+          },
+          "source_start_offset_denominator": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Start Offset Denominator"
+          },
+          "source_start_offset_state": {
+            "default": "unavailable",
+            "enum": [
+              "mapped_from_pts",
+              "mapped_from_start_time",
+              "unavailable"
+            ],
+            "title": "Source Start Offset State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stream_index",
+          "codec_type"
+        ],
+        "title": "ProjectStreamTiming",
+        "type": "object"
+      },
+      "RightsBasis": {
+        "enum": [
+          "public_license",
+          "owner_permission",
+          "other_documented_authority"
+        ],
+        "title": "RightsBasis",
+        "type": "string"
+      },
+      "RightsState": {
+        "enum": [
+          "unverified",
+          "local_processing_allowed",
+          "third_party_processing_allowed"
+        ],
+        "title": "RightsState",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Versioned project boundary and ordered, content-addressed asset set.",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "manifest_id": {
+        "title": "Manifest Id",
+        "type": "string"
+      },
+      "revision": {
+        "minimum": 1,
+        "title": "Revision",
+        "type": "integer"
+      },
+      "boundary_basis": {
+        "$ref": "#/$defs/ProjectBoundaryBasis"
+      },
+      "boundary_source_ref": {
+        "minLength": 1,
+        "title": "Boundary Source Ref",
+        "type": "string"
+      },
+      "boundary_evidence_refs": {
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Boundary Evidence Refs",
+        "type": "array"
+      },
+      "boundary_state": {
+        "default": "declared_unverified",
+        "title": "Boundary State",
+        "type": "string"
+      },
+      "analysis_profile": {
+        "$ref": "#/$defs/ProjectAnalysisProfile",
+        "default": "deterministic_v1"
+      },
+      "assets": {
+        "items": {
+          "$ref": "#/$defs/ProjectAsset"
+        },
+        "minItems": 1,
+        "title": "Assets",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "manifest_id",
+      "revision",
+      "boundary_basis",
+      "boundary_source_ref",
+      "boundary_evidence_refs",
+      "assets"
+    ],
+    "title": "FilmProjectManifest",
+    "type": "object"
+  }
+}

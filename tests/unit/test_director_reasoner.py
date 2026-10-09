@@ -18,6 +18,7 @@ from director_brain.brief_compiler import compile_brief
 from director_brain.director_reasoner import (
     DirectorReasoner,
     EvidenceTooPoorError,
+    derive_candidate_edl_source_asset_alignment,
     _build_candidates,
     get_director_reasoner,
     HeuristicDirectorReasoner,
@@ -25,8 +26,13 @@ from director_brain.director_reasoner import (
 )
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import DirectorDecisionPlan
+from director_brain.models.director_plan import ProjectNarrativeEvidenceRef
 from director_brain.models.edl import EditorialDecisionList
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
 from director_brain.models.story_graph import StoryGraph, StoryNode, StoryNodeType
 from director_brain.pathway_protocol import (
     PathwayNotActiveError,
@@ -34,6 +40,41 @@ from director_brain.pathway_protocol import (
     set_pathway_status,
 )
 from director_brain.story_graph_builder import build_story_graph
+
+
+@pytest.mark.parametrize(
+    ("source_indexes", "selected_indexes", "expected"),
+    [
+        ([], [], "no_cited_sources"),
+        ([0], [0], "all_cited_assets_selected"),
+        ([0, 1], [0], "some_cited_assets_selected"),
+        ([0], [1], "no_cited_assets_selected"),
+    ],
+)
+def test_candidate_edl_source_asset_alignment_is_mechanical_and_bounded(
+    source_indexes, selected_indexes, expected,
+):
+    refs = [
+        ProjectNarrativeEvidenceRef(
+            project_asset_id=f"project-asset-{index}",
+            source_media_hash=(str(index + 1) * 64),
+            source_asset_id=f"source-{index}",
+            observation_id=f"observation-{index}",
+        )
+        for index in range(2)
+    ]
+    selected = {
+        (
+            refs[index].project_asset_id,
+            refs[index].source_media_hash.lower(),
+            refs[index].source_asset_id,
+        )
+        for index in selected_indexes
+    }
+
+    assert derive_candidate_edl_source_asset_alignment(
+        [refs[index] for index in source_indexes], selected,
+    ) == expected
 
 
 @pytest.fixture()
@@ -134,6 +175,226 @@ def test_edl_fields():
     assert set(edl.source_asset_hashes) == {e.source_media_hash for e in edl.ordered_edits}
 
 
+@pytest.mark.parametrize(
+    ("audio_style", "offset_field"),
+    [("j_cut", "audio_lead_us"), ("l_cut", "audio_tail_us")],
+)
+def test_audio_bridge_offsets_only_cover_real_adjacent_boundaries(
+    audio_style, offset_field,
+):
+    brief, graph, obs = _build_context()
+    narrative = {
+        "suggested_order_resolved": [
+            "shot_00000002", "shot_00000001", "shot_00000000",
+        ],
+        "act_boundaries_resolved": [],
+    }
+
+    edl, plan = HeuristicDirectorReasoner().generate_plan(
+        brief, graph, obs, narrative=narrative,
+        narrative_order_priority=True, audio_style=audio_style,
+    )
+
+    edits = edl.ordered_edits
+    assert len(edits) >= 2
+    assert edits[0].source_asset_id == "shot_00000002"
+    assert all(getattr(edit, offset_field) == 0 for edit in edits)
+    assert f"audio_bridge_style={audio_style}" in plan.constraints
+    assert "audio_bridge_fallback=fixed_offset_disabled" in plan.constraints
+    assert any(
+        item.startswith(f"audio_bridge_no_supported_boundary={audio_style}:")
+        for item in plan.open_questions
+    )
+
+
+@pytest.mark.parametrize(
+    ("audio_style", "offset_field", "target_index"),
+    [("j_cut", "audio_lead_us", 1), ("l_cut", "audio_tail_us", 0)],
+)
+def test_audio_bridge_uses_exact_crossing_asr_span_and_binds_evidence(
+    audio_style, offset_field, target_index,
+):
+    brief, graph, observations = _build_context()
+    narrative = {
+        "suggested_order_resolved": [
+            "shot_00000002", "shot_00000001", "shot_00000000",
+        ],
+        "act_boundaries_resolved": [],
+    }
+    reasoner = HeuristicDirectorReasoner()
+    baseline_edl, _ = reasoner.generate_plan(
+        brief, graph, observations, narrative=narrative,
+        narrative_order_priority=True,
+    )
+    target = baseline_edl.ordered_edits[target_index]
+    boundary = target.in_frame if audio_style == "j_cut" else target.out_frame
+    source = next(
+        item for item in observations
+        if item.observation_type == "deterministic_technical"
+        and item.media_asset_id == target.source_asset_id
+        and item.media_hash == target.source_media_hash
+    )
+    speech = source.model_copy(update={
+        "observation_id": f"asr_bridge_{audio_style}",
+        "source_observation_id": source.observation_id,
+        "start_frame": boundary - 200_000,
+        "end_frame": boundary + 350_000,
+        "observation_type": "speech_transcript",
+        "claim": "synthetic fixture content",
+        "provider": "local_asr_fixture",
+        "model_version": "fixture-1",
+        "prompt_version": "fixture-1",
+        "claim_kind": ClaimKind.MODEL_OBSERVATION,
+        "timebase_unit": TimebaseUnit.MICROSECONDS,
+    })
+
+    edl, plan = reasoner.generate_plan(
+        brief, graph, [*observations, speech], narrative=narrative,
+        narrative_order_priority=True, audio_style=audio_style,
+    )
+
+    selected = next(
+        item for item in edl.ordered_edits
+        if item.source_asset_id == target.source_asset_id
+    )
+    expected_offset = 200_000 if audio_style == "j_cut" else 350_000
+    assert getattr(selected, offset_field) == expected_offset
+    assert selected.audio_evidence_refs == [speech.observation_id]
+    assert edl.audio_evidence_refs == [speech.observation_id]
+    assert edl.audio_refs == []
+    decision = next(
+        item for item in plan.decisions
+        if item.shot_refs == [selected.source_asset_id]
+    )
+    assert speech.observation_id in decision.evidence_refs
+    assert decision.requires_approval is True
+    assert "audio_bridge_asr_timing_unverified" in plan.open_questions
+    assert f"audio_bridge_style={audio_style}" in plan.constraints
+
+
+@pytest.mark.parametrize("audio_style", ["j_cut", "l_cut"])
+@pytest.mark.parametrize("mismatch", ["hash", "boundary"])
+def test_audio_bridge_rejects_unbound_or_non_crossing_asr(
+    audio_style, mismatch,
+):
+    brief, graph, observations = _build_context()
+    narrative = {
+        "suggested_order_resolved": [
+            "shot_00000002", "shot_00000001", "shot_00000000",
+        ],
+        "act_boundaries_resolved": [],
+    }
+    reasoner = HeuristicDirectorReasoner()
+    baseline_edl, _ = reasoner.generate_plan(
+        brief, graph, observations, narrative=narrative,
+        narrative_order_priority=True,
+    )
+    target_index = 1 if audio_style == "j_cut" else 0
+    target = baseline_edl.ordered_edits[target_index]
+    boundary = target.in_frame if audio_style == "j_cut" else target.out_frame
+    source = next(
+        item for item in observations
+        if item.observation_type == "deterministic_technical"
+        and item.media_asset_id == target.source_asset_id
+        and item.media_hash == target.source_media_hash
+    )
+    speech = source.model_copy(update={
+        "observation_id": f"asr_mismatch_{audio_style}_{mismatch}",
+        "source_observation_id": source.observation_id,
+        "start_frame": boundary if mismatch == "boundary" else boundary - 200_000,
+        "end_frame": boundary + 350_000,
+        "observation_type": "speech_transcript",
+        "claim": "synthetic fixture content",
+        "provider": "local_asr_fixture",
+        "model_version": "fixture-1",
+        "prompt_version": "fixture-1",
+        "claim_kind": ClaimKind.MODEL_OBSERVATION,
+        "timebase_unit": TimebaseUnit.MICROSECONDS,
+        **({"media_hash": "wrong-source-hash"} if mismatch == "hash" else {}),
+    })
+
+    edl, plan = reasoner.generate_plan(
+        brief, graph, [*observations, speech], narrative=narrative,
+        narrative_order_priority=True, audio_style=audio_style,
+    )
+
+    selected = next(
+        item for item in edl.ordered_edits
+        if item.source_asset_id == target.source_asset_id
+    )
+    offset_field = "audio_lead_us" if audio_style == "j_cut" else "audio_tail_us"
+    assert getattr(selected, offset_field) == 0
+    assert selected.audio_evidence_refs == []
+    assert edl.audio_evidence_refs == []
+    assert any(
+        item.startswith(f"audio_bridge_no_supported_boundary={audio_style}:")
+        for item in plan.open_questions
+    )
+
+
+def test_audio_bridge_respects_asr_decision_use_gate():
+    brief, graph, observations = _build_context()
+    narrative = {
+        "suggested_order_resolved": [
+            "shot_00000002", "shot_00000001", "shot_00000000",
+        ],
+        "act_boundaries_resolved": [],
+    }
+    reasoner = HeuristicDirectorReasoner()
+    base_edl, _ = reasoner.generate_plan(
+        brief, graph, observations, narrative=narrative,
+        narrative_order_priority=True,
+    )
+    target = base_edl.ordered_edits[1]
+    source = next(
+        item for item in observations
+        if item.observation_type == "deterministic_technical"
+        and item.media_asset_id == target.source_asset_id
+        and item.media_hash == target.source_media_hash
+    )
+    speech = source.model_copy(update={
+        "observation_id": "asr_bridge_gated",
+        "source_observation_id": source.observation_id,
+        "start_frame": target.in_frame - 100_000,
+        "end_frame": target.in_frame + 100_000,
+        "observation_type": "speech_transcript",
+        "claim": "synthetic fixture content",
+        "provider": "local_asr_fixture",
+        "model_version": "fixture-1",
+        "prompt_version": "fixture-1",
+        "claim_kind": ClaimKind.MODEL_OBSERVATION,
+        "timebase_unit": TimebaseUnit.MICROSECONDS,
+    })
+
+    set_pathway_status("asr_transcript", PathwayStatus.SHADOW)
+    try:
+        with pytest.raises(PathwayNotActiveError, match="asr_transcript"):
+            reasoner.generate_plan(
+                brief, graph, [*observations, speech], narrative=narrative,
+                narrative_order_priority=True, audio_style="j_cut",
+            )
+    finally:
+        set_pathway_status("asr_transcript", PathwayStatus.ACTIVE)
+
+
+@pytest.mark.parametrize("audio_style", ["j_cut", "l_cut"])
+def test_audio_bridge_does_not_offset_a_single_edit(audio_style):
+    observations = [_make_tech_obs(0, 0, 3_000_000)]
+    brief = compile_brief(
+        "test_proj", "dummy.mp4", observations,
+        target_duration_us=3_000_000,
+    )
+    graph = build_story_graph(brief, observations)
+
+    edl, _plan = HeuristicDirectorReasoner().generate_plan(
+        brief, graph, observations, audio_style=audio_style,
+    )
+
+    assert len(edl.ordered_edits) == 1
+    assert edl.ordered_edits[0].audio_lead_us == 0
+    assert edl.ordered_edits[0].audio_tail_us == 0
+
+
 def test_plan_decisions_match_editems():
     brief, graph, obs = _build_context()
     reasoner = HeuristicDirectorReasoner()
@@ -147,12 +408,324 @@ def test_plan_decisions_match_editems():
         assert len(dec.evidence_refs) == 1
 
 
-def test_llm_reasoner_raises_not_implemented():
+def test_project_bound_reasoner_rejects_observations_from_another_asset():
+    observations = [
+        _make_tech_obs(0, 0, 3_000_000).model_copy(update={
+            "project_asset_id": "asset-a",
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        }),
+        _make_tech_obs(1, 3_000_000, 6_000_000).model_copy(update={
+            "project_asset_id": "asset-b",
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        }),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", observations[:1])
+    graph = build_story_graph(brief, observations[:1])
+
+    with pytest.raises(ValueError, match="match the StoryGraph project asset"):
+        HeuristicDirectorReasoner().generate_plan(brief, graph, observations)
+
+
+def test_project_bound_reasoner_rejects_non_microsecond_source_timebase():
+    observations = [
+        _make_tech_obs(0, 0, 25).model_copy(update={
+            "project_asset_id": "asset-a",
+            "timebase": 25,
+            "timebase_unit": TimebaseUnit.FRAMES,
+        }),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", observations)
+    graph = build_story_graph(brief, observations)
+
+    with pytest.raises(ValueError, match="microsecond source timebase"):
+        HeuristicDirectorReasoner().generate_plan(brief, graph, observations)
+
+
+def test_project_bound_edits_and_decisions_keep_exact_asset_and_evidence_refs():
+    observations = [
+        _make_tech_obs(index, start, end).model_copy(update={
+            "project_asset_id": "asset-a",
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        })
+        for index, (start, end) in enumerate((
+            (0, 3_000_000),
+            (3_000_000, 6_000_000),
+            (6_000_000, 10_000_000),
+        ))
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", observations)
+    graph = build_story_graph(brief, observations)
+
+    edl, plan = HeuristicDirectorReasoner().generate_plan(
+        brief, graph, observations)
+    from director_brain.plan_validator import validate_plan
+
+    _is_valid, errors = validate_plan(edl, plan, observations)
+    assert not any("source observation" in error for error in errors)
+    assert not any("same project asset and evidence ref" in error for error in errors)
+
+    assert edl.timebase_unit == TimebaseUnit.MICROSECONDS
+    assert edl.ordered_edits
+    for edit, decision in zip(edl.ordered_edits, plan.decisions):
+        source = next(
+            observation for observation in observations
+            if observation.media_asset_id == edit.source_asset_id
+        )
+        assert edit.timebase_unit == TimebaseUnit.MICROSECONDS
+        assert edit.project_asset_id == "asset-a"
+        assert edit.source_observation_refs == [source.observation_id]
+        assert edit.source_timebase == 1_000_000
+        assert edit.source_timebase_unit == TimebaseUnit.MICROSECONDS
+        assert (
+            edit.source_observation_start <= edit.in_frame < edit.out_frame
+            <= edit.source_observation_end
+        )
+        assert decision.project_asset_id == "asset-a"
+        assert decision.evidence_refs == [source.observation_id]
+
+    invalid_edl = edl.model_copy(deep=True)
+    invalid_edit = invalid_edl.ordered_edits[0]
+    invalid_edit.out_frame = invalid_edit.source_observation_end + 1
+    is_valid, errors = validate_plan(invalid_edl, plan, observations)
+    assert not is_valid
+    assert any("outside its cited source observation" in error for error in errors)
+
+
+def test_project_bound_reasoner_rejects_noncanonical_microsecond_timebase():
+    observations = [
+        _make_tech_obs(0, 0, 3_000_000).model_copy(update={
+            "project_asset_id": "asset-a",
+            "timebase": 2_000_000,
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        }),
+    ]
+    brief = compile_brief("test_proj", "dummy.mp4", observations)
+    graph = build_story_graph(brief, observations)
+
+    with pytest.raises(ValueError, match="canonical microsecond timebase"):
+        HeuristicDirectorReasoner().generate_plan(brief, graph, observations)
+
+
+def test_llm_reasoner_is_gated_while_semantic_pathway_is_shadow(monkeypatch):
     brief, graph, obs = _build_context()
     reasoner = LLMDirectorReasoner(provider="ollama")
     assert reasoner.provider == "ollama"
-    with pytest.raises(NotImplementedError):
+    set_pathway_status("director_strategy_reasoning", PathwayStatus.SHADOW)
+    monkeypatch.setattr(reasoner, "_analyze", lambda _observations: pytest.fail(
+        "provider must not be called while the pathway is SHADOW"))
+
+    with pytest.raises(PathwayNotActiveError, match="director_strategy_reasoning"):
         reasoner.generate_plan(brief, graph, obs)
+
+
+def test_llm_reasoner_passes_creator_direction_with_brief(monkeypatch):
+    from director_brain import narrative_analyzer
+
+    direction = "Open with the quiet arrival, then build toward the reunion."
+    source_hash = "a" * 64
+    observations = []
+    for index in range(2):
+        tech = _make_tech_obs(index, index * 3_000_000,
+                              (index + 1) * 3_000_000).model_copy(update={
+            "media_hash": source_hash,
+            "project_asset_id": "asset-a",
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        })
+        semantic = _make_vlm_obs(index, tech.start_frame,
+                                 tech.end_frame).model_copy(update={
+            "media_hash": source_hash,
+            "project_asset_id": "asset-a",
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        })
+        observations.extend((tech, semantic))
+    brief = compile_brief(
+        "test_proj", "dummy.mp4", observations, intent_text=direction)
+    captured = {}
+
+    def fake_analysis(semantics, **kwargs):
+        captured.update(kwargs)
+        return {"result": "test"}
+
+    monkeypatch.setattr(narrative_analyzer, "analyze_narrative", fake_analysis)
+    result = LLMDirectorReasoner(provider="ollama")._analyze(
+        brief, observations)
+
+    assert result == {"result": "test"}
+    assert json.loads(captured["director_brief"])["creator_direction"] == direction
+
+
+def test_llm_reasoner_shadow_plan_is_non_confirmable(monkeypatch):
+    from director_brain.plan_state import confirm_strategy
+
+    source_hash = "a" * 64
+    observations = [
+        _make_tech_obs(index, 0, 4_000_000)
+        for index in range(3)
+    ]
+    observations = [item.model_copy(update={
+        "media_hash": source_hash,
+        "timebase_unit": TimebaseUnit.MICROSECONDS,
+    }) for item in observations]
+    observations.extend([
+        _make_vlm_obs(index, item.start_frame, item.end_frame,
+                      role="development").model_copy(update={
+            "media_hash": source_hash,
+            "timebase_unit": TimebaseUnit.MICROSECONDS,
+        })
+        for index, item in enumerate(observations)
+    ])
+    brief = compile_brief("test_proj", "dummy.mp4", observations)
+    graph = build_story_graph(brief, observations)
+    narrative = {
+        "story_arc": "A small moment grows into a shared celebration.",
+        "emotional_trajectory": ["quiet", "warm", "joyful"],
+        "pairings": [],
+        "key_moments": [],
+        "act_boundaries": [],
+        "suggested_order": [2, 1, 0],
+        "act_boundaries_resolved": [],
+        "suggested_order_resolved": [
+            "shot_00000002", "shot_00000001", "shot_00000000",
+        ],
+        "limitations": ["Synthetic observations; no source video was assessed."],
+    }
+    reasoner = LLMDirectorReasoner(provider="ollama")
+    monkeypatch.setattr(reasoner, "_analyze", lambda _brief, _observations: narrative)
+    set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
+    set_pathway_status("director_strategy_reasoning", PathwayStatus.SHADOW)
+
+    edl, plan = reasoner.generate_shadow_plan(brief, graph, observations)
+
+    assert plan.sequence == [item.source_asset_id for item in edl.ordered_edits]
+    assert any(
+        item.startswith("narrative_reorder:applied:planner_sort_changed=false:")
+        for item in plan.open_questions
+    )
+    assert "director_reasoner_shadow_candidate=not_confirmable" in plan.constraints
+    assert "director_reasoner_prompt_version=2.3" in plan.constraints
+    assert "director_reasoner_temperature=0" in plan.constraints
+    assert "director_reasoner_quality_not_proven" in plan.open_questions
+    assert edl.producer == plan.producer == "llm_director_reasoner_shadow_v0.1"
+    with pytest.raises(ValueError, match="shadow-only"):
+        confirm_strategy(plan, edl)
+
+
+def test_llm_reasoner_rejects_remote_endpoints_by_default():
+    from director_brain.llm_adapter import LLMTransportError
+
+    with pytest.raises(LLMTransportError, match="loopback") as rejected:
+        LLMDirectorReasoner(config={"base_url": "https://example.com/v1"})
+    assert rejected.value.failure_code == "provider_configuration_error"
+
+
+def test_project_reasoner_uses_existing_configured_ollama_base_url(monkeypatch):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11435")
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_MODEL_DIGEST", "")
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_RUNTIME_VERSION", "")
+
+    reasoner = LLMDirectorReasoner()
+
+    assert reasoner.base_url == "http://127.0.0.1:11435/v1"
+    assert reasoner._runtime_binding is None
+
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11436/v1/")
+    normalized = LLMDirectorReasoner()
+    assert normalized.base_url == "http://127.0.0.1:11436/v1"
+
+    explicit = LLMDirectorReasoner(config={
+        "base_url": "http://127.0.0.1:11437/v1",
+    })
+    assert explicit.base_url == "http://127.0.0.1:11437/v1"
+
+
+def test_project_reasoner_reports_missing_loopback_endpoint_as_provider_config(
+    monkeypatch,
+):
+    from director_brain.llm_adapter import LLMTransportError
+
+    monkeypatch.setenv("OLLAMA_BASE_URL", "")
+    with pytest.raises(LLMTransportError) as missing_endpoint:
+        LLMDirectorReasoner()
+    assert missing_endpoint.value.failure_code == "provider_configuration_error"
+
+
+@pytest.mark.parametrize(
+    ("provider", "config"),
+    [
+        ("openai", {}),
+        ("ollama", {"timeout": "not-an-integer"}),
+        ("ollama", {"temperature": 2.1}),
+        ("ollama", {"model_digest": "a" * 64}),
+        ("ollama", {
+            "model_digest": "not-a-digest",
+            "runtime_version": "0.32.14",
+        }),
+        ("ollama", {
+            "model_digest": "a" * 64,
+            "runtime_version": "invalid version",
+        }),
+        ("ollama", {
+            "base_url": "http://127.0.0.1:11434/custom",
+            "model_digest": "a" * 64,
+            "runtime_version": "0.32.14",
+        }),
+    ],
+)
+def test_project_reasoner_classifies_invalid_provider_options(
+    monkeypatch, provider, config,
+):
+    from director_brain.llm_adapter import LLMTransportError
+
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_MODEL_DIGEST", "")
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_RUNTIME_VERSION", "")
+    with pytest.raises(LLMTransportError) as invalid_configuration:
+        LLMDirectorReasoner(provider=provider, config=config)
+    assert invalid_configuration.value.failure_code == "provider_configuration_error"
+
+
+def test_project_reasoner_requires_complete_runtime_pin_for_formal_use(monkeypatch):
+    from director_brain.llm_adapter import LLMTransportError
+    from observation_service.ollama_vlm_adapter import (
+        LocalVLMRuntimeBindingError,
+        OllamaVLMAdapter,
+    )
+
+    # Explicit empty inherited values keep this test independent of a local .env.
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_MODEL_DIGEST", "")
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_RUNTIME_VERSION", "")
+    unpinned = LLMDirectorReasoner()
+    with pytest.raises(LLMTransportError) as missing_pin:
+        unpinned._verify_model_binding(required=True)
+    assert missing_pin.value.failure_code == "provider_configuration_error"
+
+    with pytest.raises(LLMTransportError, match="must be configured together") as (
+        invalid_pin
+    ):
+        LLMDirectorReasoner(config={"model_digest": "a" * 64})
+    assert invalid_pin.value.failure_code == "provider_configuration_error"
+
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_MODEL_DIGEST", "b" * 64)
+    monkeypatch.setenv("PROJECT_LOCAL_REASONER_RUNTIME_VERSION", "0.32.14")
+    verified = []
+
+    def verify(adapter):
+        verified.append((adapter.model, adapter.model_digest, adapter.runtime_version))
+
+    monkeypatch.setattr(OllamaVLMAdapter, "verify_runtime_binding", verify)
+    pinned = LLMDirectorReasoner()
+    binding = pinned._verify_model_binding(required=True)
+    assert binding == {"model_digest": "b" * 64, "runtime_version": "0.32.14"}
+    assert verified == [("qwen2.5:7b", "b" * 64, "0.32.14")]
+
+    def reject_binding(_adapter):
+        raise LocalVLMRuntimeBindingError("provider detail must stay private")
+
+    monkeypatch.setattr(OllamaVLMAdapter, "verify_runtime_binding", reject_binding)
+    with pytest.raises(LLMTransportError) as mismatch:
+        pinned._verify_model_binding(required=True)
+    assert mismatch.value.failure_code == "provider_model_binding_error"
+    assert "provider detail" not in str(mismatch.value)
 
 
 def test_factory_heuristic():

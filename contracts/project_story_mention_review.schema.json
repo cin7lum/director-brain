@@ -1,0 +1,301 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "调用方对精确素材内人物/事件 mention 的接受、拒绝或内容纠正快照；不改写原始观察",
+  "schema": {
+    "$defs": {
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryLinkEventEvidence": {
+        "additionalProperties": false,
+        "description": "Exact source-local semantic fields identifying one event mention.",
+        "properties": {
+          "action_type": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Action Type"
+          },
+          "scene_description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scene Description"
+          },
+          "temporal_notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Temporal Notes"
+          }
+        },
+        "title": "ProjectStoryLinkEventEvidence",
+        "type": "object"
+      },
+      "ProjectStoryMentionDecision": {
+        "additionalProperties": false,
+        "description": "One exact mention disposition; source observations remain immutable.",
+        "properties": {
+          "relation_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity"
+            ],
+            "title": "Relation Kind",
+            "type": "string"
+          },
+          "anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "decision": {
+            "enum": [
+              "accepted_as_observed",
+              "corrected_by_caller",
+              "rejected"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "corrected_person_description": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Corrected Person Description"
+          },
+          "corrected_event_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStoryLinkEventEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_kind",
+          "anchor",
+          "decision"
+        ],
+        "title": "ProjectStoryMentionDecision",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Immutable full snapshot of caller dispositions for one graph revision.",
+    "properties": {
+      "schema_version": {
+        "const": "1.0",
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "review_id": {
+        "minLength": 1,
+        "title": "Review Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "minLength": 1,
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "context_id": {
+        "minLength": 1,
+        "title": "Context Id",
+        "type": "string"
+      },
+      "story_graph_id": {
+        "minLength": 1,
+        "title": "Story Graph Id",
+        "type": "string"
+      },
+      "analysis_fingerprint": {
+        "minLength": 1,
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "review_revision": {
+        "minimum": 1,
+        "title": "Review Revision",
+        "type": "integer"
+      },
+      "review_scope": {
+        "const": "source_local_person_event_mentions",
+        "default": "source_local_person_event_mentions",
+        "title": "Review Scope",
+        "type": "string"
+      },
+      "actor_identity_state": {
+        "const": "caller_asserted",
+        "default": "caller_asserted",
+        "title": "Actor Identity State",
+        "type": "string"
+      },
+      "decisions": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryMentionDecision"
+        },
+        "maxItems": 10000,
+        "title": "Decisions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "review_id",
+      "project_manifest_id",
+      "project_revision",
+      "context_id",
+      "story_graph_id",
+      "analysis_fingerprint",
+      "review_revision",
+      "decisions"
+    ],
+    "title": "ProjectStoryMentionReview",
+    "type": "object"
+  }
+}

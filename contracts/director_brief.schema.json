@@ -38,6 +38,13 @@
         "title": "Source Text",
         "type": "string"
       },
+      "creator_direction": {
+        "default": "",
+        "description": "Sanitized, bounded creator-authored direction; distinct from asset-derived transcript text in source_text.",
+        "maxLength": 2000,
+        "title": "Creator Direction",
+        "type": "string"
+      },
       "language": {
         "title": "Language",
         "type": "string"

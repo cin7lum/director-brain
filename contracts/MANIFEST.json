@@ -1,11 +1,23 @@
 {
   "director_brain_version": "0.1.0",
   "contracts": {
-    "film_observation.schema.json": "3f845219d1caf97e0692ce19c6274de0b5bdd68aaf5ee235628dbca7232275ba",
-    "director_brief.schema.json": "a71970e32c0203c56a88f8c61764b16210c5f985447ba103e12cbddac6a873a8",
-    "story_graph.schema.json": "c3beb8b3870a40352c3d435f7fb88381bb13b06a2a74319b9c7ba213ccc729a8",
-    "editorial_decision_list.schema.json": "f794772b9986de54a73671b7dfd7ae0914599d9961fdf6c57661eec178be2e18",
-    "director_decision_plan.schema.json": "4c52b48b8601e32f78ba1e1abb137d1eb9ca8b73787555460ab81c97fddf1f43",
-    "director_decision.schema.json": "b45293325c70189397f804b09abf904a8a10ef548f6526898c77a2b5130fa83d"
+    "film_observation.schema.json": "330872f254d2f32a9f1649dcf91719a41d35a6fdbb98eda76603e7d5cb62c311",
+    "film_context.schema.json": "692617daeb95c732a0b70ab933a262351ba20bf63f3edfbffd743cebee6b7df0",
+    "film_project_manifest.schema.json": "bf5b849f6ca84ee957ff929bed8b2c024f3fc2aa04a64d601c3362b9d7d31447",
+    "director_brief.schema.json": "f6e51e7ba08c98d701f4f24e30e02b4e43595bd99401fe254100353c9ac6323f",
+    "story_graph.schema.json": "c92c307fc31eb061ec3f4de7c9108072ce8c258e90db8c2830cbd092795fbff2",
+    "project_story_graph.schema.json": "7d5419e5019b5b3eab112be2d9e2a32bb6da606b82fa41821d31f89b63122b82",
+    "project_story_graph_view.schema.json": "c227c0b2fbd1874739e0a8e2f929474a9d8ed62771ff072cc799c99af3aae723",
+    "project_story_link_review.schema.json": "1554df814a60cd0a9b80dfcef5a17f323ef08b5b04bd7a6b9e3c93460257759a",
+    "project_story_link_comparison.schema.json": "feedf94211782c01f0899371c902d9c4e5c72d88723c41900e3c1d77d5fb01b4",
+    "project_story_link_candidate_page.schema.json": "e0e7dadd6f3b459db8d81dda830f5502715ee19a6f92f397d2386826cd974046",
+    "project_story_mention_review.schema.json": "b5851d862dd1e8ff0e794233a10f76104a15819a1096ffb35ec41ec8b6750263",
+    "project_story_mention_preview.schema.json": "6466a69ab62ec606c76bfa1ee8b8663af32a5b7740750c77f1a79bfbbc7edcae",
+    "project_story_link_candidate_preview.schema.json": "801d5eac210bfba03f685aff267c4cf8df2a4da3c40189fc4077a5b2bb15caa2",
+    "editorial_decision_list.schema.json": "42dbedd7cdef71199ef12f83c77fede06b0bb92d4fc5c2441832566745e59a83",
+    "director_decision_plan.schema.json": "7152c081d50ee4b49e290ea57a732fac5d02506300efc8d344ae689ee71f7bbd",
+    "project_director_shadow_comparison.schema.json": "b9936f779be20866c53949439d64da2f43e56b87a1e5c44fdbdc42b896fba83d",
+    "project_director_shadow_comparison_record.schema.json": "2f1021757a895c0d5388981aab76b293ed57c20d108c1d487efdbf05b0e95b67",
+    "director_decision.schema.json": "fe06bd12e43f65e0c7f1bc0d1fca455d7eb4ae87f4dc9f81568639b4e24a1131"
   }
 }

@@ -42,6 +42,9 @@ from director_brain.pathway_protocol import (
     PathwayStatus,
     get_pathway_status,
 )
+from director_brain.parameterization.post_validation import (
+    validate_director_decision,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +146,10 @@ class ShadowReport:
     #: 状态分歧描述（无分歧为 None）
     status_divergence: str | None = None
     positive_intents: list[str] = field(default_factory=list)
+    #: SemanticDirectorService 共享的确定性语义校验结果。
+    post_validation_violations: list[str] = field(default_factory=list)
+    #: Stable non-semantic classification; never stores provider error text.
+    failure_code: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -160,6 +167,8 @@ class ShadowReport:
             "uncovered_negatives": self.uncovered_negatives,
             "status_divergence": self.status_divergence,
             "positive_intents": self.positive_intents,
+            "post_validation_violations": self.post_validation_violations,
+            "failure_code": self.failure_code,
         }
 
 
@@ -276,6 +285,8 @@ def run_shadow_semantic(
     chain_a_constraints: list[str] | None = None,
     chain_a_valid: bool | None = None,
     decision_id: str | None = None,
+    context: str | None = None,
+    available_source_evidence_refs: list[str] | None = None,
     ledger=None,
     output_path: str | None = None,
     adapter_factory=None,
@@ -321,15 +332,19 @@ def run_shadow_semantic(
         attempts = attempt
         try:
             result = reasoner.reason(
-                intent_text, decision_id=decision_id or "shadow_decision"
+                intent_text,
+                context=context,
+                decision_id=decision_id or "shadow_decision",
+                available_source_evidence_refs=available_source_evidence_refs,
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             # 影子故障不得阻断主链：reasoner/适配器逃逸的意外异常按传输
             # 失败处理（响亮降级）。防扩散层——任何从影子通路逃逸的异常
             # 都等于阻断成片。
             result = SemanticReasonerResult(
                 decision=None,
-                error=f"shadow adapter raised: {type(exc).__name__}: {exc}",
+                error="SEMANTIC_REASONER_UNAVAILABLE: adapter exception",
+                failure_code="adapter_exception",
             )
         if result.decision is not None:
             break
@@ -337,16 +352,24 @@ def run_shadow_semantic(
             time.sleep(backoff_s[min(attempt - 1, len(backoff_s) - 1)])
 
     if result is None or result.decision is None:
-        error = (result.error if result else "reasoner returned no result") or "unknown"
         base.status = "failed"
         base.attempts = attempts
-        base.reason = f"链 B 调用失败（已重试 {attempts} 次）: {error}"
+        base.failure_code = (
+            result.failure_code if result and result.failure_code
+            else "reasoner_no_result"
+        )
+        base.reason = f"链 B 调用失败（已重试 {attempts} 次）"
         base.latency_ms = result.latency_ms if result else None
         _log(ledger, decision_id or "shadow_unknown", "semantic_shadow_failed",
              base.to_dict())
         return base
 
-    decision = result.decision
+    # SemanticDirectorService applies this same canonical validator before
+    # parameterization/readiness. Shadow reporting must use the identical
+    # decision boundary or a contradictory model result can appear READY here
+    # while the service correctly blocks it.
+    decision, validation_violations = validate_director_decision(
+        result.decision)
     chain_a_terms = extract_chain_a_avoid_terms(chain_a_constraints)
     negatives = [t for t in (list(decision.must_avoid) + list(decision.must_preserve)) if t]
     covered = [t for t in negatives if _is_covered(t, chain_a_terms)]
@@ -365,6 +388,7 @@ def run_shadow_semantic(
         uncovered_negatives=uncovered,
         status_divergence=_status_divergence(decision.status.value, chain_a_valid),
         positive_intents=list(decision.desired_relation_or_change),
+        post_validation_violations=validation_violations,
     )
     _log(ledger, decision_id or f"shadow_{decision.decision_id}",
          "semantic_shadow_completed", report.to_dict())

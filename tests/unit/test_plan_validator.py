@@ -15,9 +15,10 @@ from __future__ import annotations
 import time
 
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
-from director_brain.models.edl import EditItem, EditorialDecisionList
+from director_brain.models.edl import EditItem, EditorialDecisionList, TransitionSpec
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 from director_brain.plan_validator import validate_plan
+from director_brain.providers.heuristic import generate_edl
 
 
 # ---------------------------------------------------------------------------
@@ -223,6 +224,99 @@ def test_valid_edl_no_constraint():
     is_valid, errors = validate_plan(edl, plan, OBS)
     assert is_valid is True, f"errors={errors}"
     assert errors == []
+
+
+def test_xfade_must_fit_both_adjacent_source_clips():
+    edits = [
+        _edit("shot_a", in_frame=0, out_frame=2_000_000),
+        _edit("shot_b", in_frame=3_000_000, out_frame=3_800_000),
+    ]
+    edits[0].transition = TransitionSpec(
+        type="xfade", name="dissolve", duration_us=500_000)
+    edl = _edl(edits)
+    plan = _plan(
+        sequence=[edit.source_asset_id for edit in edits],
+        decisions=_decisions_for(edl),
+    )
+
+    valid, errors = validate_plan(edl, plan, OBS)
+
+    assert valid is True, f"errors={errors}"
+
+    edits[0].transition = TransitionSpec(
+        type="xfade", name="dissolve", duration_us=800_000)
+    edl = _edl(edits)
+    plan = _plan(
+        sequence=[edit.source_asset_id for edit in edits],
+        decisions=_decisions_for(edl),
+    )
+    valid, errors = validate_plan(edl, plan, OBS)
+
+    assert valid is False
+    assert any("xfade duration must be shorter than both adjacent" in error
+               for error in errors)
+
+
+def test_xfade_requires_a_following_edit():
+    edit = _edit("shot_a", in_frame=0, out_frame=2_000_000)
+    edit.transition = TransitionSpec(
+        type="xfade", name="dissolve", duration_us=500_000)
+    edl = _edl([edit])
+    plan = _plan(
+        sequence=[edit.source_asset_id], decisions=_decisions_for(edl))
+
+    valid, errors = validate_plan(edl, plan, OBS)
+
+    assert valid is False
+    assert any("xfade requires a following edit" in error for error in errors)
+
+
+def test_edl_source_hash_manifest_must_match_used_sources_in_first_use_order():
+    edits = [
+        _edit("shot_b", in_frame=1_000_000, out_frame=3_000_000),
+        _edit("shot_a", in_frame=4_000_000, out_frame=6_000_000),
+    ]
+    edl = _edl(edits)
+    plan = _plan(
+        sequence=[e.source_asset_id for e in edits],
+        decisions=_decisions_for(edl),
+    )
+
+    valid, errors = validate_plan(edl, plan, OBS)
+    assert valid is True, errors
+
+    edl.source_asset_hashes = ["hash_shot_a", "hash_shot_b"]
+    valid, errors = validate_plan(edl, plan, OBS)
+    assert valid is False
+    assert any("EDL source_asset_hashes" in error for error in errors)
+
+
+def test_heuristic_edl_deduplicates_source_hashes_used_by_multiple_edits():
+    edl = generate_edl(
+        "test_proj",
+        [
+            {
+                "source_shot_id": "shot_a",
+                "source_media_hash": "shared-source",
+                "source_in_us": 0,
+                "source_out_us": 2_000_000,
+                "technical_usable": True,
+                "blur_score": 1.0,
+            },
+            {
+                "source_shot_id": "shot_b",
+                "source_media_hash": "shared-source",
+                "source_in_us": 3_000_000,
+                "source_out_us": 5_000_000,
+                "technical_usable": True,
+                "blur_score": 0.9,
+            },
+        ],
+        target_duration_us=3_000_000,
+    )
+
+    assert len(edl.ordered_edits) == 2
+    assert edl.source_asset_hashes == ["shared-source"]
 
 
 # ---------------------------------------------------------------------------

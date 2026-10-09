@@ -27,6 +27,8 @@ def log_decision(
     decision_id: str,
     action: str,
     detail: dict[str, Any],
+    *,
+    project_id: str | None = None,
 ) -> DecisionLedgerEntry:
     """向决策账本追加一条变更记录并持久化。
 
@@ -47,6 +49,7 @@ def log_decision(
         action=action,
         timestamp=int(time.time()),
         detail=detail,
+        project_id=project_id,
     )
     repository.save(entry)
     return entry

@@ -303,6 +303,96 @@ def test_malformed_claim_falls_back():
     assert sc["quality_distribution"]["exposure_ok_ratio"] == pytest.approx(0.0)
 
 
+def test_project_comparison_binds_metrics_to_full_asset_identity_and_act_labels():
+    from director_brain.models.film_observation import TimebaseUnit
+
+    hash_a = "a" * 64
+    hash_b = "b" * 64
+    obs_a = _obs(
+        "same-shot",
+        {"blur_score": 20.0, "exposure_ok": True},
+        0,
+        10_000_000,
+    ).model_copy(update={
+        "observation_id": "obs-a",
+        "project_asset_id": "asset-a",
+        "media_hash": hash_a,
+    })
+    obs_b = _obs(
+        "same-shot",
+        {"blur_score": 80.0, "exposure_ok": False},
+        0,
+        10_000_000,
+    ).model_copy(update={
+        "observation_id": "obs-b",
+        "project_asset_id": "asset-b",
+        "media_hash": hash_b,
+    })
+
+    edits = [
+        EditItem(
+            source_asset_id="same-shot",
+            source_media_hash=hash_a,
+            in_frame=8_500_000,
+            out_frame=9_000_000,
+            timebase=1_000_000,
+            timebase_unit=TimebaseUnit.MICROSECONDS,
+            project_asset_id="asset-a",
+            source_observation_refs=["obs-a"],
+            source_observation_start=0,
+            source_observation_end=10_000_000,
+            source_timebase=1_000_000,
+            source_timebase_unit=TimebaseUnit.MICROSECONDS,
+            act="hook",
+        ),
+        EditItem(
+            source_asset_id="same-shot",
+            source_media_hash=hash_b,
+            in_frame=500_000,
+            out_frame=1_000_000,
+            timebase=1_000_000,
+            timebase_unit=TimebaseUnit.MICROSECONDS,
+            project_asset_id="asset-b",
+            source_observation_refs=["obs-b"],
+            source_observation_start=0,
+            source_observation_end=10_000_000,
+            source_timebase=1_000_000,
+            source_timebase_unit=TimebaseUnit.MICROSECONDS,
+            act="resolve",
+        ),
+    ]
+    project_plan = _plan().model_copy(update={
+        "brief_id": "brief-1",
+        "edl_id": "edl-1",
+        "project_manifest_id": "manifest-1",
+        "project_revision": 1,
+        "project_context_id": "ctx-1",
+        "project_story_graph_id": "graph-1",
+        "film_state_version": "ctx-1",
+    })
+
+    scorecard = compare_plans([(_edl(edits), project_plan)], [obs_a, obs_b])[0]
+
+    assert scorecard["avg_blur"] == pytest.approx(50.0)
+    assert scorecard["quality_distribution"]["exposure_ok_count"] == 1
+    assert scorecard["narrative_coverage"] == {
+        "hook": 1, "develop": 0, "peak": 0, "resolve": 1,
+    }
+    assert scorecard["narrative_coverage_basis"] == "project_plan_act_labels"
+
+
+def test_strategy_comparison_rejects_ambiguous_duplicate_source_observations():
+    first = _obs("same-shot", {"blur_score": 20.0, "exposure_ok": True})
+    duplicate = first.model_copy(update={
+        "observation_id": "obs-duplicate",
+        "claim": json.dumps({"blur_score": 80.0, "exposure_ok": True}),
+    })
+
+    with pytest.raises(ValueError, match="ambiguous technical observations"):
+        compare_plans([(_edl([_edit("same-shot", 0, 1_000_000)]), _plan())],
+                      [first, duplicate])
+
+
 # ---------------------------------------------------------------------------
 # select_best
 # ---------------------------------------------------------------------------

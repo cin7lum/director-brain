@@ -67,6 +67,11 @@ class Settings:
     vlm_provider: str
     vlm_model: str
     ollama_base_url: str
+    project_local_vlm_model: str
+    project_local_vlm_digest: str | None
+    project_local_vlm_runtime_version: str | None
+    project_local_reasoner_model_digest: str | None
+    project_local_reasoner_runtime_version: str | None
     zhipu_api_key: str | None
     zhipu_base_url: str
     # 存储
@@ -85,6 +90,15 @@ def load_settings() -> Settings:
         vlm_provider=_env("VLM_PROVIDER", "ollama"),
         vlm_model=_env("VLM_MODEL", "glm-4.6v-flash"),
         ollama_base_url=_env("OLLAMA_BASE_URL", "http://localhost:11434"),
+        project_local_vlm_model=_env(
+            "PROJECT_LOCAL_VLM_MODEL", "qwen3-vl:8b"),
+        project_local_vlm_digest=_env("PROJECT_LOCAL_VLM_DIGEST"),
+        project_local_vlm_runtime_version=_env(
+            "PROJECT_LOCAL_VLM_RUNTIME_VERSION"),
+        project_local_reasoner_model_digest=_env(
+            "PROJECT_LOCAL_REASONER_MODEL_DIGEST"),
+        project_local_reasoner_runtime_version=_env(
+            "PROJECT_LOCAL_REASONER_RUNTIME_VERSION"),
         zhipu_api_key=_env("ZHIPU_API_KEY"),
         zhipu_base_url=_env("ZHIPU_BASE_URL", "https://open.bigmodel.cn/api/paas/v4"),
         storage_backend=_env("STORAGE_BACKEND", "sqlite"),

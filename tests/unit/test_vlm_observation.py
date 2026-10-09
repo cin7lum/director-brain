@@ -14,7 +14,11 @@ import time
 import pytest
 
 from director_brain.analysis_cache import AnalysisCache
-from director_brain.models.film_observation import ClaimKind
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FILM_OBSERVATION_SCHEMA_VERSION,
+    TimebaseUnit,
+)
 from observation_service.vlm_observation import (
     batch_vlm_observations,
     vlm_result_to_observation,
@@ -79,6 +83,8 @@ class TestVlmResultToObservation:
         assert obs.model_version == "qwen3-vl:latest"
         assert obs.confidence == 0.7
         assert obs.timebase == 1_000_000
+        assert obs.timebase_unit == TimebaseUnit.MICROSECONDS
+        assert obs.schema_version == FILM_OBSERVATION_SCHEMA_VERSION
         assert obs.media_asset_id == "shot_test_0000"
         assert obs.media_hash == "hash_test_0"
         assert obs.start_frame == 0
@@ -235,6 +241,35 @@ class TestBatchVlmObservations:
 
         assert len(obs_list) == 1
         assert obs_list[0].claim_kind == ClaimKind.NOT_DETERMINED
+
+    def test_failure_is_retried_and_only_success_is_cached(self, tmp_path):
+        import contextlib
+        import observation_service.vlm_observation as mod
+
+        shots = [_shot(0, 0, 2_000_000)]
+        adapter = _MockAdapter(results=[_vlm_failure(), _vlm_success()])
+
+        @contextlib.contextmanager
+        def fake_kfs(video_path, in_us, out_us, positions=(0.15, 0.50, 0.85)):
+            yield ["/tmp/fake_frame.jpg"]
+
+        monkeypatch = pytest.MonkeyPatch()
+        monkeypatch.setattr(mod, "extract_keyframes", fake_kfs)
+        try:
+            cache = AnalysisCache()
+            failed_attempt = batch_vlm_observations(
+                "dummy.mp4", shots, adapter=adapter, cache=cache)
+            recovered_attempt = batch_vlm_observations(
+                "dummy.mp4", shots, adapter=adapter, cache=cache)
+            replay = batch_vlm_observations(
+                "dummy.mp4", shots, adapter=adapter, cache=cache)
+        finally:
+            monkeypatch.undo()
+
+        assert failed_attempt[0].claim_kind == ClaimKind.NOT_DETERMINED
+        assert recovered_attempt[0].claim_kind == ClaimKind.MODEL_OBSERVATION
+        assert replay[0].claim_kind == ClaimKind.MODEL_OBSERVATION
+        assert len(adapter.calls) == 2
 
     def test_keyframe_failure_degrades_gracefully(self, tmp_path):
         """extract_keyframe 返回空串时产出 NOT_DETERMINED，不抛异常。"""

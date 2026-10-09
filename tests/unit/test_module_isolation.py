@@ -54,7 +54,19 @@ def test_contracts_match_committed_schemas():
     from scripts.export_contracts import CONTRACTS_DIR, build_contracts
 
     assert CONTRACTS_DIR.is_dir(), "contracts/ 未导出——先跑 scripts/export_contracts.py"
-    for fname, text in build_contracts().items():
+    contracts = build_contracts()
+    assert "film_context.schema.json" in contracts
+    assert "film_project_manifest.schema.json" in contracts
+    context_schema = json.loads(contracts["film_context.schema.json"])["schema"]
+    assert "asset_coverage" in context_schema["properties"]
+    assert "timeline_scope" in context_schema["properties"]
+    manifest_schema = json.loads(
+        contracts["film_project_manifest.schema.json"])["schema"]
+    assert "assets" in manifest_schema["properties"]
+    from director_brain.models.project import ProjectBoundaryBasis
+    assert ProjectBoundaryBasis.DATASET_EVENT_ID.value == "dataset_event_id"
+    assert ProjectBoundaryBasis.DATASET_RECORDING_ID.value == "dataset_recording_id"
+    for fname, text in contracts.items():
         committed = (CONTRACTS_DIR / fname).read_text(encoding="utf-8").rstrip("\n")
         assert committed == text, (
             f"契约漂移: {fname} 与已提交版本不一致——"

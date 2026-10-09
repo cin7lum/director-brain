@@ -19,6 +19,9 @@ import subprocess
 import tempfile
 import os
 
+MULTI_FRAME_SAMPLE_POSITIONS = (0.15, 0.50, 0.85)
+MULTI_FRAME_SAMPLING_PROFILE = "shot-relative-v1:0.15,0.50,0.85"
+
 
 @contextlib.contextmanager
 def extract_keyframe(video_path: str, shot_in_us: int, shot_out_us: int,
@@ -81,10 +84,13 @@ def extract_keyframe(video_path: str, shot_in_us: int, shot_out_us: int,
 
 @contextlib.contextmanager
 def extract_keyframes(video_path: str, shot_in_us: int, shot_out_us: int,
-                      positions: tuple[float, ...] = (0.15, 0.50, 0.85)):
+                      positions: tuple[float, ...] = MULTI_FRAME_SAMPLE_POSITIONS,
+                      *, local_only: bool = False):
     """按镜头内相对位置抽多帧（P3 语义观测：一次多图 VLM 调用）。
 
     与 :func:`extract_keyframe` 同一清理约定：临时帧 with 块退出自动删除。
+    ``local_only=True`` restricts FFmpeg input protocols to local files for
+    private-media preview routes; the default preserves existing callers.
     个别位置抽取失败时该帧**不占位**（成功帧列表可能短于 positions）；
     全部失败 yield 空列表（fail-soft，调用方按无帧降级）。
     """
@@ -97,15 +103,21 @@ def extract_keyframes(video_path: str, shot_in_us: int, shot_out_us: int,
             os.close(fd)
             fds.append(path)
             pos_sec = (shot_in_us + int(dur * frac)) / 1_000_000
-            cmd = [
-                "ffmpeg",
+            cmd = ["ffmpeg"]
+            if local_only:
+                # The source has already passed the allowed-root and hash
+                # checks. Restrict FFmpeg itself to local-file inputs so a
+                # playlist or container reference cannot initiate a network
+                # protocol while making a private-media preview.
+                cmd.extend(["-protocol_whitelist", "file"])
+            cmd.extend([
                 "-ss", f"{pos_sec:.3f}",
                 "-i", video_path,
                 "-frames:v", "1",
                 "-q:v", "2",
                 path,
                 "-y",
-            ]
+            ])
             try:
                 result = subprocess.run(cmd, capture_output=True, timeout=30)
                 ok = (

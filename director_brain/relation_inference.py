@@ -22,7 +22,11 @@ from __future__ import annotations
 
 import json
 
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
 from director_brain.models.story_graph import (
     INFERENCE_STATUS_INFERRED,
     StoryEdge,
@@ -251,6 +255,39 @@ def infer_relations(
     if len(tech) < 2:
         return []
 
+    vlm_obs = [
+        o for o in observations
+        if o.observation_type == "vlm_semantic"
+        and o.claim_kind == ClaimKind.MODEL_OBSERVATION
+    ]
+    scoped_observations = [*tech, *vlm_obs]
+    project_asset_ids = {
+        observation.project_asset_id for observation in scoped_observations
+    }
+    if len(project_asset_ids) > 1:
+        if None in project_asset_ids:
+            raise ValueError(
+                "relation inference cannot mix bound and unbound observations"
+            )
+        raise ValueError(
+            "relation inference requires one project_asset_id; "
+            "cross-asset inference is not admitted"
+        )
+    project_asset_id = next(iter(project_asset_ids), None)
+    if graph.project_asset_id != project_asset_id:
+        raise ValueError("relation inference observations do not match graph asset scope")
+
+    timebases = {(o.timebase, o.timebase_unit) for o in tech}
+    if len(timebases) != 1:
+        raise ValueError("relation inference requires one consistent source timebase")
+    timebase, timebase_unit = next(iter(timebases))
+    if timebase_unit != TimebaseUnit.MICROSECONDS:
+        raise ValueError(
+            "relation inference duration rules require microsecond observations"
+        )
+    if graph.timebase != timebase or graph.timebase_unit != timebase_unit:
+        raise ValueError("relation inference observations do not match graph timebase")
+
     claims = [_parse_claim(o.claim) for o in tech]
     dedup: dict[tuple[str, str, StoryEdgeType], StoryEdge] = {}
 
@@ -271,11 +308,6 @@ def infer_relations(
 
     # ---- VLM 语义规则：仅当存在成功的 vlm_semantic 观测时生效 ----
     # 没有 VLM 观测时该块整体跳过，函数行为与纯确定性规则一致（向后兼容）。
-    vlm_obs = [
-        o for o in observations
-        if o.observation_type == "vlm_semantic"
-        and o.claim_kind == ClaimKind.MODEL_OBSERVATION
-    ]
     if vlm_obs:
         vlm_by_shot = {o.media_asset_id: o for o in vlm_obs}
         for edge in _vlm_semantic_edges(tech, vlm_by_shot):

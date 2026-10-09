@@ -14,10 +14,13 @@
 from __future__ import annotations
 
 import json
+import io
 import os
 import subprocess
 import tempfile
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -29,12 +32,20 @@ from observation_service.vlm_adapter import (
     FAILED,
     FT_NETWORK,
     FT_RATE_LIMIT,
+    FT_REQUEST,
     FT_DECODE,
     FT_PARSE,
     FT_EMPTY,
     FT_UNKNOWN,
 )
-from observation_service.ollama_vlm_adapter import OllamaVLMAdapter
+from observation_service.ollama_vlm_adapter import (
+    LocalVLMRuntimeBindingError,
+    OllamaVLMAdapter,
+    PROJECT_LINK_COMPARISON_NUM_CTX,
+    SEMANTIC_NUM_CTX,
+    SEMANTIC_GENERATION_PROFILE,
+    PROJECT_LINK_COMPARISON_GENERATION_PROFILE,
+)
 from observation_service.zhipu_vlm_adapter import ZhipuVLMAdapter
 from observation_service.vlm_factory import get_vlm_adapter
 from observation_service.keyframe import extract_keyframe
@@ -72,6 +83,204 @@ def _make_test_video(duration_sec: int = 3, size: str = "320x240") -> str:
     ]
     subprocess.run(cmd, capture_output=True, check=True)
     return path
+
+
+def _json_http_response(payload: dict):
+    response = MagicMock()
+    response.__enter__.return_value.read.return_value = json.dumps(payload).encode()
+    return response
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://example.com",
+        "http://user@127.0.0.1:11434",
+        "http://127.0.0.1:11434/proxy",
+    ],
+)
+def test_project_local_adapter_rejects_non_loopback_or_ambiguous_urls(base_url):
+    with pytest.raises(LocalVLMRuntimeBindingError):
+        OllamaVLMAdapter(
+            base_url=base_url,
+            model_digest="a" * 64,
+            runtime_version="0.32.14",
+            enforce_loopback=True,
+        )
+
+
+def test_project_local_adapter_bypasses_ambient_proxy_settings():
+    adapter = OllamaVLMAdapter(
+        model_digest="a" * 64,
+        runtime_version="0.32.14",
+        enforce_loopback=True,
+    )
+    proxy_handlers = [
+        handler for handler in adapter._opener.handlers
+        if isinstance(handler, urllib.request.ProxyHandler)
+    ]
+    # urllib omits an empty ProxyHandler from the chain, and build_opener then
+    # suppresses its ambient-proxy default. No proxy handler means direct I/O.
+    assert proxy_handlers == []
+
+
+def test_project_local_adapter_binds_exact_runtime_and_model_digest():
+    digest = "a" * 64
+    adapter = OllamaVLMAdapter(
+        model="qwen3-vl:4b",
+        model_digest=digest,
+        runtime_version="0.32.14",
+        enforce_loopback=True,
+    )
+    with patch.object(adapter._opener, "open", side_effect=[
+        _json_http_response({"version": "0.32.14"}),
+        _json_http_response({"models": [{
+            "name": "qwen3-vl:4b", "digest": digest,
+        }]}),
+    ]) as open_local:
+        adapter.verify_runtime_binding()
+    assert adapter._runtime_binding_verified is True
+    assert open_local.call_count == 2
+
+
+def test_project_local_adapter_fails_closed_instead_of_changing_generation_profile():
+    image = _make_dummy_image()
+    try:
+        adapter = OllamaVLMAdapter(
+            model_digest="a" * 64,
+            runtime_version="0.32.14",
+            enforce_loopback=True,
+        )
+        adapter._runtime_binding_verified = True
+        with patch.object(
+            adapter, "_chat",
+            return_value=("", ValueError("unsupported format option")),
+        ) as chat:
+            result = adapter.analyze_frames([image])
+        assert result["status"] == FAILED
+        assert result["degraded"] is True
+        chat.assert_called_once()
+    finally:
+        os.remove(image)
+
+
+@pytest.mark.parametrize(
+    "version_payload,tags_payload",
+    [
+        ({"version": "0.32.15"}, {"models": [{
+            "name": "qwen3-vl:4b", "digest": "a" * 64,
+        }]}),
+        ({"version": "0.32.14"}, {"models": [{
+            "name": "qwen3-vl:4b", "digest": "b" * 64,
+        }]}),
+    ],
+)
+def test_project_local_adapter_fails_closed_on_runtime_or_digest_drift(
+    version_payload, tags_payload
+):
+    adapter = OllamaVLMAdapter(
+        model="qwen3-vl:4b",
+        model_digest="a" * 64,
+        runtime_version="0.32.14",
+        enforce_loopback=True,
+    )
+    with patch.object(adapter._opener, "open", side_effect=[
+        _json_http_response(version_payload),
+        _json_http_response(tags_payload),
+    ]):
+        with pytest.raises(LocalVLMRuntimeBindingError):
+            adapter.verify_runtime_binding()
+
+
+def test_semantic_multiframe_profile_pins_context_size_in_request_and_fingerprint():
+    image = _make_dummy_image()
+    seen = {}
+    adapter = OllamaVLMAdapter()
+    response = {
+        "function": "SENSORY_INSERT",
+        "role": "broll",
+        "motion": "subtle",
+        "narrative": "transition",
+        "emotion": "neutral",
+        "action": "sensory",
+        "desc": "transport contract fixture",
+        "temporal": "",
+    }
+
+    def fake_chat(body):
+        seen["options"] = dict(body["options"])
+        return json.dumps(response), None
+
+    try:
+        with patch.object(adapter, "_chat", side_effect=fake_chat):
+            result = adapter.analyze_frames([image, image, image])
+        assert result["status"] == OBSERVED
+        assert seen["options"]["num_ctx"] == SEMANTIC_NUM_CTX == 8192
+        assert f"num_ctx={SEMANTIC_NUM_CTX}" in SEMANTIC_GENERATION_PROFILE
+    finally:
+        os.remove(image)
+
+
+def test_cross_asset_comparison_profile_pins_six_image_context_size():
+    image = _make_dummy_image()
+    seen = {}
+    adapter = OllamaVLMAdapter()
+    response = {
+        "assessment": "insufficient_evidence",
+        "evidence_for": [],
+        "evidence_against": [],
+        "limitation": "transport contract fixture",
+    }
+
+    def fake_chat(body):
+        seen["options"] = dict(body["options"])
+        return json.dumps(response), None
+
+    try:
+        with patch.object(adapter, "_chat", side_effect=fake_chat):
+            result = adapter.compare_cross_asset_frames(
+                [image, image, image],
+                [image, image, image],
+                relation_kind="event_identity",
+                left_event_evidence={"scene_description": "source A fixture"},
+                right_event_evidence={"scene_description": "source B fixture"},
+            )
+        assert result["status"] == OBSERVED
+        assert seen["options"]["num_ctx"] == PROJECT_LINK_COMPARISON_NUM_CTX == 16384
+        assert (
+            f"num_ctx={PROJECT_LINK_COMPARISON_NUM_CTX}"
+            in PROJECT_LINK_COMPARISON_GENERATION_PROFILE
+        )
+    finally:
+        os.remove(image)
+
+
+def test_ollama_http_400_preserves_bounded_diagnostic_and_request_failure_type():
+    image = _make_dummy_image()
+    adapter = OllamaVLMAdapter()
+    error_body = json.dumps({
+        "error": {
+            "code": 400,
+            "type": "exceed_context_size_error",
+            "message": "request exceeds the available context size",
+        }
+    }).encode("utf-8")
+    error = urllib.error.HTTPError(
+        "http://127.0.0.1:11434/api/chat",
+        400,
+        "Bad Request",
+        hdrs=None,
+        fp=io.BytesIO(error_body),
+    )
+    try:
+        with patch.object(adapter, "_open", side_effect=error):
+            result = adapter.analyze_frames([image, image, image])
+        assert result["status"] == FAILED
+        assert result["failure_type"] == FT_REQUEST
+        assert "exceed_context_size_error" in result["degrade_reason"]
+        assert "available context size" in result["degrade_reason"]
+    finally:
+        os.remove(image)
 
 
 # ---------------------------------------------------------------------------

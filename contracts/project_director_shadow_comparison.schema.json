@@ -1,0 +1,1680 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "SHADOW 输出：未排序的项目导演策略 Plan/EDL 比较，不可确认或执行",
+  "schema": {
+    "$defs": {
+      "Decision": {
+        "additionalProperties": false,
+        "description": "单条编辑决策理由（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "decision_id": {
+            "title": "Decision Id",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "shot_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Shot Refs",
+            "type": "array"
+          },
+          "project_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Asset Id"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rationale"
+          },
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "alternative_project_asset_ids": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Alternative Project Asset Ids",
+            "type": "array"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Confidence"
+          },
+          "requires_approval": {
+            "default": false,
+            "title": "Requires Approval",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "decision_id",
+          "purpose"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "DirectorDecisionPlan": {
+        "additionalProperties": false,
+        "description": "面向执行的导演决策计划。",
+        "properties": {
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "plan_id": {
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "brief_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Brief Id"
+          },
+          "edl_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Edl Id"
+          },
+          "project_manifest_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Manifest Id"
+          },
+          "project_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Revision"
+          },
+          "project_context_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Context Id"
+          },
+          "project_story_graph_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Story Graph Id"
+          },
+          "project_story_link_review_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Story Link Review Id"
+          },
+          "project_story_link_review_revision": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Story Link Review Revision"
+          },
+          "brief_version": {
+            "title": "Brief Version",
+            "type": "string"
+          },
+          "film_state_version": {
+            "title": "Film State Version",
+            "type": "string"
+          },
+          "sequence": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sequence",
+            "type": "array"
+          },
+          "sequence_project_asset_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sequence Project Asset Ids",
+            "type": "array"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/$defs/Decision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "project_narrative_reasoning": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectNarrativeReasoningTrace"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "constraints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
+          "open_questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Open Questions",
+            "type": "array"
+          },
+          "degraded": {
+            "default": false,
+            "title": "Degraded",
+            "type": "boolean"
+          },
+          "degradation_events": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Degradation Events",
+            "type": "array"
+          },
+          "validation_status": {
+            "title": "Validation Status",
+            "type": "string"
+          },
+          "approval_state": {
+            "title": "Approval State",
+            "type": "string"
+          },
+          "supersedes_plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Plan Id"
+          },
+          "state": {
+            "default": "draft",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "plan_id",
+          "version",
+          "brief_version",
+          "film_state_version",
+          "validation_status",
+          "approval_state"
+        ],
+        "title": "DirectorDecisionPlan",
+        "type": "object"
+      },
+      "EditItem": {
+        "additionalProperties": false,
+        "description": "单条剪辑决策（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "source_asset_id": {
+            "title": "Source Asset Id",
+            "type": "string"
+          },
+          "source_media_hash": {
+            "title": "Source Media Hash",
+            "type": "string"
+          },
+          "in_frame": {
+            "title": "In Frame",
+            "type": "integer"
+          },
+          "out_frame": {
+            "title": "Out Frame",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit",
+            "default": "unknown"
+          },
+          "project_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Asset Id"
+          },
+          "source_observation_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Observation Refs",
+            "type": "array"
+          },
+          "audio_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Evidence Refs",
+            "type": "array"
+          },
+          "project_story_link_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Project Story Link Refs",
+            "type": "array"
+          },
+          "project_story_relation_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Project Story Relation Refs",
+            "type": "array"
+          },
+          "source_observation_start": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Observation Start"
+          },
+          "source_observation_end": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Observation End"
+          },
+          "source_timebase": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Timebase"
+          },
+          "source_timebase_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TimebaseUnit"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "transition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TransitionSpec"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "audio_lead_us": {
+            "default": 0,
+            "title": "Audio Lead Us",
+            "type": "integer"
+          },
+          "audio_tail_us": {
+            "default": 0,
+            "title": "Audio Tail Us",
+            "type": "integer"
+          },
+          "effect_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Effect Refs",
+            "type": "array"
+          },
+          "shot_function": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shot Function"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rationale"
+          },
+          "act": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Act"
+          },
+          "evidence_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence Type"
+          }
+        },
+        "required": [
+          "source_asset_id",
+          "source_media_hash",
+          "in_frame",
+          "out_frame",
+          "timebase"
+        ],
+        "title": "EditItem",
+        "type": "object"
+      },
+      "EditorialDecisionList": {
+        "additionalProperties": false,
+        "description": "一份完整的编辑决策表。",
+        "properties": {
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "edl_id": {
+            "title": "Edl Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "brief_version": {
+            "title": "Brief Version",
+            "type": "string"
+          },
+          "context_id": {
+            "title": "Context Id",
+            "type": "string"
+          },
+          "source_asset_hashes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Asset Hashes",
+            "type": "array"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit",
+            "default": "unknown"
+          },
+          "ordered_edits": {
+            "items": {
+              "$ref": "#/$defs/EditItem"
+            },
+            "title": "Ordered Edits",
+            "type": "array"
+          },
+          "decision_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Decision Refs",
+            "type": "array"
+          },
+          "audio_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Refs",
+            "type": "array"
+          },
+          "audio_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Audio Evidence Refs",
+            "type": "array"
+          },
+          "overlay_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Overlay Refs",
+            "type": "array"
+          },
+          "subtitle_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Subtitle Refs",
+            "type": "array"
+          },
+          "hard_rule_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hard Rule Refs",
+            "type": "array"
+          },
+          "artistic_choices": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Artistic Choices",
+            "type": "array"
+          },
+          "expected_duration": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Duration"
+          },
+          "plan_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Plan Hash"
+          },
+          "approval_state": {
+            "title": "Approval State",
+            "type": "string"
+          },
+          "supersedes_edl_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Supersedes Edl Id"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "edl_id",
+          "version",
+          "brief_version",
+          "context_id",
+          "timebase",
+          "approval_state"
+        ],
+        "title": "EditorialDecisionList",
+        "type": "object"
+      },
+      "ProjectDirectorSourceSelectionAuditEntry": {
+        "additionalProperties": false,
+        "description": "Bind one model disposition to the planner's final SHADOW EDL outcome.",
+        "properties": {
+          "strategy_rank": {
+            "minimum": 0,
+            "title": "Strategy Rank",
+            "type": "integer"
+          },
+          "strategy_disposition": {
+            "enum": [
+              "include",
+              "exclude"
+            ],
+            "title": "Strategy Disposition",
+            "type": "string"
+          },
+          "selected_in_edl": {
+            "title": "Selected In Edl",
+            "type": "boolean"
+          },
+          "reason_codes": {
+            "items": {
+              "enum": [
+                "present_in_candidate_edl",
+                "excluded_by_director_strategy",
+                "excluded_by_must_avoid",
+                "source_has_no_technical_data",
+                "source_is_dark_shot",
+                "source_role_discarded",
+                "technical_eligibility_not_met",
+                "source_interval_below_minimum",
+                "act_duration_target_reached",
+                "act_remaining_capacity_below_minimum"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Reason Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strategy_rank",
+          "strategy_disposition",
+          "selected_in_edl",
+          "reason_codes"
+        ],
+        "title": "ProjectDirectorSourceSelectionAuditEntry",
+        "type": "object"
+      },
+      "ProjectDirectorStrategyCandidate": {
+        "additionalProperties": false,
+        "description": "A non-confirmable project Plan/EDL generated from one SHADOW hypothesis.",
+        "properties": {
+          "hypothesis": {
+            "$ref": "#/$defs/ProjectNarrativeStrategyHypothesis"
+          },
+          "candidate_binding_digest": {
+            "description": "SHA-256 binding to the exact project evidence scope, stable DirectorBrief, Plan and EDL state, strategy hypothesis, reasoning trace, decisions, and materialized EDL behavior. Generated artifact IDs and timestamps are excluded. A matching digest is required before a later formal generation can reuse a candidate.",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Candidate Binding Digest",
+            "type": "string"
+          },
+          "edl": {
+            "$ref": "#/$defs/EditorialDecisionList"
+          },
+          "plan": {
+            "$ref": "#/$defs/DirectorDecisionPlan"
+          },
+          "selection_audit": {
+            "items": {
+              "$ref": "#/$defs/ProjectDirectorSourceSelectionAuditEntry"
+            },
+            "minItems": 2,
+            "title": "Selection Audit",
+            "type": "array"
+          },
+          "sequence_changed_vs_heuristic": {
+            "description": "Whether the ordered source identities differ from the heuristic baseline; does not compare trims, transitions, audio, or effects.",
+            "title": "Sequence Changed Vs Heuristic",
+            "type": "boolean"
+          },
+          "distinct_edl_sequence_from_baseline": {
+            "description": "Whether the materialized EDL execution signature differs from the heuristic baseline, including source intervals, transitions, audio offsets, effects, and output tracks; provenance-only metadata is excluded.",
+            "title": "Distinct Edl Sequence From Baseline",
+            "type": "boolean"
+          },
+          "distinct_edl_sequence_from_other_candidates": {
+            "description": "Whether this candidate's materialized EDL execution signature is unique among the strategy candidates, including source intervals, transitions, audio offsets, effects, and output tracks.",
+            "title": "Distinct Edl Sequence From Other Candidates",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hypothesis",
+          "candidate_binding_digest",
+          "edl",
+          "plan",
+          "selection_audit",
+          "sequence_changed_vs_heuristic",
+          "distinct_edl_sequence_from_baseline",
+          "distinct_edl_sequence_from_other_candidates"
+        ],
+        "title": "ProjectDirectorStrategyCandidate",
+        "type": "object"
+      },
+      "ProjectNarrativeActBoundary": {
+        "additionalProperties": false,
+        "properties": {
+          "act": {
+            "enum": [
+              "hook",
+              "develop",
+              "peak",
+              "resolve"
+            ],
+            "title": "Act",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "minItems": 1,
+            "title": "Source Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "act",
+          "source_refs"
+        ],
+        "title": "ProjectNarrativeActBoundary",
+        "type": "object"
+      },
+      "ProjectNarrativeCallProvenance": {
+        "additionalProperties": false,
+        "description": "Content-free request scope for one successful project Reasoner call.",
+        "properties": {
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "stage": {
+            "enum": [
+              "flat_project",
+              "segment",
+              "project_synthesis"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "model": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "system_prompt_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "System Prompt Sha256",
+            "type": "string"
+          },
+          "response_schema_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Response Schema Sha256",
+            "type": "string"
+          },
+          "input_evidence_ref_indexes": {
+            "description": "Zero-based positions in ProjectNarrativeReasoningTrace.input_evidence_refs",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 1,
+            "title": "Input Evidence Ref Indexes",
+            "type": "array"
+          },
+          "temperature": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Temperature",
+            "type": "number"
+          },
+          "timeout_seconds": {
+            "exclusiveMinimum": 0,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          },
+          "max_output_tokens": {
+            "exclusiveMinimum": 0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "provider_identity_state": {
+            "default": "not_reported",
+            "description": "Whether the response envelope reported a model identifier or system fingerprint; this is not an immutable model revision or quality admission.",
+            "enum": [
+              "reported",
+              "not_reported"
+            ],
+            "title": "Provider Identity State",
+            "type": "string"
+          },
+          "provider_reported_model": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Model identifier returned by the provider response envelope, if any.",
+            "title": "Provider Reported Model"
+          },
+          "provider_reported_system_fingerprint": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "System fingerprint returned by the provider response envelope, if any.",
+            "title": "Provider Reported System Fingerprint"
+          },
+          "runtime_binding_state": {
+            "default": "unbound",
+            "enum": [
+              "unbound",
+              "verified"
+            ],
+            "title": "Runtime Binding State",
+            "type": "string"
+          },
+          "verified_model_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-fA-F0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Exact Ollama model digest verified against the local model catalog immediately before this provider call.",
+            "title": "Verified Model Digest"
+          },
+          "verified_runtime_version": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Ollama runtime version verified immediately before this provider call.",
+            "title": "Verified Runtime Version"
+          }
+        },
+        "required": [
+          "sequence",
+          "stage",
+          "model",
+          "prompt_version",
+          "system_prompt_sha256",
+          "response_schema_sha256",
+          "input_evidence_ref_indexes",
+          "temperature",
+          "timeout_seconds",
+          "max_output_tokens"
+        ],
+        "title": "ProjectNarrativeCallProvenance",
+        "type": "object"
+      },
+      "ProjectNarrativeConstraintAssessment": {
+        "additionalProperties": false,
+        "description": "Unverified per-strategy review suggestion for one exact Brief entry.",
+        "properties": {
+          "constraint_kind": {
+            "enum": [
+              "must_include",
+              "must_avoid"
+            ],
+            "title": "Constraint Kind",
+            "type": "string"
+          },
+          "brief_index": {
+            "minimum": 0,
+            "title": "Brief Index",
+            "type": "integer"
+          },
+          "constraint_text": {
+            "minLength": 1,
+            "title": "Constraint Text",
+            "type": "string"
+          },
+          "assessment": {
+            "enum": [
+              "candidate_supported",
+              "candidate_conflicted",
+              "unresolved"
+            ],
+            "title": "Assessment",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "title": "Source Refs",
+            "type": "array"
+          },
+          "candidate_edl_source_asset_alignment": {
+            "default": "not_evaluated",
+            "description": "Mechanical source-asset identity overlap with the candidate EDL; does not establish cited time-range overlap or semantic constraint truth.",
+            "enum": [
+              "not_evaluated",
+              "no_cited_sources",
+              "all_cited_assets_selected",
+              "some_cited_assets_selected",
+              "no_cited_assets_selected"
+            ],
+            "title": "Candidate Edl Source Asset Alignment",
+            "type": "string"
+          }
+        },
+        "required": [
+          "constraint_kind",
+          "brief_index",
+          "constraint_text",
+          "assessment",
+          "statement"
+        ],
+        "title": "ProjectNarrativeConstraintAssessment",
+        "type": "object"
+      },
+      "ProjectNarrativeEvidenceClaim": {
+        "additionalProperties": false,
+        "description": "One strategy rationale statement tied to exact project evidence.",
+        "properties": {
+          "statement": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Source Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "statement",
+          "source_refs"
+        ],
+        "title": "ProjectNarrativeEvidenceClaim",
+        "type": "object"
+      },
+      "ProjectNarrativeEvidenceRef": {
+        "additionalProperties": false,
+        "description": "Exact semantic observation supplied to a project narrative hypothesis.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_media_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Media Hash",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "minLength": 1,
+            "title": "Source Asset Id",
+            "type": "string"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "source_media_hash",
+          "source_asset_id",
+          "observation_id"
+        ],
+        "title": "ProjectNarrativeEvidenceRef",
+        "type": "object"
+      },
+      "ProjectNarrativeReasoningTrace": {
+        "additionalProperties": false,
+        "description": "Unverified project narrative hypotheses with exact input lineage.",
+        "properties": {
+          "state": {
+            "default": "SHADOW_UNVERIFIED",
+            "enum": [
+              "SHADOW_UNVERIFIED",
+              "ACTIVE_PATHWAY_UNVERIFIED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "evidence_meaning": {
+            "const": "input_lineage_only_not_claim_verification",
+            "default": "input_lineage_only_not_claim_verification",
+            "title": "Evidence Meaning",
+            "type": "string"
+          },
+          "brief_id": {
+            "minLength": 1,
+            "title": "Brief Id",
+            "type": "string"
+          },
+          "provider": {
+            "const": "ollama",
+            "default": "ollama",
+            "title": "Provider",
+            "type": "string"
+          },
+          "model": {
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "minLength": 1,
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "temperature": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Temperature",
+            "type": "number"
+          },
+          "provider_call_provenance": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeCallProvenance"
+            },
+            "title": "Provider Call Provenance",
+            "type": "array"
+          },
+          "provider_call_provenance_state": {
+            "default": "legacy_not_captured",
+            "enum": [
+              "captured",
+              "legacy_not_captured"
+            ],
+            "title": "Provider Call Provenance State",
+            "type": "string"
+          },
+          "story_arc": {
+            "minLength": 1,
+            "title": "Story Arc",
+            "type": "string"
+          },
+          "input_evidence_refs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "minItems": 2,
+            "title": "Input Evidence Refs",
+            "type": "array"
+          },
+          "emotional_hypotheses": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeShotHypothesis"
+            },
+            "minItems": 2,
+            "title": "Emotional Hypotheses",
+            "type": "array"
+          },
+          "key_moments": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeShotHypothesis"
+            },
+            "title": "Key Moments",
+            "type": "array"
+          },
+          "act_boundaries": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeActBoundary"
+            },
+            "title": "Act Boundaries",
+            "type": "array"
+          },
+          "suggested_order": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "minItems": 2,
+            "title": "Suggested Order",
+            "type": "array"
+          },
+          "strategy_hypotheses": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeStrategyHypothesis"
+            },
+            "minItems": 2,
+            "title": "Strategy Hypotheses",
+            "type": "array"
+          },
+          "active_strategy_hypothesis_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Strategy Hypothesis Id"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "caller_asserted_link_hints_supplied": {
+            "default": 0,
+            "description": "Caller-asserted link hints supplied as unverified context; this does not establish that the model used or accepted them.",
+            "minimum": 0,
+            "title": "Caller Asserted Link Hints Supplied",
+            "type": "integer"
+          },
+          "caller_asserted_link_hint_ids_supplied": {
+            "description": "Stable IDs of caller link hints supplied to the provider.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Caller Asserted Link Hint Ids Supplied",
+            "type": "array"
+          },
+          "caller_asserted_link_hint_ids_omitted": {
+            "description": "Stable IDs of current review links omitted because they could not be mapped to the active semantic evidence supplied to the provider.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Caller Asserted Link Hint Ids Omitted",
+            "type": "array"
+          },
+          "caller_asserted_link_review_link_count": {
+            "default": 0,
+            "maximum": 500,
+            "minimum": 0,
+            "title": "Caller Asserted Link Review Link Count",
+            "type": "integer"
+          },
+          "caller_asserted_link_provenance_state": {
+            "default": "legacy_not_captured",
+            "enum": [
+              "captured",
+              "legacy_not_captured"
+            ],
+            "title": "Caller Asserted Link Provenance State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brief_id",
+          "model",
+          "prompt_version",
+          "temperature",
+          "story_arc",
+          "input_evidence_refs",
+          "emotional_hypotheses",
+          "suggested_order",
+          "strategy_hypotheses"
+        ],
+        "title": "ProjectNarrativeReasoningTrace",
+        "type": "object"
+      },
+      "ProjectNarrativeShotHypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+          },
+          "label": {
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rationale"
+          }
+        },
+        "required": [
+          "source",
+          "label"
+        ],
+        "title": "ProjectNarrativeShotHypothesis",
+        "type": "object"
+      },
+      "ProjectNarrativeSourceRationale": {
+        "additionalProperties": false,
+        "description": "One strategy-specific include/exclude decision tied to evidence.",
+        "properties": {
+          "focus_source": {
+            "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+          },
+          "disposition": {
+            "enum": [
+              "include",
+              "exclude"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "statement": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "source_refs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Source Refs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "focus_source",
+          "disposition",
+          "statement",
+          "source_refs"
+        ],
+        "title": "ProjectNarrativeSourceRationale",
+        "type": "object"
+      },
+      "ProjectNarrativeStrategyHypothesis": {
+        "additionalProperties": false,
+        "description": "One unranked editorial strategy hypothesis bound to project evidence.",
+        "properties": {
+          "hypothesis_id": {
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,47}$",
+            "title": "Hypothesis Id",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "editorial_intent": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Editorial Intent",
+            "type": "string"
+          },
+          "emotional_arc": {
+            "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+          },
+          "editing_language_choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "fast_cut",
+                  "slow_paced",
+                  "montage",
+                  "jump_cut"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Editing Language Choice"
+          },
+          "editing_language_rationale": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "audio_style_choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "j_cut",
+                  "l_cut"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Audio Style Choice"
+          },
+          "audio_style_rationale": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "transition_policy_choice": {
+            "anyOf": [
+              {
+                "enum": [
+                  "none",
+                  "dissolve_act_boundary"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transition Policy Choice"
+          },
+          "transition_policy_rationale": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "transition_duration_us": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transition Duration Us"
+          },
+          "ordered_sources": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceRef"
+            },
+            "minItems": 2,
+            "title": "Ordered Sources",
+            "type": "array"
+          },
+          "source_rationales": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeSourceRationale"
+            },
+            "minItems": 2,
+            "title": "Source Rationales",
+            "type": "array"
+          },
+          "act_boundaries": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeActBoundary"
+            },
+            "title": "Act Boundaries",
+            "type": "array"
+          },
+          "tradeoffs": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Tradeoffs",
+            "type": "array"
+          },
+          "uncertainties": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeEvidenceClaim"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Uncertainties",
+            "type": "array"
+          },
+          "constraint_assessments": {
+            "items": {
+              "$ref": "#/$defs/ProjectNarrativeConstraintAssessment"
+            },
+            "title": "Constraint Assessments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "hypothesis_id",
+          "label",
+          "editorial_intent",
+          "emotional_arc",
+          "ordered_sources",
+          "source_rationales",
+          "tradeoffs",
+          "uncertainties"
+        ],
+        "title": "ProjectNarrativeStrategyHypothesis",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      },
+      "TransitionSpec": {
+        "additionalProperties": false,
+        "description": "转场规格（挂在出点侧：本镜头与下一镜头之间；P2-b 证据包裁定）。\n\ntype=\"cut\" 为硬切（渲染器 concat 路径，缺省行为）；\ntype=\"xfade\" 走链式 xfade/acrossfade（总时长 = Σd − ΣD，时间线由\n:mod:`director_brain.timeline` 统一计算，字幕自动跟随）。",
+        "properties": {
+          "type": {
+            "default": "cut",
+            "title": "Type",
+            "type": "string"
+          },
+          "name": {
+            "default": "fade",
+            "title": "Name",
+            "type": "string"
+          },
+          "duration_us": {
+            "default": 500000,
+            "exclusiveMinimum": 0,
+            "title": "Duration Us",
+            "type": "integer"
+          },
+          "audio_duration_us": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Audio Duration Us"
+          }
+        },
+        "title": "TransitionSpec",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Unranked SHADOW strategy comparison; it is never confirmable.",
+    "properties": {
+      "state": {
+        "const": "SHADOW_UNVERIFIED",
+        "default": "SHADOW_UNVERIFIED",
+        "title": "State",
+        "type": "string"
+      },
+      "baseline_edl": {
+        "$ref": "#/$defs/EditorialDecisionList"
+      },
+      "baseline_plan": {
+        "$ref": "#/$defs/DirectorDecisionPlan"
+      },
+      "strategy_candidates": {
+        "items": {
+          "$ref": "#/$defs/ProjectDirectorStrategyCandidate"
+        },
+        "minItems": 2,
+        "title": "Strategy Candidates",
+        "type": "array"
+      },
+      "persistence_state": {
+        "default": "NOT_PERSISTED",
+        "enum": [
+          "NOT_PERSISTED",
+          "PERSISTED_LOCAL"
+        ],
+        "title": "Persistence State",
+        "type": "string"
+      },
+      "confirmable": {
+        "const": false,
+        "default": false,
+        "title": "Confirmable",
+        "type": "boolean"
+      },
+      "quality_acceptance": {
+        "const": "NOT_PROVEN",
+        "default": "NOT_PROVEN",
+        "title": "Quality Acceptance",
+        "type": "string"
+      }
+    },
+    "required": [
+      "baseline_edl",
+      "baseline_plan",
+      "strategy_candidates"
+    ],
+    "title": "ProjectDirectorShadowComparison",
+    "type": "object"
+  }
+}

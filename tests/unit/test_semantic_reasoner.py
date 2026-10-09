@@ -34,7 +34,7 @@ def _make_decision(**overrides) -> DirectorDecision:
         parameterization=Parameterization(magnitude="slight", exact_value=None),
         required_context=["dialogue_onset_timing"],
         confidence=0.85,
-        evidence=["test evidence"],
+        evidence=[],
         status=DecisionStatus.NEEDS_CONTEXT,
         user_terminology=[],
     )
@@ -72,9 +72,164 @@ class TestI1Entrypoint:
         result = reasoner.reason("")
         assert result.decision is None
         assert "SEMANTIC_REASONER_UNAVAILABLE" in (result.error or "")
+        assert result.failure_code == "empty_user_direction"
 
 
 # ── I2: Structured output schema valid ──
+
+class TestSourceEvidenceReferences:
+    def test_verbatim_director_request_excerpt_is_accepted(self):
+        excerpt = "不要改变画面的切点"
+        adapter = _mock_llm(_make_decision(evidence=[excerpt]))
+        result = SemanticDirectorReasoner(llm_adapter=adapter).reason(
+            f"请执行要求：{excerpt}。"
+        )
+
+        assert result.decision is not None
+        assert result.decision.evidence == [excerpt]
+        assert result.error is None
+        assert result.failure_code is None
+
+    def test_invented_or_paraphrased_excerpt_fails_closed(self):
+        invented = "用户明确要求声音提前两秒"
+        adapter = _mock_llm(_make_decision(evidence=[invented]))
+        result = SemanticDirectorReasoner(llm_adapter=adapter).reason(
+            "让声音提前一点进入"
+        )
+
+        assert result.decision is None
+        assert "exact substring" in (result.error or "")
+        assert invented not in (result.error or "")
+        assert result.failure_code == "evidence_excerpt_unbound"
+
+    def test_blank_excerpt_fails_closed(self):
+        adapter = _mock_llm(_make_decision(evidence=["  "]))
+        result = SemanticDirectorReasoner(llm_adapter=adapter).reason("自然一点")
+
+        assert result.decision is None
+        assert "exact substring" in (result.error or "")
+        assert result.failure_code == "evidence_excerpt_unbound"
+
+    def test_exact_parameter_value_requires_quoted_numeric_value_and_unit(self):
+        quote = "Audio leads by 8 frames"
+        decision = _make_decision(
+            evidence=[quote],
+            parameterization=Parameterization(
+                exact_value=8.0,
+                unit="frames",
+                certainty="explicit",
+            ),
+        )
+        result = SemanticDirectorReasoner(llm_adapter=_mock_llm(decision)).reason(quote)
+
+        assert result.decision is not None
+        assert result.exact_parameterization_source_verified is True
+
+    def test_exact_parameter_value_cannot_be_inferred_from_vague_quote(self):
+        quote = "让声音提前一点进入"
+        decision = _make_decision(
+            evidence=[quote],
+            parameterization=Parameterization(
+                exact_value=8.0,
+                unit="frames",
+                certainty="explicit",
+            ),
+        )
+        result = SemanticDirectorReasoner(llm_adapter=_mock_llm(decision)).reason(quote)
+
+        assert result.decision is None
+        assert "numeric-and-unit request excerpt" in (result.error or "")
+        assert result.failure_code == "exact_parameterization_unverified"
+
+    def test_exact_parameter_value_unit_must_match_quote(self):
+        quote = "Audio leads by 8 frames"
+        decision = _make_decision(
+            evidence=[quote],
+            parameterization=Parameterization(
+                exact_value=8.0,
+                unit="seconds",
+                certainty="explicit",
+            ),
+        )
+        result = SemanticDirectorReasoner(llm_adapter=_mock_llm(decision)).reason(quote)
+
+        assert result.decision is None
+        assert "numeric-and-unit request excerpt" in (result.error or "")
+        assert result.failure_code == "exact_parameterization_unverified"
+
+    def test_only_allowlisted_source_references_are_returned(self):
+        adapter = _mock_llm(_make_decision(source_evidence_refs=["obs_a"]))
+        reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+        result = reasoner.reason(
+            "基于这个素材证据安排声音进入",
+            context="obs_a: next dialogue begins after the picture cut",
+            available_source_evidence_refs=["obs_a", "obs_b"],
+        )
+
+        assert result.decision is not None
+        assert result.decision.source_evidence_refs == ["obs_a"]
+        call_context = adapter.generate_decision.call_args.kwargs["context"]
+        assert "Authorized source evidence reference IDs" in call_context
+        assert '["obs_a", "obs_b"]' in call_context
+
+    def test_unlisted_source_reference_fails_closed(self):
+        adapter = _mock_llm(_make_decision(source_evidence_refs=["invented-id"]))
+        reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+        result = reasoner.reason(
+            "安排声音进入",
+            available_source_evidence_refs=["obs_a"],
+        )
+
+        assert result.decision is None
+        assert "unavailable source evidence" in (result.error or "")
+        assert result.failure_code == "source_reference_not_allowlisted"
+
+    def test_source_reference_without_allowlist_fails_closed(self):
+        adapter = _mock_llm(_make_decision(source_evidence_refs=["obs_a"]))
+        reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+        result = reasoner.reason("安排声音进入")
+
+        assert result.decision is None
+        assert "unavailable source evidence" in (result.error or "")
+        assert result.failure_code == "source_reference_not_allowlisted"
+
+    def test_malformed_allowlist_stops_before_provider_call(self):
+        adapter = _mock_llm(_make_decision())
+        reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+        result = reasoner.reason(
+            "安排声音进入",
+            available_source_evidence_refs=["obs_a", "obs_a"],
+        )
+
+        assert result.decision is None
+        assert "duplicate source evidence" in (result.error or "")
+        assert result.failure_code == "duplicate_source_evidence_refs"
+        adapter.generate_decision.assert_not_called()
+
+    def test_adapter_exception_fails_closed_without_echoing_exception(self):
+        adapter = _mock_llm()
+        adapter.generate_decision.side_effect = RuntimeError("private context value")
+        reasoner = SemanticDirectorReasoner(llm_adapter=adapter)
+
+        result = reasoner.reason("安排声音进入")
+
+        assert result.decision is None
+        assert result.error == "SEMANTIC_REASONER_UNAVAILABLE: adapter exception"
+        assert "private context value" not in (result.error or "")
+        assert result.failure_code == "adapter_exception"
+
+    def test_provider_error_text_is_normalized_to_a_fixed_failure(self):
+        adapter = _mock_llm(error="PRIVATE_PROVIDER_RESPONSE_MARKER")
+        result = SemanticDirectorReasoner(llm_adapter=adapter).reason(
+            "让声音稍早进入")
+
+        assert result.decision is None
+        assert result.failure_code == "provider_failure"
+        assert "PRIVATE_PROVIDER_RESPONSE_MARKER" not in (result.error or "")
 
 class TestI2SchemaValid:
     def test_i2_decision_validates(self):

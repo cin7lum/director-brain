@@ -13,9 +13,11 @@ no retry labyrinth, no agent framework.
 from __future__ import annotations
 
 import json
+import ipaddress
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
@@ -25,7 +27,7 @@ from director_brain.models.director_decision import DirectorDecision
 OLLAMA_BASE = "http://localhost:11434"
 DEFAULT_MODEL = "qwen2.5:7b"  # primary model path; installed locally
 DEFAULT_TIMEOUT = 120  # seconds (local 7B model can be slow on first load)
-PROMPT_VERSION = "1.1"  # bumped for schema-constrained output
+PROMPT_VERSION = "1.2"  # bumped for schema-constrained output
 
 SYSTEM_PROMPT = """You are a film editing director's semantic interpreter.
 
@@ -44,6 +46,9 @@ You express WHAT the director wants to happen at the film-semantic level.
   "自然一点", "舒服一点", "高级一点" → status=UNDERSPECIFIED or NEEDS_CONTEXT.
 - ALWAYS separate positive intent (desired_relation_or_change) from
   negative constraints (must_avoid, must_preserve).
+- `evidence` contains only excerpts from the director request.
+- `source_evidence_refs` may contain only exact IDs from the authorized source-evidence
+  list in Available context. Never invent, rewrite, or infer source evidence IDs.
 - If user explicitly uses a technical term like "J-cut", preserve it in
   user_terminology only — do NOT use it as a desired_relation.
 - If the request is outside editing decisions (e.g. "make this person younger"),
@@ -119,6 +124,102 @@ class LLMResult:
 class LLMTransportError(RuntimeError):
     """统一传输层错误（网络/HTTP/空回复）；语义层错误不走此异常。"""
 
+    def __init__(
+        self,
+        message: str,
+        *,
+        failure_code: str = "provider_transport_error",
+    ) -> None:
+        super().__init__(message)
+        self.failure_code = failure_code
+
+
+class LLMStructuredOutputError(ValueError):
+    """Provider content did not satisfy the expected structured JSON format."""
+
+    def __init__(self, message: str, *, failure_code: str | None = None) -> None:
+        super().__init__(message)
+        self.failure_code = failure_code
+
+
+class LLMInputCapacityError(ValueError):
+    """A request cannot fit the configured bounded model-input contract."""
+
+
+def _parse_http_endpoint(url: str) -> urllib.parse.ParseResult:
+    """Validate an HTTP endpoint before it is used for model traffic."""
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        raise ValueError("endpoint must be an absolute HTTP(S) URL")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("endpoint URL must not contain userinfo")
+    if parsed.query or parsed.fragment:
+        raise ValueError("endpoint URL must not contain a query or fragment")
+    try:
+        _ = parsed.port
+    except ValueError as exc:
+        raise ValueError("endpoint URL contains an invalid port") from exc
+    return parsed
+
+
+def _is_loopback_host(host: str) -> bool:
+    normalized = host.rstrip(".").lower()
+    if normalized == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(normalized).is_loopback
+    except ValueError:
+        return False
+
+
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _open_local_request(req: urllib.request.Request, timeout: int):
+    """Open only a loopback request, without proxy discovery or redirects."""
+    parsed = _parse_http_endpoint(req.full_url)
+    if not _is_loopback_host(parsed.hostname or ""):
+        raise ValueError("local model endpoint must use a loopback host")
+    opener = urllib.request.build_opener(
+        urllib.request.ProxyHandler({}),
+        _NoRedirectHandler(),
+    )
+    return opener.open(req, timeout=timeout)
+
+
+def prepare_response_schema_for_provider(
+    base_url: str, response_schema: dict,
+) -> dict:
+    """Prepare a response schema without weakening local validation.
+
+    Ollama's local JSON-Schema-to-grammar path cannot compile ``\\S`` patterns
+    reliably. Remove only those provider-side patterns for loopback endpoints;
+    the caller must still validate the full response against its canonical
+    schema/model after parsing. Remote providers receive the original schema.
+    """
+    parsed = _parse_http_endpoint(base_url)
+    if not _is_loopback_host(parsed.hostname or ""):
+        return response_schema
+
+    def normalize(value):
+        if isinstance(value, dict):
+            return {
+                key: normalize(child)
+                for key, child in value.items()
+                if not (
+                    key == "pattern"
+                    and isinstance(child, str)
+                    and r"\S" in child
+                )
+            }
+        if isinstance(value, list):
+            return [normalize(child) for child in value]
+        return value
+
+    return normalize(response_schema)
+
 
 def post_chat_json(
     base_url: str,
@@ -130,18 +231,33 @@ def post_chat_json(
     timeout: int = 300,
     max_tokens: int = 2048,
     temperature: float = 0.1,
+    response_schema: dict | None = None,
+    response_metadata: dict[str, str] | None = None,
 ) -> str:
     """OpenAI 兼容 /chat/completions 统一传输缝（架构体检候选④收编）。
 
     自由 JSON 消费者（叙事分析/评审脚本等）经此调用，不再各自手写 urllib +
     围栏剥离。``user`` 传 list 时按 OpenAI 多模态 content 数组透传
-    （像素评审的图片输入）。约束生成用 response_format=json_object；服务端
-    400 时去掉该参数重试一次（传输级协商，非语义改动）。返回 content 字符串；
+    （像素评审的图片输入）。默认约束生成用 response_format=json_object；
+    调用方可选提供 JSON Schema，使用 response_format=json_schema。服务端
+    400 时 JSON 模式可去掉该参数重试一次；Schema 模式必须失败关闭，不能降级。
+    返回 content 字符串；
     网络/HTTP/空回复抛 :class:`LLMTransportError`（fail-closed）。
+    ``response_metadata`` (when supplied) receives only the provider envelope's
+    bounded ``model`` and ``system_fingerprint`` identifiers; response content
+    and other metadata are never copied there.
     """
+    if response_metadata is not None:
+        response_metadata.clear()
+    if response_schema is not None:
+        response_schema = prepare_response_schema_for_provider(
+            base_url, response_schema)
+
     def _post(payload: dict) -> str:
+        endpoint = base_url.rstrip("/") + "/chat/completions"
+        parsed = _parse_http_endpoint(endpoint)
         req = urllib.request.Request(
-            base_url.rstrip("/") + "/chat/completions",
+            endpoint,
             data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Content-Type": "application/json",
@@ -149,8 +265,23 @@ def post_chat_json(
             },
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        if _is_loopback_host(parsed.hostname or ""):
+            response = _open_local_request(req, timeout=timeout)
+        else:
+            response = urllib.request.urlopen(req, timeout=timeout)
+        with response as resp:
             data = json.loads(resp.read())
+        if response_metadata is not None and isinstance(data, dict):
+            for source_key, target_key in (
+                ("model", "model"),
+                ("system_fingerprint", "system_fingerprint"),
+            ):
+                value = data.get(source_key)
+                if (
+                    isinstance(value, str)
+                    and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}", value)
+                ):
+                    response_metadata[target_key] = value
         return (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
 
     payload = {
@@ -159,31 +290,58 @@ def post_chat_json(
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "response_format": {"type": "json_object"},
+        "response_format": (
+            {"type": "json_object"}
+            if response_schema is None
+            else {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "director_brain_response",
+                    "schema": response_schema,
+                },
+            }
+        ),
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
     try:
         content = _post(payload)
     except urllib.error.HTTPError as e:
+        if response_schema is not None:
+            raise LLMTransportError(
+                f"chat structured schema http {e.code}",
+                failure_code="provider_http_error",
+            ) from e
         if e.code != 400:
-            raise LLMTransportError(f"chat http {e.code}") from e
+            raise LLMTransportError(
+                f"chat http {e.code}", failure_code="provider_http_error") from e
         payload.pop("response_format", None)
         try:
             content = _post(payload)
         except urllib.error.HTTPError as e2:
-            raise LLMTransportError(f"chat http {e2.code}") from e2
-        except urllib.error.URLError as e2:
-            raise LLMTransportError(f"chat connection failed: {e2}") from e2
-    except urllib.error.URLError as e:
-        raise LLMTransportError(f"chat connection failed: {e}") from e
+            raise LLMTransportError(
+                f"chat http {e2.code}", failure_code="provider_http_error") from e2
+        except (urllib.error.URLError, TimeoutError, OSError) as e2:
+            raise LLMTransportError(
+                f"chat connection failed: {e2}",
+                failure_code="provider_connection_error",
+            ) from e2
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        raise LLMTransportError(
+            f"chat connection failed: {e}",
+            failure_code="provider_connection_error",
+        ) from e
     except LLMTransportError:
         raise
     except Exception as e:
-        raise LLMTransportError(f"{type(e).__name__}: {e}") from e
+        raise LLMTransportError(
+            f"{type(e).__name__}: {e}",
+            failure_code="provider_exchange_error",
+        ) from e
 
     if not content.strip():
-        raise LLMTransportError("chat returned empty content")
+        raise LLMTransportError(
+            "chat returned empty content", failure_code="provider_empty_response")
     return content
 
 
@@ -222,6 +380,9 @@ class LLMAdapter:
         timeout: int = DEFAULT_TIMEOUT,
     ):
         self.model = model
+        endpoint = _parse_http_endpoint(base_url)
+        if not _is_loopback_host(endpoint.hostname or ""):
+            raise ValueError("Ollama base_url must use a loopback host")
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         # Canonical schema — generated from the single source of truth
@@ -285,7 +446,7 @@ class LLMAdapter:
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with _open_local_request(req, timeout=self.timeout) as resp:
                 raw = resp.read().decode("utf-8")
         except urllib.error.HTTPError as e:
             # If schema format is rejected by this ollama version, fall back
@@ -300,7 +461,7 @@ class LLMAdapter:
                         headers={"Content-Type": "application/json"},
                         method="POST",
                     )
-                    with urllib.request.urlopen(req2, timeout=self.timeout) as resp2:
+                    with _open_local_request(req2, timeout=self.timeout) as resp2:
                         raw = resp2.read().decode("utf-8")
                 except Exception as e2:
                     latency = int((time.time() - start) * 1000)

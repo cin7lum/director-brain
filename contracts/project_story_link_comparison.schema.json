@@ -1,0 +1,485 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "本地 VLM 生成的未审核逐对关系比较；不构成身份确认",
+  "schema": {
+    "$defs": {
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryLinkEventEvidence": {
+        "additionalProperties": false,
+        "description": "Exact source-local semantic fields identifying one event mention.",
+        "properties": {
+          "action_type": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Action Type"
+          },
+          "scene_description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scene Description"
+          },
+          "temporal_notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Temporal Notes"
+          }
+        },
+        "title": "ProjectStoryLinkEventEvidence",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Persist one local shadow comparison without asserting an identity link.\n\nThis review aid is separate from ``ProjectStoryLinkReview`` and cannot be\nconsumed by a Director Plan.",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "comparison_id": {
+        "title": "Comparison Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "context_id": {
+        "title": "Context Id",
+        "type": "string"
+      },
+      "story_graph_id": {
+        "title": "Story Graph Id",
+        "type": "string"
+      },
+      "analysis_fingerprint": {
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "source_mention_review_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Mention Review Id"
+      },
+      "source_mention_review_revision": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Source Mention Review Revision",
+        "type": "integer"
+      },
+      "request_fingerprint": {
+        "pattern": "^[a-fA-F0-9]{64}$",
+        "title": "Request Fingerprint",
+        "type": "string"
+      },
+      "idempotency_key_sha256": {
+        "pattern": "^[a-fA-F0-9]{64}$",
+        "title": "Idempotency Key Sha256",
+        "type": "string"
+      },
+      "candidate_id": {
+        "anyOf": [
+          {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Candidate Id"
+      },
+      "attempt_number": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Attempt Number"
+      },
+      "relation_kind": {
+        "enum": [
+          "person_identity",
+          "event_identity"
+        ],
+        "title": "Relation Kind",
+        "type": "string"
+      },
+      "left_anchor": {
+        "$ref": "#/$defs/ProjectStoryLinkAnchor"
+      },
+      "right_anchor": {
+        "$ref": "#/$defs/ProjectStoryLinkAnchor"
+      },
+      "left_person_description": {
+        "anyOf": [
+          {
+            "maxLength": 240,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Left Person Description"
+      },
+      "right_person_description": {
+        "anyOf": [
+          {
+            "maxLength": 240,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Right Person Description"
+      },
+      "left_event_evidence": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ProjectStoryLinkEventEvidence"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "right_event_evidence": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ProjectStoryLinkEventEvidence"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "run_state": {
+        "enum": [
+          "completed_unreviewed",
+          "failed"
+        ],
+        "title": "Run State",
+        "type": "string"
+      },
+      "assessment": {
+        "anyOf": [
+          {
+            "enum": [
+              "possible_match",
+              "visually_distinct",
+              "insufficient_evidence"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Assessment"
+      },
+      "evidence_for": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5,
+        "title": "Evidence For",
+        "type": "array"
+      },
+      "evidence_against": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 5,
+        "title": "Evidence Against",
+        "type": "array"
+      },
+      "limitation": {
+        "anyOf": [
+          {
+            "maxLength": 400,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Limitation"
+      },
+      "left_frame_sha256": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3,
+        "title": "Left Frame Sha256",
+        "type": "array"
+      },
+      "right_frame_sha256": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 3,
+        "title": "Right Frame Sha256",
+        "type": "array"
+      },
+      "frame_extractor_version": {
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "Frame Extractor Version",
+        "type": "string"
+      },
+      "failure_code": {
+        "anyOf": [
+          {
+            "enum": [
+              "runtime_binding_failed",
+              "sampling_failed",
+              "provider_unavailable",
+              "provider_rate_limited",
+              "provider_request_rejected",
+              "provider_invalid",
+              "source_changed"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Failure Code"
+      },
+      "review_state": {
+        "const": "unreviewed",
+        "default": "unreviewed",
+        "title": "Review State",
+        "type": "string"
+      },
+      "confidence_type": {
+        "const": "uncalibrated_model_assessment",
+        "default": "uncalibrated_model_assessment",
+        "title": "Confidence Type",
+        "type": "string"
+      },
+      "provider": {
+        "const": "ollama_qwen3_vl",
+        "default": "ollama_qwen3_vl",
+        "title": "Provider",
+        "type": "string"
+      },
+      "model_version": {
+        "maxLength": 240,
+        "minLength": 1,
+        "title": "Model Version",
+        "type": "string"
+      },
+      "prompt_version": {
+        "maxLength": 120,
+        "minLength": 1,
+        "title": "Prompt Version",
+        "type": "string"
+      },
+      "prompt_sha256": {
+        "pattern": "^[a-fA-F0-9]{64}$",
+        "title": "Prompt Sha256",
+        "type": "string"
+      },
+      "generation_profile": {
+        "maxLength": 240,
+        "minLength": 1,
+        "title": "Generation Profile",
+        "type": "string"
+      },
+      "sampling_profile": {
+        "maxLength": 240,
+        "minLength": 1,
+        "title": "Sampling Profile",
+        "type": "string"
+      },
+      "observation_schema_version": {
+        "maxLength": 40,
+        "minLength": 1,
+        "title": "Observation Schema Version",
+        "type": "string"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "comparison_id",
+      "project_manifest_id",
+      "project_revision",
+      "context_id",
+      "story_graph_id",
+      "analysis_fingerprint",
+      "request_fingerprint",
+      "idempotency_key_sha256",
+      "relation_kind",
+      "left_anchor",
+      "right_anchor",
+      "run_state",
+      "frame_extractor_version",
+      "model_version",
+      "prompt_version",
+      "prompt_sha256",
+      "generation_profile",
+      "sampling_profile",
+      "observation_schema_version"
+    ],
+    "title": "ProjectStoryLinkComparison",
+    "type": "object"
+  }
+}

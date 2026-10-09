@@ -12,7 +12,16 @@ import time
 import cv2
 import numpy as np
 
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
+
+DETERMINISTIC_ANALYSIS_VERSION = "v1.1"
+DETERMINISTIC_SAMPLE_FRACTIONS = (0.10, 0.30, 0.50, 0.70, 0.90)
+DETERMINISTIC_SHAKE_LOOKBACK_US = 200_000
+OPENCV_RUNTIME_VERSION = str(cv2.__version__)
 
 
 def _load_frame_at(video_path: str, time_us: int):
@@ -42,6 +51,7 @@ def _build_obs(
         start_frame=int(shot["source_in_us"]),
         end_frame=int(shot["source_out_us"]),
         timebase=1_000_000,
+        timebase_unit=TimebaseUnit.MICROSECONDS,
         observation_type="deterministic_technical",
         claim=claim,
         provider="deterministic_opencv",
@@ -86,7 +96,7 @@ def analyze_shot(video_path: str, shot: dict) -> FilmObservation:
     # fade 尾巴逃过测量（语义 pilot 黑帧 3 段）；五点把首尾 fade 纳入
     # dark_ratio/brightness 的度量范围（排除阈值 ≥0.5 不变，策略待拍板）。
     sample_times = [
-        in_us + int(dur * f) for f in (0.10, 0.30, 0.50, 0.70, 0.90)
+        in_us + int(dur * f) for f in DETERMINISTIC_SAMPLE_FRACTIONS
     ]
 
     try:
@@ -116,7 +126,10 @@ def analyze_shot(video_path: str, shot: dict) -> FilmObservation:
 
         # 抖动：首采样点与前 200ms 帧的 absdiff 均值
         shake = 0.0
-        earlier = _load_frame_at(video_path, max(in_us, sample_times[0] - 200_000))
+        earlier = _load_frame_at(
+            video_path,
+            max(in_us, sample_times[0] - DETERMINISTIC_SHAKE_LOOKBACK_US),
+        )
         if earlier is not None:
             g2 = cv2.cvtColor(earlier, cv2.COLOR_BGR2GRAY)
             if g2.shape == grays[0].shape:

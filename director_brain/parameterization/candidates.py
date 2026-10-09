@@ -1,7 +1,7 @@
 """Candidate generation for J_CUT audio offset.
 
 Candidates come from REAL context signals, never random numbers or keyword lookups.
-Signal priority: dialogue_onset > silence_boundary > handle_fraction > convention.
+Only observed boundaries before the picture cut can supply a J-cut lead.
 
 Convention candidates are EXPERIMENTAL — they have no professional corpus citation
 and are only included when no audio signal is available.
@@ -49,32 +49,27 @@ def generate_jcut_candidates(
             evidence_refs=evidence_refs or [],
         ))
 
-    # 1. Dialogue onset candidates (strong signal)
+    # AudioEvent.frame is signed relative to the picture cut: positive means
+    # after it. A J-cut can only start from an observed event before that cut.
+    # DIALOGUE_ONSET and SILENCE_END identify a possible incoming speech
+    # boundary; SILENCE_START does not.
     for event in ctx.audio_events:
-        if event.event_type == AudioEventType.DIALOGUE_ONSET:
-            # Dialogue onset frame is relative to picture cut
-            # Positive frame = after cut; for J_CUT we want audio BEFORE cut
-            # If onset is at source frame N, audio lead = N (start audio N frames before cut)
-            lead = float(event.frame)
-            _add(
-                lead,
-                CandidateSource.OBSERVED_EVENT,
-                f"dialogue_onset at source frame {event.frame} (confidence={event.confidence})",
-                confidence=event.confidence,
-                evidence_refs=[event.evidence_ref] if event.evidence_ref else [],
+        if (
+            event.event_type not in (
+                AudioEventType.DIALOGUE_ONSET,
+                AudioEventType.SILENCE_END,
             )
-
-    # 2. Silence boundary candidates (strong signal)
-    for event in ctx.audio_events:
-        if event.event_type in (AudioEventType.SILENCE_END, AudioEventType.SILENCE_START):
-            lead = float(event.frame)
-            _add(
-                lead,
-                CandidateSource.OBSERVED_EVENT,
-                f"{event.event_type.value} at frame {event.frame}",
-                confidence=event.confidence,
-                evidence_refs=[event.evidence_ref] if event.evidence_ref else [],
-            )
+            or event.frame >= 0
+        ):
+            continue
+        lead = float(-event.frame)
+        _add(
+            lead,
+            CandidateSource.OBSERVED_EVENT,
+            f"{event.event_type.value} {lead:g} frames before picture cut",
+            confidence=event.confidence,
+            evidence_refs=[event.evidence_ref] if event.evidence_ref else [],
+        )
 
     # 3. Handle fraction candidates (weak signal, only if handle known)
     if ctx.available_audio_handle_before is not None and ctx.available_audio_handle_before > 0:
@@ -89,7 +84,10 @@ def generate_jcut_candidates(
 
     # 4. Convention candidates (EXPERIMENTAL, only if no audio signal)
     has_audio_signal = any(
-        e.event_type in (AudioEventType.DIALOGUE_ONSET, AudioEventType.SILENCE_END)
+        e.event_type in (
+            AudioEventType.DIALOGUE_ONSET,
+            AudioEventType.SILENCE_END,
+        ) and e.frame < 0
         for e in ctx.audio_events
     )
     if not has_audio_signal and feasible.max_value > 0:

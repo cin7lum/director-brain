@@ -16,6 +16,7 @@ dependencies = [
     # 原计划"删除零实现 http extra"顺带完成：api 已实现，extra 名不副实
     "fastapi>=0.100",
     "uvicorn>=0.23",
+    "huey>=3.4,<4",  # durable local SQLite queue for long project analyses
     "librosa>=0.10",  # D5 节拍网格（ISC；采用级准入，见计划附录 A）
 ]
 

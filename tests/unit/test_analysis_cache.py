@@ -14,7 +14,11 @@ from __future__ import annotations
 
 import pytest
 
-from director_brain.analysis_cache import AnalysisCache, compute_fingerprint
+from director_brain.analysis_cache import (
+    AnalysisCache,
+    RepositoryAnalysisCache,
+    compute_fingerprint,
+)
 from director_brain.models.film_observation import ClaimKind, FilmObservation
 
 
@@ -234,6 +238,54 @@ def test_sampling_config_order_independent():
         timebase=25,
     )
     assert a == b
+
+
+def test_repository_analysis_cache_survives_repository_reopen(tmp_path):
+    from storage.sqlite_repository import SqliteRepository
+
+    db_path = tmp_path / "project-analysis.db"
+    source_hash = "a" * 64
+    observation = _make_observation(
+        observation_id="obs-restart",
+        media_hash=source_hash,
+    )
+
+    first_repository = SqliteRepository(str(db_path))
+    try:
+        first_cache = RepositoryAnalysisCache(
+            first_repository, source_hash, "local-vlm-profile-v1")
+        first_cache.put("shot-fingerprint", [observation])
+    finally:
+        first_repository.close()
+
+    reopened_repository = SqliteRepository(str(db_path))
+    try:
+        reopened_cache = RepositoryAnalysisCache(
+            reopened_repository, source_hash, "local-vlm-profile-v1")
+        restored = reopened_cache.get("shot-fingerprint")
+        assert restored is not None
+        assert restored[0].observation_id == "obs-restart"
+        assert restored[0].media_hash == source_hash
+
+        changed_profile = RepositoryAnalysisCache(
+            reopened_repository, source_hash, "local-vlm-profile-v2")
+        assert changed_profile.get("shot-fingerprint") is None
+        changed_profile.put("shot-fingerprint", [
+            _make_observation(
+                observation_id="obs-new-profile",
+                media_hash=source_hash,
+                claim="new profile result",
+            )
+        ])
+        assert changed_profile.get("shot-fingerprint")[0].observation_id == (
+            "obs-new-profile")
+        assert reopened_cache.get("shot-fingerprint")[0].observation_id == (
+            "obs-restart")
+        changed_source = RepositoryAnalysisCache(
+            reopened_repository, "b" * 64, "local-vlm-profile-v1")
+        assert changed_source.get("shot-fingerprint") is None
+    finally:
+        reopened_repository.close()
 
 
 # ---------------------------------------------------------------------------

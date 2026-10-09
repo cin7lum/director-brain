@@ -13,7 +13,50 @@ It never creates values, never checks parameter completeness.
 """
 from __future__ import annotations
 
+import re
+
 from director_brain.models.director_decision import DecisionStatus, DirectorDecision
+
+
+# These equivalence classes are limited to the controlled film-language terms
+# already defined in llm_adapter.SYSTEM_PROMPT. Unknown free text is never
+# guessed or rewritten here.
+_KNOWN_CONSTRAINT_EQUIVALENTS = {
+    "audio_precedes_picture": "audio_precedes_picture",
+    "audio_lead": "audio_precedes_picture",
+    "outgoing_audio_continues_after_cut": "outgoing_audio_continues_after_cut",
+    "audio_tail": "outgoing_audio_continues_after_cut",
+    "extend_visible_duration": "extend_visible_duration",
+    "duration_extension": "extend_visible_duration",
+    "shorten_visible_duration": "shorten_visible_duration",
+    "duration_shortening": "shorten_visible_duration",
+    "allow_transition": "transition",
+    "transition": "transition",
+}
+
+
+def _constraint_key(value: str) -> str:
+    normalized = re.sub(r"[\s-]+", "_", value.strip().casefold())
+    return _KNOWN_CONSTRAINT_EQUIVALENTS.get(normalized, normalized)
+
+
+def _known_constraint_conflicts(
+    desired: list[str], must_avoid: list[str],
+) -> list[tuple[str, str]]:
+    """Return stable source terms whose known meanings directly conflict."""
+    desired_by_key: dict[str, list[str]] = {}
+    avoided_by_key: dict[str, list[str]] = {}
+    for value in desired:
+        desired_by_key.setdefault(_constraint_key(value), []).append(value)
+    for value in must_avoid:
+        avoided_by_key.setdefault(_constraint_key(value), []).append(value)
+
+    return sorted(
+        (positive, negative)
+        for key in desired_by_key.keys() & avoided_by_key.keys()
+        for positive in desired_by_key[key]
+        for negative in avoided_by_key[key]
+    )
 
 
 def validate_director_decision(decision: DirectorDecision) -> tuple[DirectorDecision, list[str]]:
@@ -41,12 +84,14 @@ def validate_director_decision(decision: DirectorDecision) -> tuple[DirectorDeci
         # Check 2: READY should not have semantic contradiction between
         # desired_relation_or_change and must_avoid
         elif decision.must_avoid:
-            desired_set = set(decision.desired_relation_or_change)
-            avoid_set = set(decision.must_avoid)
-            contradiction = desired_set & avoid_set
+            contradiction = _known_constraint_conflicts(
+                decision.desired_relation_or_change,
+                decision.must_avoid,
+            )
             if contradiction:
                 violations.append(
-                    f"Semantic contradiction: desired and must_avoid overlap: {contradiction}. "
+                    "Semantic contradiction: desired relation conflicts with "
+                    f"must_avoid terms: {contradiction}. "
                     "Downgrading to CONFLICTING_CONSTRAINTS."
                 )
                 decision = decision.model_copy(

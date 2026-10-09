@@ -215,6 +215,43 @@ def test_entity_resolver_empty_people_no_assignment():
     assert res.entities == [] and res.assignments == {}
 
 
+def test_entity_resolver_fails_closed_across_project_assets():
+    """独立素材上的相似描述不得自动变成同一人物身份。"""
+    from director_brain.entity_resolver import resolve_entities
+
+    obs = [
+        _vlm_people_obs(1, 0, 2_000_000, ["红衣短发女孩"]).model_copy(
+            update={"project_asset_id": "asset-a"}),
+        _vlm_people_obs(2, 0, 2_000_000, ["红衣短发女孩"]).model_copy(
+            update={"project_asset_id": "asset-b"}),
+    ]
+
+    with pytest.raises(ValueError, match="cross-asset identity matching"):
+        resolve_entities(obs)
+
+
+def test_entity_resolver_rejects_mixed_asset_binding_and_clock():
+    """跨素材混合绑定或时钟不能进入按时间排序的聚类。"""
+    from director_brain.entity_resolver import resolve_entities
+    from director_brain.models.film_observation import TimebaseUnit
+
+    bound = _vlm_people_obs(1, 0, 2_000_000, ["红衣短发女孩"]).model_copy(
+        update={"project_asset_id": "asset-a"})
+    unbound = _vlm_people_obs(2, 2_000_000, 4_000_000, ["红衣短发女孩"])
+    with pytest.raises(ValueError, match="mix bound and unbound"):
+        resolve_entities([bound, unbound])
+
+    second_clock = _vlm_people_obs(3, 2_000_000, 4_000_000,
+                                   ["红衣短发女孩"]).model_copy(update={
+        "timebase": 25,
+        "timebase_unit": TimebaseUnit.FRAMES,
+    })
+    with pytest.raises(ValueError, match="one source timebase"):
+        resolve_entities([bound, bound.model_copy(update={
+            "observation_id": "vlm_other",
+        }), second_clock.model_copy(update={"project_asset_id": "asset-a"})])
+
+
 def test_kernel_entity_continuity_bonus():
     """与上一幕已选镜头共享人物实体 → continuity_bonus 加分留痕。"""
     set_pathway_status("vlm_semantic", PathwayStatus.ACTIVE)
@@ -414,11 +451,23 @@ def test_kernel_beat_snap_aligns_when_active():
 # D6 参考片学习（特征提取 → 显式卡 → user 卡库装载）
 # ---------------------------------------------------------------------------
 
-def test_reference_card_roundtrip(tmp_path):
+def test_reference_card_roundtrip(tmp_path, monkeypatch):
     """参考片 → 特征 → 卡 → user 卡库装载 → --card 可选。"""
+    import shutil
     import subprocess
+    from pathlib import Path
+
+    from director_brain import shot_cards as shot_cards_module
     from director_brain.shot_cards import get_card, load_cards
-    from scripts.reference_card import extract_features, features_to_card, save_user_card
+    import scripts.reference_card as reference_card
+
+    isolated_root = tmp_path / "reference-card-root"
+    isolated_cards_dir = isolated_root / "director_brain" / "cards"
+    isolated_cards_dir.mkdir(parents=True)
+    repo_cards_dir = Path(__file__).resolve().parents[2] / "director_brain" / "cards"
+    shutil.copy2(repo_cards_dir / "v1.json", isolated_cards_dir / "v1.json")
+    monkeypatch.setattr(reference_card, "ROOT", isolated_root)
+    monkeypatch.setattr(shot_cards_module, "_CARDS_DIR", isolated_cards_dir)
 
     src = str(tmp_path / "ref.mp4")
     subprocess.run(["ffmpeg", "-f", "lavfi",
@@ -427,15 +476,16 @@ def test_reference_card_roundtrip(tmp_path):
                    capture_output=True, text=True, check=True)
     # testsrc 无场景变化 → 单镜头；用 scenedetect 后端切不出多镜头，
     # 特征提取对单镜头素材也应产出合法卡（min_shots 兜底）
-    features = extract_features(src)
+    features = reference_card.extract_features(src)
     assert features["shot_count"] >= 1
-    card = features_to_card(features, "测试参考卡")
+    card = reference_card.features_to_card(features, "测试参考卡")
     assert card.card_id.startswith("ref_")
     assert card.pacing_override["min_clip_us"] >= 300_000
-    out = save_user_card(card)
+    out = reference_card.save_user_card(card)
     assert out.is_file()
+    assert out.parent == isolated_cards_dir / "user"
     assert get_card(card.card_id) is not None  # user 卡进卡库
     # 同 id 重复保存不产生重复卡
-    save_user_card(card)
+    reference_card.save_user_card(card)
     ids = [c.card_id for c in load_cards()]
     assert ids.count(card.card_id) == 1

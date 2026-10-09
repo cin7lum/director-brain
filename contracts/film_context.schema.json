@@ -1,0 +1,712 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "中间产物：项目/素材级可溯源 Film Context",
+  "schema": {
+    "$defs": {
+      "AssetAnalysisState": {
+        "description": "Per-asset state; a project context may retain usable assets on failure.",
+        "enum": [
+          "observed",
+          "completed_empty",
+          "partial",
+          "failed",
+          "source_unavailable",
+          "source_changed",
+          "not_authorized",
+          "provided",
+          "provided_empty"
+        ],
+        "title": "AssetAnalysisState",
+        "type": "string"
+      },
+      "ContextLayer": {
+        "description": "上下文覆盖层级。",
+        "enum": [
+          "project",
+          "asset",
+          "scene",
+          "evidence"
+        ],
+        "title": "ContextLayer",
+        "type": "string"
+      },
+      "ObservationTimebase": {
+        "additionalProperties": false,
+        "description": "A source timebase descriptor; projects never merge these implicitly.",
+        "properties": {
+          "value": {
+            "exclusiveMinimum": 0,
+            "title": "Value",
+            "type": "integer"
+          },
+          "unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "ObservationTimebase",
+        "type": "object"
+      },
+      "ProjectAssetCoverage": {
+        "additionalProperties": false,
+        "description": "Typed coverage/provenance summary for one ordered source asset.",
+        "properties": {
+          "asset_id": {
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "order": {
+            "minimum": 0,
+            "title": "Order",
+            "type": "integer"
+          },
+          "source_content_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-fA-F0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Content Hash"
+          },
+          "duration_us": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Us"
+          },
+          "fps": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fps"
+          },
+          "r_frame_rate": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "R Frame Rate"
+          },
+          "avg_frame_rate": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Avg Frame Rate"
+          },
+          "stream_time_base": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Stream Time Base"
+          },
+          "has_audio": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Has Audio"
+          },
+          "time_map": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectAssetTimeMap"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "probe_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Probe Ok"
+          },
+          "observation_count": {
+            "minimum": 0,
+            "title": "Observation Count",
+            "type": "integer"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "observation_timebases": {
+            "items": {
+              "$ref": "#/$defs/ObservationTimebase"
+            },
+            "title": "Observation Timebases",
+            "type": "array"
+          },
+          "analysis_state": {
+            "$ref": "#/$defs/AssetAnalysisState"
+          },
+          "analysis_cache_state": {
+            "title": "Analysis Cache State",
+            "type": "string"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "analyzer_failed",
+                  "source_unavailable",
+                  "source_changed",
+                  "semantic_analysis_partial",
+                  "speech_analysis_partial",
+                  "speech_analysis_failed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Code"
+          },
+          "blocked_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "rights_unverified",
+                  "local_processing_not_authorized"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Blocked Reason"
+          },
+          "rights_state": {
+            "title": "Rights State",
+            "type": "string"
+          },
+          "rights_evidence_state": {
+            "title": "Rights Evidence State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "order",
+          "observation_count",
+          "analysis_state",
+          "analysis_cache_state",
+          "rights_state",
+          "rights_evidence_state"
+        ],
+        "title": "ProjectAssetCoverage",
+        "type": "object"
+      },
+      "ProjectAssetTimeMap": {
+        "additionalProperties": false,
+        "description": "Source video/audio clocks without implying a shared project timeline.",
+        "properties": {
+          "container_start_time_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Container Start Time Seconds"
+          },
+          "video_stream": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStreamTiming"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "audio_streams": {
+            "items": {
+              "$ref": "#/$defs/ProjectStreamTiming"
+            },
+            "title": "Audio Streams",
+            "type": "array"
+          },
+          "mapping_state": {
+            "enum": [
+              "complete",
+              "partial",
+              "unavailable"
+            ],
+            "title": "Mapping State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mapping_state"
+        ],
+        "title": "ProjectAssetTimeMap",
+        "type": "object"
+      },
+      "ProjectStreamTiming": {
+        "additionalProperties": false,
+        "description": "One source stream's native clock and offset from the container origin.",
+        "properties": {
+          "stream_index": {
+            "minimum": 0,
+            "title": "Stream Index",
+            "type": "integer"
+          },
+          "codec_type": {
+            "enum": [
+              "video",
+              "audio"
+            ],
+            "title": "Codec Type",
+            "type": "string"
+          },
+          "codec_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Codec Name"
+          },
+          "time_base": {
+            "anyOf": [
+              {
+                "pattern": "^[1-9][0-9]*/[1-9][0-9]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time Base"
+          },
+          "start_pts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start Pts"
+          },
+          "start_time_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start Time Seconds"
+          },
+          "duration_ts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Ts"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Seconds"
+          },
+          "sample_rate": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sample Rate"
+          },
+          "channels": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channels"
+          },
+          "channel_layout": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Channel Layout"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "is_default": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Is Default"
+          },
+          "source_start_offset_numerator": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Start Offset Numerator"
+          },
+          "source_start_offset_denominator": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Start Offset Denominator"
+          },
+          "source_start_offset_state": {
+            "default": "unavailable",
+            "enum": [
+              "mapped_from_pts",
+              "mapped_from_start_time",
+              "unavailable"
+            ],
+            "title": "Source Start Offset State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stream_index",
+          "codec_type"
+        ],
+        "title": "ProjectStreamTiming",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "某次分析调用产生的影片上下文快照（project_id / created_at 由基类提供）。",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "context_id": {
+        "title": "Context Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Project Manifest Id"
+      },
+      "project_revision": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Project Revision"
+      },
+      "asset_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Asset Refs",
+        "type": "array"
+      },
+      "source_content_hashes": {
+        "items": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": "Source Content Hashes",
+        "type": "array"
+      },
+      "layers": {
+        "items": {
+          "$ref": "#/$defs/ContextLayer"
+        },
+        "title": "Layers",
+        "type": "array"
+      },
+      "analysis_fingerprint": {
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "provider": {
+        "title": "Provider",
+        "type": "string"
+      },
+      "model": {
+        "title": "Model",
+        "type": "string"
+      },
+      "prompt_version": {
+        "title": "Prompt Version",
+        "type": "string"
+      },
+      "sampling_config": {
+        "additionalProperties": true,
+        "title": "Sampling Config",
+        "type": "object"
+      },
+      "timeline_scope": {
+        "default": "not_applicable",
+        "enum": [
+          "single_asset",
+          "project_per_asset",
+          "mixed_or_unknown",
+          "not_applicable"
+        ],
+        "title": "Timeline Scope",
+        "type": "string"
+      },
+      "timebase": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Timebase"
+      },
+      "timebase_unit": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/TimebaseUnit"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "asset_coverage": {
+        "items": {
+          "$ref": "#/$defs/ProjectAssetCoverage"
+        },
+        "title": "Asset Coverage",
+        "type": "array"
+      },
+      "coverage": {
+        "title": "Coverage",
+        "type": "string"
+      },
+      "rights_scope": {
+        "title": "Rights Scope",
+        "type": "string"
+      },
+      "evidence_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Evidence Refs",
+        "type": "array"
+      },
+      "cache_state": {
+        "title": "Cache State",
+        "type": "string"
+      },
+      "invalidated_at": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Invalidated At"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "context_id",
+      "analysis_fingerprint",
+      "provider",
+      "model",
+      "prompt_version",
+      "coverage",
+      "rights_scope",
+      "cache_state"
+    ],
+    "title": "FilmContextSnapshot",
+    "type": "object"
+  }
+}

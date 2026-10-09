@@ -142,6 +142,14 @@
         "title": "Evidence",
         "type": "array"
       },
+      "source_evidence_refs": {
+        "description": "Exact source evidence IDs from the caller-provided allowlist. These identify project/asset/observation evidence; never invent IDs.",
+        "items": {
+          "type": "string"
+        },
+        "title": "Source Evidence Refs",
+        "type": "array"
+      },
       "status": {
         "$ref": "#/$defs/DecisionStatus",
         "description": "Readiness status. READY only means semantic info is sufficient, not that execution is guaranteed."

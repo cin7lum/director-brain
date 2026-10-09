@@ -9,11 +9,23 @@ schema 版本）产生稳定指纹；命中缓存直接复用，不重复调用 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
+from typing import Protocol
 
 from director_brain.utils import short_hash
 from director_brain.models.film_observation import FilmObservation
+
+
+class AnalysisCacheStore(Protocol):
+    """Minimal cache contract shared by file and repository-backed stores."""
+
+    def get(self, fingerprint: str) -> list[FilmObservation] | None: ...
+
+    def put(self, fingerprint: str, observations: list[FilmObservation]) -> None: ...
+
+    def flush(self) -> None: ...
 
 
 def compute_fingerprint(
@@ -131,3 +143,42 @@ class AnalysisCache:
         payload = json.loads(raw)
         for fp, obs_list in payload.items():
             self._store[fp] = [FilmObservation(**data) for data in obs_list]
+
+
+class RepositoryAnalysisCache:
+    """Persist provider-level observations through the configured repository.
+
+    Each put is committed by the repository immediately. Long local inference
+    can therefore resume from completed shots after an application restart
+    without writing media-derived cache files beside source footage.
+    """
+
+    def __init__(self, repository, source_content_hash: str,
+                 analysis_profile: str):
+        self._repository = repository
+        self._source_content_hash = source_content_hash.lower()
+        self._analysis_profile = analysis_profile
+
+    def _profiled_fingerprint(self, fingerprint: str) -> str:
+        """Keep historical entries isolated when a provider profile changes."""
+        return hashlib.sha256(
+            f"{self._analysis_profile}\0{fingerprint}".encode("utf-8")
+        ).hexdigest()
+
+    def get(self, fingerprint: str) -> list[FilmObservation] | None:
+        return self._repository.get_analysis_result(
+            self._profiled_fingerprint(fingerprint),
+            self._source_content_hash,
+            self._analysis_profile,
+        )
+
+    def put(self, fingerprint: str, observations: list[FilmObservation]) -> None:
+        self._repository.save_analysis_result(
+            self._profiled_fingerprint(fingerprint),
+            self._source_content_hash,
+            self._analysis_profile,
+            observations,
+        )
+
+    def flush(self) -> None:
+        """Repository-backed entries are durable at each ``put``."""

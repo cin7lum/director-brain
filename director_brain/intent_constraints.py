@@ -93,6 +93,36 @@ def interpret_constraints(brief: DirectorBrief) -> ConstraintDirectives:
     return ConstraintDirectives(avoid_rules=avoid_rules, unverifiable=unverifiable)
 
 
+def unresolved_constraint_review_items(brief: DirectorBrief) -> list[dict]:
+    """Return stable Brief references for semantic constraints needing review.
+
+    This preserves the user's original list position, including duplicate text,
+    while excluding deterministic ``must_avoid`` rules already handled by the
+    technical planner. The result is a review scope, not a finding that any
+    candidate satisfies or violates the constraint.
+    """
+    remaining = list(interpret_constraints(brief).unverifiable)
+    items: list[dict] = []
+    for kind, values in (
+        ("must_include", brief.must_include),
+        ("must_avoid", brief.must_avoid),
+    ):
+        for brief_index, text in enumerate(values):
+            reference = (kind, text)
+            if reference not in remaining:
+                continue
+            remaining.remove(reference)
+            items.append({
+                "constraint_ref": f"{kind}:{brief_index}",
+                "kind": kind,
+                "brief_index": brief_index,
+                "text": text,
+            })
+    if remaining:
+        raise ValueError("unresolved Brief constraints lost their source positions")
+    return items
+
+
 def candidate_violated_rules(candidate: dict, rules: list[TechnicalAvoidRule]) -> list[TechnicalAvoidRule]:
     """返回候选镜头违反的技术排除规则列表。
 
@@ -116,6 +146,10 @@ _EDITING_LANGUAGE_BOUNDS: dict[str, tuple[int, int]] = {
     "montage": (300_000, 1_000_000),
     "jump_cut": (300_000, 4_000_000),
 }
+
+# Reusable, already-supported editing-language profiles. This list is a
+# capability vocabulary, not a product-quality threshold or acceptance gate.
+EDITING_LANGUAGE_PROFILE_IDS = tuple(_EDITING_LANGUAGE_BOUNDS)
 
 #: 默认界占位（与 providers.heuristic 模块常量一致；避免循环 import，
 #: 由调用方传入默认值）。

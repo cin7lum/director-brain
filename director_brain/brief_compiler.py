@@ -221,6 +221,7 @@ def compile_brief(
         brief_id=brief_id,
         version="0.1",
         source_text=source_text,
+        creator_direction=sanitize_untrusted(intent_text or ""),
         language=intent_fields["language"],
         intent="user_provided" if intent_text else "auto_compiled_from_observations",
         audience=intent_fields["audience"],
@@ -240,3 +241,38 @@ def compile_brief(
         approved_by=None,
         approved_at=None,
     )
+
+
+def compile_project_brief(
+    project_id: str,
+    project_ref: str,
+    observations: list[FilmObservation],
+    target_duration_us: int | None = None,
+    intent_text: str | None = None,
+) -> DirectorBrief:
+    """Compile project intent without merging independent source clocks/text.
+
+    Objective technical shot summaries may be pooled. Source duration stays
+    unknown at the project level, and transcript text remains asset-local in
+    its source observations rather than being concatenated into one timeline.
+    """
+    technical = [
+        item for item in observations
+        if item.observation_type == "deterministic_technical"
+    ]
+    brief = compile_brief(
+        project_id,
+        project_ref,
+        technical,
+        target_duration_us=target_duration_us,
+        intent_text=intent_text,
+    )
+    has_speech = any(
+        item.observation_type == "speech_transcript" for item in observations
+    )
+    return brief.model_copy(update={
+        "brief_id": f"brief_{project_id}_{short_hash(project_ref)}",
+        "source_text": "not_determined",
+        "source_duration_us": None,
+        "sound_language": "speech_present" if has_speech else "no_speech",
+    })

@@ -16,7 +16,16 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from director_brain.models.director_decision import DirectorDecision, DecisionStatus
+from director_brain.models.director_decision import (
+    DirectorDecision,
+    DecisionStatus,
+    Parameterization,
+)
+from director_brain.models.parameterization import (
+    ParameterizationDecision,
+    ParameterizationStatus,
+)
+from director_brain.arsenal_adapter import from_service_result
 from director_brain.llm_adapter import LLMAdapter, LLMResult
 from director_brain.semantic_reasoner import SemanticDirectorReasoner
 from director_brain.service import SemanticDirectorService, DirectorRequestResult
@@ -35,12 +44,13 @@ class TestR1SchemaConstrained:
         assert "decision_id" in schema["properties"]
         assert "creative_intent" in schema["properties"]
         assert "status" in schema["properties"]
+        assert "source_evidence_refs" in schema["properties"]
 
     def test_r1_1_payload_contains_schema_as_format(self):
         """The ollama request payload must use the canonical schema as format."""
         adapter = LLMAdapter()
         expected_schema = DirectorDecision.model_json_schema()
-        with patch("urllib.request.urlopen") as mock_urlopen:
+        with patch("director_brain.llm_adapter._open_local_request") as mock_urlopen:
             mock_resp = MagicMock()
             mock_resp.read.return_value = json.dumps({
                 "message": {"content": json.dumps({
@@ -112,11 +122,127 @@ class TestR1Entrypoint:
         reasoner = SemanticDirectorReasoner(llm_adapter=mock_llm)
         service = SemanticDirectorService(reasoner=reasoner)
 
-        result = service.process_direction("test input")
+        result = service.process_direction(
+            "test input",
+            context="obs_1: speech begins after cut",
+            available_source_evidence_refs=["obs_1"],
+        )
         assert isinstance(result, DirectorRequestResult)
         assert result.decision is not None
-        assert result.status == "READY"
+        assert result.semantic_status == "READY"
+        assert result.execution_readiness == "WAITING_FOR_CONTEXT"
+        assert from_service_result(result) is None
         assert result.trace_id.startswith("svc_")
+        context = mock_llm.generate_decision.call_args.kwargs["context"]
+        assert "obs_1" in context
+
+    def test_r1_5_explicit_semantic_value_can_pass_without_context(self):
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t-explicit",
+                creative_intent="Use the explicit audio offset",
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+                parameterization=Parameterization(
+                    exact_value=8.0,
+                    unit="frames",
+                    certainty="explicit",
+                ),
+                evidence=["Audio leads by 8 frames"],
+            ),
+            model="test",
+            latency_ms=10,
+        )
+        service = SemanticDirectorService(
+            reasoner=SemanticDirectorReasoner(llm_adapter=mock_llm))
+
+        result = service.process_direction("Audio leads by 8 frames")
+
+        assert result.semantic_status == "READY"
+        assert result.execution_readiness == "READY"
+        assert result.exact_parameterization_source_verified is True
+        assert from_service_result(result) == {
+            "exact_value": 8.0,
+            "unit": "frames",
+            "magnitude": None,
+            "certainty": "explicit",
+        }
+
+    def test_r1_5_exact_seconds_are_not_reinterpreted_as_frames(self):
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t-explicit-seconds",
+                creative_intent="Use the explicit audio lead",
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+                parameterization=Parameterization(
+                    exact_value=0.5,
+                    unit="seconds",
+                    certainty="explicit",
+                ),
+                evidence=["Audio leads by 0.5 seconds"],
+            ),
+            model="test",
+            latency_ms=10,
+        )
+        service = SemanticDirectorService(
+            reasoner=SemanticDirectorReasoner(llm_adapter=mock_llm))
+
+        direct_result = service.process_direction("Audio leads by 0.5 seconds")
+        assert direct_result.execution_readiness == "READY"
+        assert direct_result.exact_parameterization_source_verified is True
+        assert from_service_result(direct_result) == {
+            "exact_value": 0.5,
+            "unit": "seconds",
+            "magnitude": None,
+            "certainty": "explicit",
+        }
+
+        result = service.process_direction(
+            "Audio leads by 0.5 seconds",
+            parameterization_context=object(),
+        )
+
+        assert result.semantic_status == "READY"
+        assert result.exact_parameterization_source_verified is True
+        assert result.parameterization_decision.status == ParameterizationStatus.UNAVAILABLE
+        assert (result.parameterization_decision.reason_code
+                == "EXPLICIT_UNIT_NOT_SUPPORTED_BY_JCUT_PARAMETERIZER")
+        assert result.execution_readiness == "NOT_READY"
+        assert from_service_result(result) is None
+
+    def test_r1_5_parameterizer_ready_without_exact_value_fails_closed(self):
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t-missing-exact",
+                creative_intent="Use an incoming audio lead",
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+            ),
+            model="test",
+            latency_ms=10,
+        )
+        invalid_parameterization = ParameterizationDecision(
+            parameter_name="audio_offset_frames",
+            status=ParameterizationStatus.READY,
+            exact_value=None,
+        )
+        service = SemanticDirectorService(
+            reasoner=SemanticDirectorReasoner(llm_adapter=mock_llm))
+        service._parameterizer = MagicMock()
+        service._parameterizer.parameterize.return_value = invalid_parameterization
+
+        result = service.process_direction(
+            "Use an incoming audio lead",
+            parameterization_context=object(),
+        )
+
+        assert result.semantic_status == "READY"
+        assert result.execution_readiness == "NOT_READY"
+        assert from_service_result(result) is None
 
     def test_r1_5_needs_context_propagates(self):
         """NEEDS_CONTEXT must propagate to caller via result.status."""
@@ -134,6 +260,30 @@ class TestR1Entrypoint:
         assert result.status == "NEEDS_CONTEXT"
         assert result.decision.required_context == ["dialogue_onset_timing"]
 
+    def test_r1_5_known_negative_alias_conflict_blocks_readiness(self):
+        """A known equivalent must_avoid term cannot leave the service READY."""
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t-conflict",
+                creative_intent="Audio lead requested and forbidden",
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+                must_avoid=["audio_lead"],
+            ),
+            model="test",
+            latency_ms=10,
+        )
+        service = SemanticDirectorService(
+            reasoner=SemanticDirectorReasoner(llm_adapter=mock_llm))
+
+        result = service.process_direction("声音要提前，但禁止声音领先")
+
+        assert result.semantic_status == "CONFLICTING_CONSTRAINTS"
+        assert result.execution_readiness == "BLOCKED"
+        assert result.status == "BLOCKED"
+        assert result.post_validation_violations
+
     def test_r1_5_model_failure_propagates(self):
         """SEMANTIC_REASONER_UNAVAILABLE must propagate to caller."""
         mock_llm = MagicMock(spec=LLMAdapter)
@@ -146,7 +296,37 @@ class TestR1Entrypoint:
         result = service.process_direction("test")
         assert result.status == "SEMANTIC_REASONER_UNAVAILABLE"
         assert result.decision is None
-        assert "connection refused" in (result.error or "")
+        assert result.failure_code == "provider_failure"
+        assert "connection refused" not in (result.error or "")
+
+    def test_r1_5_invalid_evidence_is_distinct_from_provider_unavailable(self):
+        mock_llm = MagicMock(spec=LLMAdapter)
+        mock_llm.generate_decision.return_value = LLMResult(
+            decision=DirectorDecision(
+                decision_id="t-invented-evidence",
+                creative_intent="Use a two-second audio lead",
+                evidence=["用户明确要求声音提前两秒"],
+                status=DecisionStatus.READY,
+                desired_relation_or_change=["audio_precedes_picture"],
+                parameterization=Parameterization(
+                    exact_value=2.0,
+                    unit="seconds",
+                    certainty="explicit",
+                ),
+            ),
+            model="test",
+            latency_ms=10,
+        )
+        service = SemanticDirectorService(
+            reasoner=SemanticDirectorReasoner(llm_adapter=mock_llm))
+
+        result = service.process_direction("让声音提前一点进入")
+
+        assert result.semantic_status == "INVALID"
+        assert result.execution_readiness == "NOT_READY"
+        assert result.status == "SEMANTIC_REASONER_INVALID"
+        assert "exact substring" in (result.error or "")
+        assert from_service_result(result) is None
 
 
 # ── R1-6: Model unavailable → fail closed ──
@@ -154,7 +334,7 @@ class TestR1Entrypoint:
 class TestR1FailClosed:
     def test_r1_6_connection_error(self):
         adapter = LLMAdapter()
-        with patch("urllib.request.urlopen", side_effect=ConnectionError("refused")):
+        with patch("director_brain.llm_adapter._open_local_request", side_effect=ConnectionError("refused")):
             result = adapter.generate_decision("test")
             assert result.decision is None
             assert "SEMANTIC_REASONER_UNAVAILABLE" in (result.error or "")
@@ -162,7 +342,7 @@ class TestR1FailClosed:
     def test_r1_6_timeout(self):
         import urllib.error
         adapter = LLMAdapter()
-        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("timeout")):
+        with patch("director_brain.llm_adapter._open_local_request", side_effect=urllib.error.URLError("timeout")):
             result = adapter.generate_decision("test")
             assert result.decision is None
             assert result.error is not None
@@ -170,7 +350,7 @@ class TestR1FailClosed:
     def test_r1_6_invalid_schema_output(self):
         """Model output that fails Pydantic validation → fail closed."""
         adapter = LLMAdapter()
-        with patch("urllib.request.urlopen") as mock_urlopen:
+        with patch("director_brain.llm_adapter._open_local_request") as mock_urlopen:
             mock_resp = MagicMock()
             mock_resp.read.return_value = json.dumps({
                 "message": {"content": '{"decision_id": "t", "creative_intent": "t"}'}

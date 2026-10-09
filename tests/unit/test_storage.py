@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 
 import pytest
+import storage.sqlite_repository as sqlite_repository_module
 
 from director_brain.models import (
     ClaimKind,
@@ -49,6 +50,7 @@ def _make_brief(brief_id: str = "b-1", project_id: str = "P-A") -> DirectorBrief
         brief_id=brief_id,
         version="1",
         source_text="A heist story.",
+        creator_direction="Begin with suspicion; reveal the crew's loyalty later.",
         language="zh",
         intent="create tension",
         audience="adults",
@@ -358,6 +360,56 @@ def test_factory_functions(tmp_path):
 
     with pytest.raises(ValueError):
         get_repository("s3", db_path=str(tmp_path / "x.db"))
+
+
+def test_sqlite_repository_pins_extra_synchronous_durability(tmp_path, monkeypatch):
+    original_connect = sqlite_repository_module.sqlite3.connect
+
+    def connect_with_normal_synchronous(db_path):
+        connection = original_connect(db_path)
+        connection.execute("PRAGMA synchronous = NORMAL")
+        return connection
+
+    monkeypatch.setattr(
+        sqlite_repository_module.sqlite3,
+        "connect",
+        connect_with_normal_synchronous,
+    )
+    repo = SqliteRepository(str(tmp_path / "durability.db"))
+    try:
+        assert repo._conn.execute("PRAGMA synchronous").fetchone()[0] == 3
+        repo.save(_make_brief("durability-brief"))
+    finally:
+        repo.close()
+
+
+def test_project_story_link_ranking_snapshot_is_immutable_and_persistent(tmp_path):
+    db_path = tmp_path / "ranking-cache.db"
+    identity = (
+        "project-1",
+        "candidate-set-1",
+        "bge_m3_shadow_v1",
+        "bge-m3:latest",
+        "a" * 64,
+        "cosine_similarity",
+    )
+    entries = [("candidate-a", 0.91), ("candidate-b", -0.2)]
+    repo = SqliteRepository(str(db_path))
+    repo.save_project_story_link_ranking_snapshot(*identity, entries)
+    repo.save_project_story_link_ranking_snapshot(*identity, entries)
+    with pytest.raises(ValueError, match="result drift"):
+        repo.save_project_story_link_ranking_snapshot(
+            *identity, [("candidate-a", 0.1), ("candidate-b", 0.2)])
+    repo.close()
+
+    restarted_repo = SqliteRepository(str(db_path))
+    try:
+        assert restarted_repo.get_project_story_link_ranking_snapshot(
+            *identity) == entries
+        assert restarted_repo.get_project_story_link_ranking_snapshot(
+            *identity[:2], "different-profile", *identity[3:]) is None
+    finally:
+        restarted_repo.close()
 
 
 # ---------------------------------------------------------------------------

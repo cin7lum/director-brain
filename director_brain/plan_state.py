@@ -61,6 +61,7 @@ _TRANSITIONS: dict[PlanState, set[PlanState]] = {
     },
     PlanState.VALIDATING: {
         PlanState.READY_FOR_STRATEGY_CONFIRMATION,
+        PlanState.NEEDS_INPUT,
         PlanState.FAILED_VALIDATION,
     },
     PlanState.READY_FOR_STRATEGY_CONFIRMATION: {
@@ -83,7 +84,7 @@ _TRANSITIONS: dict[PlanState, set[PlanState]] = {
     },
     PlanState.FQL_FILM_QUALITY_REVIEWED: set(),
     PlanState.NEEDS_INPUT: {
-        PlanState.DRAFT, PlanState.SUPERSEDED,
+        PlanState.DRAFT, PlanState.REJECTED, PlanState.SUPERSEDED,
     },
     PlanState.REJECTED: set(),
     PlanState.STALE_CONTEXT: {
@@ -191,6 +192,8 @@ def confirm_strategy(
     调用方须先确保 ``plan.validation_status`` 为 valid 且已过渲染闸门——
     本函数只做 hash 绑定，不重跑验证。
     """
+    if "director_reasoner_shadow_candidate=not_confirmable" in plan.constraints:
+        raise ValueError("shadow-only Director Reasoner candidates cannot be confirmed")
     plan_hash = compute_plan_hash(plan)
     edl_hash = compute_edl_hash(edl)
     return StrategyConfirmation(

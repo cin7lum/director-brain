@@ -19,6 +19,7 @@ FAILED = "FAILED"
 # ---------------------------------------------------------------------------
 FT_NETWORK = "NETWORK"
 FT_RATE_LIMIT = "RATE_LIMIT"
+FT_REQUEST = "REQUEST"
 FT_DECODE = "DECODE"
 FT_PARSE = "PARSE"
 FT_EMPTY = "EMPTY"

@@ -72,6 +72,19 @@ def test_transition_plan_writes_state():
         transition_plan(plan, PlanState.DISPATCH_ELIGIBLE)
 
 
+def test_unverifiable_constraints_require_input_before_confirmation():
+    """An unresolved semantic hard constraint cannot enter confirmation."""
+    plan = _plan()
+    transition_plan(plan, PlanState.CONTEXT_PARTIAL)
+    transition_plan(plan, PlanState.VALIDATING)
+    transition_plan(plan, PlanState.NEEDS_INPUT)
+    assert plan.state == PlanState.NEEDS_INPUT.value
+    with pytest.raises(InvalidTransition):
+        transition_plan(plan, PlanState.READY_FOR_STRATEGY_CONFIRMATION)
+    transition_plan(plan, PlanState.REJECTED)
+    assert plan.state == PlanState.REJECTED.value
+
+
 def test_hash_binds_content_not_workflow_metadata():
     """hash 只锁内容：确认后合法推进状态不破坏绑定；改序列则失效。"""
     plan = _plan(state="ready_for_strategy_confirmation")

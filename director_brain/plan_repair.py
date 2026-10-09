@@ -39,7 +39,11 @@ import re
 from dataclasses import dataclass, field
 
 from director_brain.models.director_plan import DirectorDecisionPlan
-from director_brain.models.edl import EditItem, EditorialDecisionList
+from director_brain.models.edl import (
+    EditItem,
+    EditorialDecisionList,
+    ordered_unique_source_hashes,
+)
 from director_brain.models.film_observation import FilmObservation
 from director_brain.plan_validator import validate_plan, _parse_target_duration
 from director_brain.providers.heuristic import MAX_CLIP_US, MIN_CLIP_US
@@ -392,12 +396,7 @@ def repair_plan(
 
     # ---- 收尾：重算 expected_duration + source_asset_hashes ----
     expected_duration = sum(e.out_frame - e.in_frame for e in edits)
-    source_hashes: list[str] = []
-    seen_hashes: set[str] = set()
-    for e in edits:
-        if e.source_media_hash not in seen_hashes:
-            seen_hashes.add(e.source_media_hash)
-            source_hashes.append(e.source_media_hash)
+    source_hashes = ordered_unique_source_hashes(edits)
 
     new_edl.ordered_edits = edits
     new_edl.expected_duration = expected_duration

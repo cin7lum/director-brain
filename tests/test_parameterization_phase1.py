@@ -53,7 +53,7 @@ def _make_ctx(
     fps: float = 24.0,
     clip_count: int = 3,
 ) -> ParameterizationContext:
-    """Build a minimal ParameterizationContext for testing."""
+    """Build a context; each dialogue offset is frames before the cut."""
     incoming = ClipBoundary(
         clip_id="clip_B",
         media_name="video_B.mp4",
@@ -79,10 +79,10 @@ def _make_ctx(
         for frame in dialogue_onsets:
             audio_events.append(AudioEvent(
                 event_type=AudioEventType.DIALOGUE_ONSET,
-                frame=frame,
+                frame=-frame,
                 confidence=0.85,
                 source="test_fixture",
-                evidence_ref=f"test_dialogue_{frame}f",
+                evidence_ref=f"test_dialogue_{-frame}f",
             ))
     provenance = {}
     if handle is not None:
@@ -221,6 +221,62 @@ class TestPOC16Regression:
         d = JCutParameterizer().parameterize(ctx, user_exact_value=None)
         assert d.status == ParameterizationStatus.NEEDS_DECISION
 
+    def test_jcut_uses_dialogue_onset_before_cut_as_lead_distance(self):
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[10])
+        d = JCutParameterizer().parameterize(ctx)
+        assert d.status == ParameterizationStatus.READY
+        assert d.exact_value == 10.0
+        assert d.selected_candidate.evidence_refs == ["test_dialogue_-10f"]
+
+    def test_jcut_uses_pre_cut_silence_end_as_speech_boundary(self):
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[])
+        ctx = ctx.model_copy(update={"audio_events": [AudioEvent(
+            event_type=AudioEventType.SILENCE_END,
+            frame=-8,
+            confidence=0.85,
+            source="test_fixture",
+            evidence_ref="silence_end_before_cut",
+        )]})
+        d = JCutParameterizer().parameterize(ctx)
+        assert d.status == ParameterizationStatus.READY
+        assert d.exact_value == 8.0
+        assert d.selected_candidate.evidence_refs == ["silence_end_before_cut"]
+
+    def test_jcut_does_not_treat_dialogue_after_cut_as_lead(self):
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[])
+        ctx = ctx.model_copy(update={
+            "audio_events": [AudioEvent(
+                event_type=AudioEventType.DIALOGUE_ONSET,
+                frame=10,
+                confidence=0.85,
+                source="test_fixture",
+                evidence_ref="dialogue_after_cut",
+            )],
+            "has_dialogue": True,
+        })
+        d = JCutParameterizer().parameterize(ctx)
+        assert d.status == ParameterizationStatus.NEEDS_DECISION
+        assert all(
+            candidate.source != CandidateSource.OBSERVED_EVENT
+            for candidate in d.candidates
+        )
+
+    def test_jcut_does_not_use_silence_start_as_incoming_audio_cue(self):
+        ctx = _make_ctx(handle=24, source_start=24, dialogue_onsets=[])
+        ctx = ctx.model_copy(update={"audio_events": [AudioEvent(
+            event_type=AudioEventType.SILENCE_START,
+            frame=-8,
+            confidence=0.85,
+            source="test_fixture",
+            evidence_ref="silence_start_before_cut",
+        )]})
+        d = JCutParameterizer().parameterize(ctx)
+        assert d.status == ParameterizationStatus.NEEDS_DECISION
+        assert all(
+            candidate.source != CandidateSource.OBSERVED_EVENT
+            for candidate in d.candidates
+        )
+
 
 # ============================================================
 # Status Invariant Tests
@@ -293,6 +349,64 @@ class TestStatusInvariants:
         fixed, violations = validate_director_decision(d)
         assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
         assert len(violations) > 0
+
+    def test_ready_with_audio_lead_alias_conflict_downgraded(self):
+        """Known film-language aliases must not bypass negative constraints."""
+        d = DirectorDecision(
+            decision_id="test-audio-alias-conflict",
+            creative_intent="Keep incoming sound before picture but avoid audio lead",
+            status="READY",
+            desired_relation_or_change=["audio_precedes_picture"],
+            must_avoid=["audio_lead"],
+            parameterization=Parameterization(exact_value=None),
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
+        assert any("audio_precedes_picture" in item for item in violations)
+        assert any("audio_lead" in item for item in violations)
+
+    def test_ready_with_transition_alias_conflict_downgraded(self):
+        d = DirectorDecision(
+            decision_id="test-transition-alias-conflict",
+            creative_intent="Allow a transition while avoiding transitions",
+            status="READY",
+            desired_relation_or_change=["allow_transition"],
+            must_avoid=["transition"],
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
+        assert violations
+
+    @pytest.mark.parametrize(("desired", "must_avoid"), [
+        ("outgoing_audio_continues_after_cut", "audio-tail"),
+        ("extend_visible_duration", "duration extension"),
+        ("shorten_visible_duration", "duration_shortening"),
+    ])
+    def test_other_documented_constraint_aliases_conflict(
+        self, desired: str, must_avoid: str,
+    ):
+        d = DirectorDecision(
+            decision_id="test-known-constraint-alias",
+            creative_intent="A positive relation conflicts with an avoided effect",
+            status="READY",
+            desired_relation_or_change=[desired],
+            must_avoid=[must_avoid],
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "CONFLICTING_CONSTRAINTS"
+        assert violations
+
+    def test_opposite_audio_direction_is_not_a_conflict(self):
+        d = DirectorDecision(
+            decision_id="test-audio-direction-is-distinct",
+            creative_intent="Carry outgoing sound across the picture cut",
+            status="READY",
+            desired_relation_or_change=["outgoing_audio_continues_after_cut"],
+            must_avoid=["audio_lead"],
+        )
+        fixed, violations = validate_director_decision(d)
+        assert fixed.status.value == "READY"
+        assert not violations
 
     def test_conflicting_with_exact_value_warned(self):
         d = DirectorDecision(
@@ -649,11 +763,21 @@ class TestArsenalAdapter:
         assert is_execution_ready(semantic_bad, param) is False
 
     def test_no_param_decision_semantic_ready_with_value(self):
-        """If no parameterization context but semantic has exact_value, pass through."""
+        """A source-verified explicit value can pass through without context."""
         semantic = _make_director_decision(status="READY", exact_value=10.0)
-        result = to_arsenal_parameterization(semantic, None)
+        assert to_arsenal_parameterization(semantic, None) is None
+        result = to_arsenal_parameterization(
+            semantic, None, exact_parameterization_source_verified=True,
+        )
         assert result is not None
         assert result["exact_value"] == 10.0
+
+    def test_no_param_decision_does_not_invent_default_unit(self):
+        semantic = _make_director_decision(status="READY", exact_value=10.0)
+        semantic.parameterization.unit = None
+        assert to_arsenal_parameterization(
+            semantic, None, exact_parameterization_source_verified=True,
+        ) is None
 
 
 # ============================================================

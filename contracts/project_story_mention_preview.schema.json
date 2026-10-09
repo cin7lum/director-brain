@@ -1,0 +1,225 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "经本地授权、源哈希复核的临时素材内人物/事件可视预览；不持久化或推断跨素材关系",
+  "schema": {
+    "$defs": {
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryMentionPreviewFrame": {
+        "additionalProperties": false,
+        "description": "One bounded JPEG frame returned for an authorized source mention.",
+        "properties": {
+          "relative_position": {
+            "enum": [
+              0.15,
+              0.5,
+              0.85
+            ],
+            "title": "Relative Position",
+            "type": "number"
+          },
+          "media_type": {
+            "const": "image/jpeg",
+            "default": "image/jpeg",
+            "title": "Media Type",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "width": {
+            "exclusiveMinimum": 0,
+            "maximum": 1280,
+            "title": "Width",
+            "type": "integer"
+          },
+          "height": {
+            "exclusiveMinimum": 0,
+            "maximum": 1280,
+            "title": "Height",
+            "type": "integer"
+          },
+          "jpeg_base64": {
+            "maxLength": 2000000,
+            "minLength": 4,
+            "title": "Jpeg Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relative_position",
+          "sha256",
+          "width",
+          "height",
+          "jpeg_base64"
+        ],
+        "title": "ProjectStoryMentionPreviewFrame",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Read-only visual review aid; frame data is never persisted by this model.",
+    "properties": {
+      "schema_version": {
+        "const": "1.0",
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "minLength": 1,
+        "title": "Project Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "minLength": 1,
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "story_graph_id": {
+        "minLength": 1,
+        "title": "Story Graph Id",
+        "type": "string"
+      },
+      "relation_kind": {
+        "enum": [
+          "person_identity",
+          "event_identity"
+        ],
+        "title": "Relation Kind",
+        "type": "string"
+      },
+      "anchor": {
+        "$ref": "#/$defs/ProjectStoryLinkAnchor"
+      },
+      "source_hash_validation_state": {
+        "const": "verified_before_and_after",
+        "default": "verified_before_and_after",
+        "title": "Source Hash Validation State",
+        "type": "string"
+      },
+      "preview_profile": {
+        "const": "ffmpeg_relative_0.15_0.50_0.85_cv2_jpeg_1280_v1",
+        "default": "ffmpeg_relative_0.15_0.50_0.85_cv2_jpeg_1280_v1",
+        "title": "Preview Profile",
+        "type": "string"
+      },
+      "cache_policy": {
+        "const": "no_store",
+        "default": "no_store",
+        "title": "Cache Policy",
+        "type": "string"
+      },
+      "frames": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryMentionPreviewFrame"
+        },
+        "maxItems": 3,
+        "minItems": 3,
+        "title": "Frames",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "project_manifest_id",
+      "project_revision",
+      "story_graph_id",
+      "relation_kind",
+      "anchor",
+      "frames"
+    ],
+    "title": "ProjectStoryMentionPreview",
+    "type": "object"
+  }
+}

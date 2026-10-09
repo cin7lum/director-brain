@@ -19,7 +19,11 @@ from __future__ import annotations
 import time
 import uuid
 
-from director_brain.models.edl import EditItem, EditorialDecisionList
+from director_brain.models.edl import (
+    EditItem,
+    EditorialDecisionList,
+    ordered_unique_source_hashes,
+)
 
 PRODUCER = "heuristic_baseline_v1"
 TIMEBASE_US = 1_000_000
@@ -139,6 +143,8 @@ class HeuristicBaseline:
         max_clip_us: int = MAX_CLIP_US,
         align: str = "center",
         score_key: str | None = None,
+        priority_key: str | None = None,
+        selection_reason_events: dict | None = None,
     ) -> dict:
         """生成 V0.1 格式的 proposal dict。
 
@@ -153,7 +159,16 @@ class HeuristicBaseline:
             V0.1 proposal dict，含 ``proposal_id``、``rough_cut_id``、
             ``project_id``、``slots``、``ai_model``、``prompt_version``。
         """
+        def record_reason(candidate: dict, reason: str) -> None:
+            identity = candidate.get("_candidate_identity")
+            if selection_reason_events is None or not isinstance(identity, tuple):
+                return
+            selection_reason_events.setdefault(identity, set()).add(reason)
+
         usable = [c for c in candidates if c.get("technical_usable")]
+        for candidate in candidates:
+            if not candidate.get("technical_usable"):
+                record_reason(candidate, "technical_eligibility_not_met")
 
         def _score(c: dict) -> float:
             # 候选①：内核融合分（语义评分 × 结构权重）优先
@@ -173,22 +188,39 @@ class HeuristicBaseline:
             # D3：语音价值加成（voice_led；对白覆盖镜头 +0.1）
             return blur * mult * imp_mult + c.get("_speech_bonus", 0.0)
 
-        usable.sort(key=lambda c: -_score(c))
+        if priority_key is None:
+            usable.sort(key=lambda c: -_score(c))
+        else:
+            def _priority(c: dict) -> tuple[int, int, float]:
+                value = c.get(priority_key)
+                if type(value) is int and value >= 0:
+                    return (0, value, -_score(c))
+                return (1, 0, -_score(c))
+
+            usable.sort(key=_priority)
 
         slots: list[dict] = []
         total = 0
         pos = 0
-        for c in usable:
+        for index, c in enumerate(usable):
             if total >= target_duration_us:
+                for remainder in usable[index:]:
+                    record_reason(remainder, "act_duration_target_reached")
                 break
             shot_in = c["source_in_us"]
             shot_out = c["source_out_us"]
             shot_dur = shot_out - shot_in
             if shot_dur < min_clip_us:
+                record_reason(c, "source_interval_below_minimum")
                 continue  # 跳过过短镜头
 
             remaining = target_duration_us - total
             if remaining < min_clip_us:
+                for remainder in usable[index:]:
+                    record_reason(
+                        remainder,
+                        "act_remaining_capacity_below_minimum",
+                    )
                 break  # 剩余时间不足最小片段，停止
 
             clip_dur = min(shot_dur, max_clip_us, remaining)
@@ -249,11 +281,15 @@ def generate_edl(
     max_clip_us: int = MAX_CLIP_US,
     align: str = "center",
     score_key: str | None = None,
+    priority_key: str | None = None,
+    selection_reason_events: dict | None = None,
 ) -> EditorialDecisionList:
     """生成 EDL：产出 V0.1 proposal slots 后直接构造 EDL。
 
-    score_key: 候选①——内核融合分（selection_score）优先排序；None 时
-    用内置 ``blur × vlm_mult × imp_mult`` 公式（旧行为）。
+    score_key: 候选①——内核融合分（selection_score）排序；None 时用
+    内置 ``blur × vlm_mult × imp_mult`` 公式（旧行为）。
+    priority_key: Optional stable lower-is-better candidate rank; unranked
+    candidates follow ranked ones and retain the existing score as tie-breaker.
 
     注意：heuristic 的 slot 不含 ``proposed_role``，因此
     :attr:`EditItem.shot_function` 为 None，由调用方（director_reasoner）
@@ -269,6 +305,8 @@ def generate_edl(
         max_clip_us=max_clip_us,
         align=align,
         score_key=score_key,
+        priority_key=priority_key,
+        selection_reason_events=selection_reason_events,
     )
 
     edits = [
@@ -297,7 +335,7 @@ def generate_edl(
         version="1.0",
         brief_version="unknown",
         context_id="NOT_DETERMINED",
-        source_asset_hashes=[e.source_media_hash for e in edits],
+        source_asset_hashes=ordered_unique_source_hashes(edits),
         timebase=TIMEBASE_US,
         ordered_edits=edits,
         expected_duration=sum(e.out_frame - e.in_frame for e in edits),

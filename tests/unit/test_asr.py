@@ -27,7 +27,11 @@ import pytest
 # skip（不是 fail）——"可选功能缺依赖优雅降级"的标准形态。
 pytest.importorskip("faster_whisper")
 
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
 from observation_service.asr import transcribe
 
 
@@ -132,6 +136,8 @@ def test_timestamps_are_integer_microseconds():
     assert type(first.end_frame) is int
     assert first.timebase == 1_000_000
     assert second.timebase == 1_000_000
+    assert first.timebase_unit == TimebaseUnit.MICROSECONDS
+    assert second.timebase_unit == TimebaseUnit.MICROSECONDS
     # observation_id 按序号格式化
     assert first.observation_id == "asr_0000"
     assert second.observation_id == "asr_0001"

@@ -1,0 +1,398 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "调用方声明的跨素材身份分组与证据绑定语义关系；自动推断保持关闭",
+  "schema": {
+    "$defs": {
+      "ProjectStoryEntityLink": {
+        "additionalProperties": false,
+        "description": "A caller-asserted identity grouping across independent source assets.",
+        "properties": {
+          "link_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Link Id",
+            "type": "string"
+          },
+          "entity_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity",
+              "place_identity"
+            ],
+            "title": "Entity Kind",
+            "type": "string"
+          },
+          "display_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Label",
+            "type": "string"
+          },
+          "anchors": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryLinkAnchor"
+            },
+            "maxItems": 500,
+            "minItems": 2,
+            "title": "Anchors",
+            "type": "array"
+          },
+          "source_comparison_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Source Comparison Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "link_id",
+          "entity_kind",
+          "display_label",
+          "anchors"
+        ],
+        "title": "ProjectStoryEntityLink",
+        "type": "object"
+      },
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryLinkComparisonDisposition": {
+        "additionalProperties": false,
+        "description": "Caller-asserted disposition of one immutable model comparison.",
+        "properties": {
+          "comparison_id": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Comparison Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accepted_as_caller_asserted",
+              "rejected",
+              "needs_more_evidence"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Link Id"
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comparison_id",
+          "decision"
+        ],
+        "title": "ProjectStoryLinkComparisonDisposition",
+        "type": "object"
+      },
+      "ProjectStoryRelationClaim": {
+        "additionalProperties": false,
+        "description": "One caller-asserted semantic edge between exact cross-asset mentions.",
+        "properties": {
+          "relation_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Relation Id",
+            "type": "string"
+          },
+          "relation_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Relation Type",
+            "type": "string"
+          },
+          "from_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "to_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "relation_type_state": {
+            "const": "caller_supplied_unstandardized",
+            "default": "caller_supplied_unstandardized",
+            "title": "Relation Type State",
+            "type": "string"
+          },
+          "confirmation_state": {
+            "const": "caller_asserted",
+            "default": "caller_asserted",
+            "title": "Confirmation State",
+            "type": "string"
+          },
+          "privacy_class": {
+            "default": "private",
+            "enum": [
+              "public",
+              "internal",
+              "private",
+              "sensitive"
+            ],
+            "title": "Privacy Class",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "relation_type",
+          "from_anchor",
+          "to_anchor",
+          "evidence_refs"
+        ],
+        "title": "ProjectStoryRelationClaim",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Immutable, revision-bound caller overlay for cross-asset graph claims.\n\nA comparison disposition can point to an immutable local-model pair result,\nbut never changes that result's unreviewed state or proves the relationship.\nThe source-local StoryGraph remains unchanged. A later revision replaces the\ncomplete identity-link and semantic-relation sets while prior snapshots stay\nin the decision ledger.",
+    "properties": {
+      "schema_version": {
+        "default": "1.5",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "review_id": {
+        "title": "Review Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "context_id": {
+        "title": "Context Id",
+        "type": "string"
+      },
+      "story_graph_id": {
+        "title": "Story Graph Id",
+        "type": "string"
+      },
+      "analysis_fingerprint": {
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "source_mention_review_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Mention Review Id"
+      },
+      "source_mention_review_revision": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Source Mention Review Revision",
+        "type": "integer"
+      },
+      "review_revision": {
+        "minimum": 1,
+        "title": "Review Revision",
+        "type": "integer"
+      },
+      "review_scope": {
+        "default": "project_cross_asset_identity_overlay",
+        "enum": [
+          "project_cross_asset_identity_overlay",
+          "project_cross_asset_review"
+        ],
+        "title": "Review Scope",
+        "type": "string"
+      },
+      "evidence_state": {
+        "const": "caller_asserted",
+        "default": "caller_asserted",
+        "title": "Evidence State",
+        "type": "string"
+      },
+      "actor_identity_state": {
+        "const": "caller_asserted",
+        "default": "caller_asserted",
+        "title": "Actor Identity State",
+        "type": "string"
+      },
+      "automatic_inference_state": {
+        "const": "not_attempted",
+        "default": "not_attempted",
+        "title": "Automatic Inference State",
+        "type": "string"
+      },
+      "links": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryEntityLink"
+        },
+        "maxItems": 500,
+        "title": "Links",
+        "type": "array"
+      },
+      "relations": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryRelationClaim"
+        },
+        "maxItems": 500,
+        "title": "Relations",
+        "type": "array"
+      },
+      "comparison_dispositions": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryLinkComparisonDisposition"
+        },
+        "maxItems": 500,
+        "title": "Comparison Dispositions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "review_id",
+      "project_manifest_id",
+      "project_revision",
+      "context_id",
+      "story_graph_id",
+      "analysis_fingerprint",
+      "review_revision"
+    ],
+    "title": "ProjectStoryLinkReview",
+    "type": "object"
+  }
+}

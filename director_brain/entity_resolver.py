@@ -95,14 +95,38 @@ def resolve_entities(
     起步，单成员实体保留 _CONF_WEAK）。
     """
     res = EntityResolution()
+    eligible = [
+        observation for observation in vlm_obs
+        if observation.claim_kind is ClaimKind.MODEL_OBSERVATION
+    ]
+    project_asset_ids = {observation.project_asset_id for observation in eligible}
+    if len(project_asset_ids) > 1:
+        if None in project_asset_ids:
+            raise ValueError(
+                "entity resolution cannot mix bound and unbound observations"
+            )
+        raise ValueError(
+            "entity resolution requires one project_asset_id; cross-asset "
+            "identity matching is not admitted by this resolver"
+        )
+    project_ids = {observation.project_id for observation in eligible}
+    if len(project_ids) > 1:
+        raise ValueError("entity resolution cannot mix project_id values")
+    timebases = {
+        (observation.timebase, observation.timebase_unit)
+        for observation in eligible
+    }
+    if len(timebases) > 1:
+        raise ValueError(
+            "entity resolution requires one source timebase for ordering"
+        )
+
     # 实体成员外观列表：entity_id → [(descriptor, tokens, obs_id)]
     members: dict[str, list[tuple[str, set[str], str]]] = {}
     member_conf: dict[str, float] = {}  # entity_id → 分配时的归属置信
     counter = 0
 
-    for o in sorted(vlm_obs, key=lambda x: x.start_frame):
-        if o.claim_kind is not ClaimKind.MODEL_OBSERVATION:
-            continue
+    for o in sorted(eligible, key=lambda x: x.start_frame):
         try:
             claim = json.loads(o.claim) if o.claim else {}
         except (json.JSONDecodeError, TypeError):

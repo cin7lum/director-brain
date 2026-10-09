@@ -7,13 +7,16 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from director_brain.models.base import BaseRecord
+from director_brain.models.film_observation import TimebaseUnit
 
 
 class StoryNodeType(str, enum.Enum):
     """故事图节点类型。"""
 
     PERSON = "person"
+    PERSON_MENTION = "person_mention"
     EVENT = "event"
+    EVENT_MENTION = "event_mention"
     LOCATION = "location"
     SHOT = "shot"
     OBSERVATION = "observation"
@@ -65,7 +68,12 @@ class StoryEdge(BaseModel):
 class StoryGraph(BaseRecord):
     """从观测与实体构建的故事结构。"""
 
+    schema_version: str = "1.2"
     graph_id: str
     version: str
+    timeline_scope: str = "single_request_source_unbound"
+    project_asset_id: str | None = None
+    timebase: int | None = None
+    timebase_unit: TimebaseUnit | None = None
     nodes: list[StoryNode] = Field(default_factory=list)
     edges: list[StoryEdge] = Field(default_factory=list)

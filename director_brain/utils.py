@@ -16,6 +16,15 @@ def short_hash(text: str, length: int = 16) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:length]
 
 
+def project_story_link_comparison_id(project_id: str, idempotency_key: str) -> str:
+    """Return the stable project-scoped ID used for one pair comparison."""
+    key_digest = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()
+    comparison_digest = hashlib.sha256(
+        f"{project_id}|{key_digest}".encode("utf-8")
+    ).hexdigest()
+    return "link_cmp_" + comparison_digest
+
+
 def file_sha256(path: str) -> str:
     """流式（1MB 块）计算文件 SHA-256，返回完整 64 位十六进制哈希。
 

@@ -15,6 +15,16 @@
         ],
         "title": "ClaimKind",
         "type": "string"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
       }
     },
     "additionalProperties": false,
@@ -49,6 +59,43 @@
         "title": "Media Asset Id",
         "type": "string"
       },
+      "project_asset_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Project Asset Id"
+      },
+      "source_observation_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Observation Id"
+      },
+      "source_stream_index": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Stream Index"
+      },
       "media_hash": {
         "title": "Media Hash",
         "type": "string"
@@ -64,6 +111,10 @@
       "timebase": {
         "title": "Timebase",
         "type": "integer"
+      },
+      "timebase_unit": {
+        "$ref": "#/$defs/TimebaseUnit",
+        "default": "unknown"
       },
       "observation_type": {
         "title": "Observation Type",

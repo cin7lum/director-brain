@@ -12,8 +12,14 @@ from __future__ import annotations
 import json
 import time
 
+import pytest
+
 from director_brain.brief_compiler import compile_brief
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
 from director_brain.models.story_graph import StoryEdgeType
 from director_brain.relation_inference import infer_relations
 from director_brain.story_graph_builder import build_story_graph
@@ -48,6 +54,7 @@ def _make_tech_obs(
         start_frame=start_us,
         end_frame=end_us,
         timebase=1_000_000,
+        timebase_unit=TimebaseUnit.MICROSECONDS,
         observation_type="deterministic_technical",
         claim=claim,
         provider="deterministic_opencv",
@@ -107,6 +114,52 @@ def test_empty_observations_returns_empty():
 def test_less_than_two_shots_returns_empty():
     obs = [_make_tech_obs(0, 0, 2_000_000)]
     assert infer_relations(obs, _graph(obs)) == []
+
+
+def test_relation_inference_rejects_cross_asset_timelines():
+    first = _make_tech_obs(0, 0, 2_000_000).model_copy(update={
+        "project_asset_id": "asset-a",
+    })
+    second = _make_tech_obs(1, 0, 2_000_000).model_copy(update={
+        "project_asset_id": "asset-b",
+    })
+
+    with pytest.raises(ValueError, match="cross-asset inference"):
+        infer_relations([first, second], _graph([first]))
+
+
+def test_relation_inference_requires_matching_graph_and_microsecond_clock():
+    frame_obs = [
+        _make_tech_obs(0, 0, 50).model_copy(update={
+            "timebase": 25,
+            "timebase_unit": TimebaseUnit.FRAMES,
+        }),
+        _make_tech_obs(1, 50, 100).model_copy(update={
+            "timebase": 25,
+            "timebase_unit": TimebaseUnit.FRAMES,
+        }),
+    ]
+    with pytest.raises(ValueError, match="require microsecond observations"):
+        infer_relations(frame_obs, _graph(frame_obs))
+
+    source_obs = [
+        _make_tech_obs(0, 0, 2_000_000).model_copy(update={
+            "project_asset_id": "asset-a",
+        }),
+        _make_tech_obs(1, 2_000_000, 4_000_000).model_copy(update={
+            "project_asset_id": "asset-a",
+        }),
+    ]
+    other_asset_graph = _graph([
+        _make_tech_obs(0, 0, 2_000_000).model_copy(update={
+            "project_asset_id": "asset-b",
+        }),
+        _make_tech_obs(1, 2_000_000, 4_000_000).model_copy(update={
+            "project_asset_id": "asset-b",
+        }),
+    ])
+    with pytest.raises(ValueError, match="do not match graph asset scope"):
+        infer_relations(source_obs, other_asset_graph)
 
 
 def test_reaction_edge_on_small_blur_diff():

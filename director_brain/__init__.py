@@ -16,7 +16,7 @@
 内部模块（带下划线前缀的模块与成员）不属于公共契约，重构可随时改动；
 外部代码一律从本入口或子模块公共名导入。
 """
-from director_brain.brief_compiler import compile_brief
+from director_brain.brief_compiler import compile_brief, compile_project_brief
 from director_brain.plan_repair import RepairOutcome, repair_plan
 from director_brain.plan_validator import validate_plan
 from director_brain.revision_engine import propose_revision
@@ -28,7 +28,12 @@ __all__ = [
     "__version__",
     # 契约 facade
     "compile_brief",
+    "compile_project_brief",
     "generate_plan",
+    "generate_project_plan",
+    "materialize_project_plan_from_candidate",
+    "generate_project_shadow_plan",
+    "generate_project_shadow_strategy_options",
     "propose_revision",
     "validate_plan",
     "repair_plan",
@@ -42,9 +47,76 @@ __all__ = [
 def generate_plan(brief, graph, observations, strategy: str = "heuristic"):
     """从 Brief + 故事图 + 观测产出 ``(edl, plan)``。
 
-    strategy: ``heuristic``（确定性，默认）；``llm`` 为未实现骨架，
-    调用会抛 NotImplementedError（见 director_reasoner）。
+    strategy: ``heuristic``（确定性，默认）；``llm`` 受
+    ``director_strategy_reasoning`` 准入门控。该通路仍为 SHADOW，正式调用
+    fail-closed；仅 ``generate_shadow_plan`` 可产生不可确认的本地比较产物。
     """
     from director_brain.director_reasoner import get_director_reasoner
 
     return get_director_reasoner(strategy).generate_plan(brief, graph, observations)
+
+
+def generate_project_plan(
+    brief, manifest, context, project_graph, observations,
+    strategy: str = "heuristic", **kwargs,
+):
+    """Generate a draft project plan from exact, source-local asset evidence."""
+    from director_brain.director_reasoner import get_director_reasoner
+
+    reasoner = get_director_reasoner(strategy)
+    method = getattr(reasoner, "generate_project_plan", None)
+    if not callable(method):
+        raise NotImplementedError(
+            f"reasoner strategy {strategy!r} does not implement project planning")
+    return method(brief, manifest, context, project_graph, observations, **kwargs)
+
+
+def materialize_project_plan_from_candidate(
+    brief, manifest, context, project_graph, candidate, *, strategy: str = "llm",
+    **kwargs,
+):
+    """Materialize an exact saved project strategy candidate without a provider call."""
+    from director_brain.director_reasoner import get_director_reasoner
+
+    reasoner = get_director_reasoner(strategy)
+    method = getattr(reasoner, "materialize_project_plan_from_candidate", None)
+    if not callable(method):
+        raise NotImplementedError(
+            f"reasoner strategy {strategy!r} cannot materialize a saved candidate")
+    return method(
+        brief, manifest, context, project_graph, candidate, **kwargs)
+
+
+def generate_project_shadow_plan(
+    brief, manifest, context, project_graph, observations,
+    *, provider: str = "ollama", config: dict | None = None, **kwargs,
+):
+    """Generate a local, multi-asset comparison Plan/EDL that cannot be confirmed.
+
+    This entry remains SHADOW regardless of provider configuration. The current
+    implementation accepts only loopback Ollama and never changes the pathway
+    admission state or persists/dispatches the result.
+    """
+    from director_brain.director_reasoner import LLMDirectorReasoner
+
+    reasoner = LLMDirectorReasoner(provider=provider, config=config)
+    return reasoner.generate_project_shadow_plan(
+        brief, manifest, context, project_graph, observations, **kwargs)
+
+
+def generate_project_shadow_strategy_options(
+    brief, manifest, context, project_graph, observations,
+    *, provider: str = "ollama", config: dict | None = None, **kwargs,
+):
+    """Generate an unranked local comparison of project strategy hypotheses.
+
+    Every returned strategy includes its own Plan/EDL and exact evidence trace.
+    This function returns an in-memory SHADOW value. The project REST endpoint
+    persists an immutable local wrapper for restart readback; neither path can
+    confirm or dispatch the comparison.
+    """
+    from director_brain.director_reasoner import LLMDirectorReasoner
+
+    reasoner = LLMDirectorReasoner(provider=provider, config=config)
+    return reasoner.generate_project_shadow_strategy_options(
+        brief, manifest, context, project_graph, observations, **kwargs)

@@ -11,6 +11,8 @@
 """
 from __future__ import annotations
 
+from fractions import Fraction
+
 import pytest
 from pydantic import ValidationError
 
@@ -24,7 +26,12 @@ from director_brain.models.film_entity import (
     RelationType,
     StoryRelation,
 )
-from director_brain.models.film_observation import ClaimKind, FilmObservation
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FilmObservation,
+    TimebaseUnit,
+)
+from director_brain.models.project import ProjectAssetTimeMap
 from director_brain.models.revision import RevisionProposal
 from director_brain.models.story_graph import (
     StoryEdge,
@@ -240,6 +247,98 @@ def test_edititem_has_required_clip_fields():
 def test_edititem_missing_required_raises():
     with pytest.raises(ValidationError):
         EditItem(in_frame=0, out_frame=25, timebase=25)
+
+
+def test_project_asset_time_map_requires_all_declared_streams_for_complete():
+    video = {
+        "stream_index": 0,
+        "codec_type": "video",
+        "time_base": "1/90000",
+        "start_pts": 9000,
+        "start_time_seconds": "0.100000",
+        "source_start_offset_numerator": 0,
+        "source_start_offset_denominator": 1,
+        "source_start_offset_state": "mapped_from_pts",
+    }
+    audio = {
+        "stream_index": 1,
+        "codec_type": "audio",
+        "time_base": "1/48000",
+        "start_pts": 16800,
+        "start_time_seconds": "0.350000",
+        "sample_rate": 48000,
+        "source_start_offset_numerator": 1,
+        "source_start_offset_denominator": 4,
+        "source_start_offset_state": "mapped_from_pts",
+    }
+    mapping = ProjectAssetTimeMap.model_validate({
+        "container_start_time_seconds": "0.100000",
+        "video_stream": video,
+        "audio_streams": [audio],
+        "mapping_state": "complete",
+    })
+    assert mapping.audio_streams[0].source_start_offset_numerator == 1
+    assert mapping.first_audio_stream_clock_from_video() == (
+        1, Fraction(1, 4))
+
+    audio["source_start_offset_numerator"] = None
+    audio["source_start_offset_denominator"] = None
+    audio["source_start_offset_state"] = "unavailable"
+    with pytest.raises(ValidationError, match="mapping_state must be partial"):
+        ProjectAssetTimeMap.model_validate({
+            "container_start_time_seconds": "0.100000",
+            "video_stream": video,
+            "audio_streams": [audio],
+            "mapping_state": "complete",
+        })
+
+
+def test_project_audio_clock_requires_video_and_audio_offsets():
+    mapping = ProjectAssetTimeMap.model_validate({
+        "container_start_time_seconds": "0",
+        "video_stream": {
+            "stream_index": 0,
+            "codec_type": "video",
+            "source_start_offset_state": "unavailable",
+        },
+        "audio_streams": [{
+            "stream_index": 1,
+            "codec_type": "audio",
+            "source_start_offset_state": "unavailable",
+        }],
+        "mapping_state": "unavailable",
+    })
+    with pytest.raises(ValueError, match="audio-to-video source clock mapping"):
+        mapping.first_audio_stream_clock_from_video()
+
+
+def test_project_bound_edit_requires_explicit_observation_and_source_clock():
+    with pytest.raises(ValidationError, match="project-bound edits require"):
+        EditItem(
+            source_asset_id="shot-1",
+            source_media_hash="hash-1",
+            in_frame=100,
+            out_frame=900,
+            timebase=1_000_000,
+            timebase_unit=TimebaseUnit.MICROSECONDS,
+            project_asset_id="asset-1",
+        )
+
+    item = EditItem(
+        source_asset_id="shot-1",
+        source_media_hash="hash-1",
+        in_frame=200,
+        out_frame=800,
+        timebase=1_000_000,
+        timebase_unit=TimebaseUnit.MICROSECONDS,
+        project_asset_id="asset-1",
+        source_observation_refs=["obs-1"],
+        source_observation_start=100,
+        source_observation_end=900,
+        source_timebase=1_000_000,
+        source_timebase_unit=TimebaseUnit.MICROSECONDS,
+    )
+    assert item.project_asset_id == "asset-1"
 
 
 # ---------------------------------------------------------------------------

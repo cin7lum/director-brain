@@ -145,6 +145,8 @@ def _print_shadow_summary(report: ShadowReport) -> None:
         )
         for token in report.uncovered_negatives:
             print(f"          - 未覆盖: {token}")
+        for violation in report.post_validation_violations:
+            print(f"        语义冲突校验: {violation}")
         if report.status_divergence:
             print(f"        状态分歧: {report.status_divergence}")
     elif report.status == "failed":

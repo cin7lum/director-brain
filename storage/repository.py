@@ -23,6 +23,7 @@ class DecisionLedgerEntry:
     action: str
     timestamp: int
     detail: dict[str, Any] | None = None
+    project_id: str | None = None
 
 
 class BrainRepository(ABC):

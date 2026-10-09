@@ -88,21 +88,30 @@ def compare_plans(
     评分卡字段：
     - ``duration_us``：sum(out_frame - in_frame)
     - ``shot_count``：len(ordered_edits)
-    - ``avg_blur``：按 edit 的 source_asset_id 匹配 deterministic_technical
-      观测，取 claim 中的 blur_score 求平均（无匹配观测的 edit 跳过；全部
-      无匹配时为 0.0）
-    - ``narrative_coverage``：四幕各有多少镜头（按 edit.in_frame 落在哪个
-      幕时间区间统计）
+    - ``avg_blur``：按 (project_asset_id, media_hash, source_asset_id) 精确
+      匹配 deterministic_technical 观测，取 claim 中的 blur_score 求平均；
+      无匹配观测的 edit 跳过，全部无匹配时为 0.0。
+    - ``narrative_coverage``：单素材计划按其源时间线位置统计；项目计划按
+      edit.act 统计，绝不把多个素材的源时钟拼成一个项目时钟。
     - ``quality_distribution``：含 ``exposure_ok_ratio``（曝光通过的 edit 数
       / 总 edit 数）
     """
     tech_obs = [
         o for o in observations if o.observation_type == "deterministic_technical"
     ]
-    claim_by_asset: dict[str, dict] = {}
+    claim_by_identity: dict[tuple[str | None, str, str], dict] = {}
     for o in tech_obs:
-        # 同一 asset 若有多条观测，保留第一条（与单镜头单观测的约定一致）
-        claim_by_asset.setdefault(o.media_asset_id, _parse_claim(o.claim))
+        identity = (
+            o.project_asset_id,
+            o.media_hash.lower(),
+            o.media_asset_id,
+        )
+        if identity in claim_by_identity:
+            raise ValueError(
+                "strategy comparison has ambiguous technical observations for "
+                f"source identity {identity}"
+            )
+        claim_by_identity[identity] = _parse_claim(o.claim)
 
     total_us = max((o.end_frame for o in tech_obs), default=0)
 
@@ -116,17 +125,27 @@ def compare_plans(
         blur_n = 0
         exposure_ok_count = 0
         coverage: dict[str, int] = {act: 0 for act in _AC_ORDER}
+        is_project_plan = _plan.project_manifest_id is not None
         for e in edits:
-            claim = claim_by_asset.get(e.source_asset_id, {})
+            identity = (
+                e.project_asset_id,
+                e.source_media_hash.lower(),
+                e.source_asset_id,
+            )
+            claim = claim_by_identity.get(identity, {})
             blur = claim.get("blur_score")
             if isinstance(blur, (int, float)):
                 blur_sum += float(blur)
                 blur_n += 1
             if claim.get("exposure_ok") is True:
                 exposure_ok_count += 1
-            act = _act_for_time(e.in_frame, total_us)
+            act = (
+                e.act if is_project_plan
+                else _act_for_time(e.in_frame, total_us)
+            )
             if act is not None:
-                coverage[act] += 1
+                if act in coverage:
+                    coverage[act] += 1
 
         avg_blur = blur_sum / blur_n if blur_n else 0.0
         exposure_ratio = (exposure_ok_count / shot_count) if shot_count else 0.0
@@ -136,6 +155,10 @@ def compare_plans(
             "shot_count": shot_count,
             "avg_blur": avg_blur,
             "narrative_coverage": coverage,
+            "narrative_coverage_basis": (
+                "project_plan_act_labels"
+                if is_project_plan else "single_source_timeline_position"
+            ),
             "quality_distribution": {
                 "exposure_ok_ratio": exposure_ratio,
                 "exposure_ok_count": exposure_ok_count,

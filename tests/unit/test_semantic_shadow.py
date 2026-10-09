@@ -163,6 +163,54 @@ def test_status_divergence_both_directions():
     assert report.status_divergence == "chain_a_rejected_but_chain_b_ready"
 
 
+def test_shadow_uses_service_semantic_conflict_validation():
+    adapter = FakeAdapter([_ok(_decision(
+        desired_relation_or_change=["audio_precedes_picture"],
+        must_avoid=["audio_lead"],
+    ))])
+
+    report = ss.run_shadow_semantic(
+        "让声音先于画面进入，但不要做声音提前",
+        chain_a_constraints=_CHAIN_A,
+        chain_a_valid=True,
+        adapter_factory=_factory(adapter),
+    )
+
+    assert report.status == "completed"
+    assert report.chain_b["desired_relation_or_change"] == [
+        "audio_precedes_picture"]
+    assert report.chain_b["must_avoid"] == ["audio_lead"]
+    assert report.chain_b["status"] == "CONFLICTING_CONSTRAINTS"
+    assert report.status_divergence == (
+        "chain_a_proceeded_but_chain_b_status=CONFLICTING_CONSTRAINTS")
+    assert report.post_validation_violations
+    assert "Semantic contradiction" in report.post_validation_violations[0]
+    assert report.to_dict()["post_validation_violations"] == (
+        report.post_validation_violations)
+    assert adapter.calls == 1
+
+
+def test_roughcut_summary_discloses_semantic_validation_violations(capsys):
+    from scripts.roughcut import _print_shadow_summary
+
+    report = ss.ShadowReport(
+        status="completed",
+        pathway_status="SHADOW",
+        model="fake-model",
+        chain_b={"status": "CONFLICTING_CONSTRAINTS"},
+        post_validation_violations=[
+            "Semantic contradiction: desired relation conflicts with must_avoid terms."
+        ],
+    )
+
+    _print_shadow_summary(report)
+
+    output = capsys.readouterr().out
+    assert "链 B 状态: CONFLICTING_CONSTRAINTS" in output
+    assert "语义冲突校验" in output
+    assert "Semantic contradiction" in output
+
+
 def test_empty_negatives_no_crash():
     adapter = FakeAdapter([_ok(_decision(must_avoid=[], must_preserve=[]))])
     report = ss.run_shadow_semantic(
@@ -183,7 +231,9 @@ def test_adapter_failure_is_fail_soft():
         "测试", adapter_factory=_factory(adapter),
         max_attempts=2, backoff_s=(0.0, 0.0))
     assert report.status == "failed"
-    assert "boom" in report.reason
+    assert report.failure_code == "provider_failure"
+    assert "boom" not in report.reason
+    assert "boom" not in str(report.to_dict())
     assert report.attempts == 2
 
 
@@ -200,7 +250,9 @@ def test_adapter_unexpected_exception_never_blocks_chain():
         "测试", adapter_factory=_factory(ExplodingAdapter()),
         max_attempts=2, backoff_s=(0.0, 0.0))
     assert report.status == "failed"
-    assert "unexpected internal bug" in report.reason
+    assert report.failure_code == "adapter_exception"
+    assert "unexpected internal bug" not in report.reason
+    assert "unexpected internal bug" not in str(report.to_dict())
     assert report.attempts == 2
 
 
@@ -311,7 +363,10 @@ def test_shadow_routes_through_semantic_reasoner(monkeypatch):
 
     fake_reasoner = MagicMock(spec=SemanticDirectorReasoner)
 
-    def fake_reason(self, user_direction, context=None, decision_id=None):
+    def fake_reason(
+        self, user_direction, context=None, decision_id=None,
+        available_source_evidence_refs=None,
+    ):
         called["reasoner"] += 1
         return SemanticReasonerResult(
             decision=decision, model="ark-test",

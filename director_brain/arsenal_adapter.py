@@ -19,6 +19,8 @@ from director_brain.models.parameterization import ParameterizationDecision
 def to_arsenal_parameterization(
     semantic: DirectorDecision,
     parameterization: ParameterizationDecision | None,
+    *,
+    exact_parameterization_source_verified: bool = False,
 ) -> dict[str, Any] | None:
     """Convert 02 decisions to 03 DirectorDecision.parameterization dict.
 
@@ -29,6 +31,8 @@ def to_arsenal_parameterization(
     - Semantic must be READY (intent understood clearly)
     - Parameterization must be READY (exact execution parameter determined)
     - Neither condition alone is sufficient.
+    - Without a ParameterizationDecision, the exact value and unit must have
+      been source-verified by SemanticDirectorReasoner; no default unit is inferred.
     """
     # Semantic must be READY
     if semantic.status is None or semantic.status.value != "READY":
@@ -36,10 +40,16 @@ def to_arsenal_parameterization(
 
     # If no parameterization decision, pass through semantic parameterization
     if parameterization is None:
-        if semantic.parameterization and semantic.parameterization.exact_value is not None:
+        if (
+            semantic.parameterization is not None
+            and semantic.parameterization.exact_value is not None
+            and semantic.parameterization.unit is not None
+            and semantic.parameterization.certainty == "explicit"
+            and exact_parameterization_source_verified
+        ):
             return {
                 "exact_value": semantic.parameterization.exact_value,
-                "unit": semantic.parameterization.unit or "frames",
+                "unit": semantic.parameterization.unit,
                 "magnitude": semantic.parameterization.magnitude,
                 "certainty": semantic.parameterization.certainty,
             }
@@ -70,7 +80,9 @@ def from_service_result(
     """Convert a SemanticDirectorService result to 03 parameterization.
 
     Uses the canonical execution_readiness from the service — does NOT
-    duplicate status logic. Only produces payload when execution_readiness == "READY".
+    duplicate status logic. Only produces payload when execution_readiness == "READY";
+    without parameterizer context, the service requires a source-verified exact
+    numeric/unit quote from the original director request.
 
     Args:
         service_result: DirectorRequestResult from SemanticDirectorService.process_direction()
@@ -87,12 +99,21 @@ def from_service_result(
     return to_arsenal_parameterization(
         service_result.semantic_decision,
         service_result.parameterization_decision,
+        exact_parameterization_source_verified=getattr(
+            service_result, "exact_parameterization_source_verified", False
+        ),
     )
 
 
 def is_execution_ready(
     semantic: DirectorDecision,
     parameterization: ParameterizationDecision | None,
+    *,
+    exact_parameterization_source_verified: bool = False,
 ) -> bool:
     """Check if the combined decisions are ready for 03 execution."""
-    return to_arsenal_parameterization(semantic, parameterization) is not None
+    return to_arsenal_parameterization(
+        semantic,
+        parameterization,
+        exact_parameterization_source_verified=exact_parameterization_source_verified,
+    ) is not None

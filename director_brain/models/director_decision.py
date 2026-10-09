@@ -121,6 +121,14 @@ class DirectorDecision(BaseModel):
         description="Excerpts from user input that support each part of the decision.",
     )
 
+    source_evidence_refs: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Exact source evidence IDs from the caller-provided allowlist. "
+            "These identify project/asset/observation evidence; never invent IDs."
+        ),
+    )
+
     status: DecisionStatus = Field(
         description="Readiness status. READY only means semantic info is sufficient, not that execution is guaranteed.",
     )

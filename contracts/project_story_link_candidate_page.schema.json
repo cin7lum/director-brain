@@ -1,0 +1,992 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "基于当前项目 StoryGraph 的全量跨素材候选页；可选本地 shadow 排序但不推断关系",
+  "schema": {
+    "$defs": {
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryLinkCandidate": {
+        "additionalProperties": false,
+        "description": "One exact eligible pair; it is not a match hypothesis or inferred link.",
+        "properties": {
+          "candidate_id": {
+            "minLength": 1,
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "relation_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity"
+            ],
+            "title": "Relation Kind",
+            "type": "string"
+          },
+          "left_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "right_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "left_person_description": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Left Person Description"
+          },
+          "right_person_description": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Right Person Description"
+          },
+          "left_event_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStoryLinkEventEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "right_event_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStoryLinkEventEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "comparison_request": {
+            "$ref": "#/$defs/ProjectStoryLinkComparisonRequestData"
+          },
+          "candidate_basis": {
+            "const": "exhaustive_cross_asset_pair",
+            "default": "exhaustive_cross_asset_pair",
+            "title": "Candidate Basis",
+            "type": "string"
+          },
+          "ranking_state": {
+            "default": "unranked",
+            "enum": [
+              "unranked",
+              "shadow_ranked_unadmitted"
+            ],
+            "title": "Ranking State",
+            "type": "string"
+          },
+          "ranking_position": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ranking Position"
+          },
+          "ranking_score": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": -1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Raw, uncalibrated text-embedding cosine similarity. It is not an identity probability, confidence, or match decision.",
+            "title": "Ranking Score"
+          },
+          "automatic_inference_state": {
+            "const": "not_attempted",
+            "default": "not_attempted",
+            "title": "Automatic Inference State",
+            "type": "string"
+          },
+          "comparison_progress": {
+            "$ref": "#/$defs/ProjectStoryLinkCandidateComparisonProgress"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "relation_kind",
+          "left_anchor",
+          "right_anchor",
+          "comparison_request"
+        ],
+        "title": "ProjectStoryLinkCandidate",
+        "type": "object"
+      },
+      "ProjectStoryLinkCandidateAssetCoverage": {
+        "additionalProperties": false,
+        "description": "Coverage disclosure; rights remain caller-declared, not independently verified.",
+        "properties": {
+          "asset_id": {
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "order": {
+            "minimum": 0,
+            "title": "Order",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "eligible_under_manifest_declaration",
+              "no_eligible_mentions",
+              "not_locally_authorized",
+              "source_identity_unverified",
+              "analysis_incomplete"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "rights_state": {
+            "enum": [
+              "unverified",
+              "local_processing_allowed",
+              "third_party_processing_allowed"
+            ],
+            "title": "Rights State",
+            "type": "string"
+          },
+          "rights_evidence_state": {
+            "const": "declared_unverified",
+            "default": "declared_unverified",
+            "title": "Rights Evidence State",
+            "type": "string"
+          },
+          "source_identity_state": {
+            "enum": [
+              "locally_verified",
+              "declared_unverified"
+            ],
+            "title": "Source Identity State",
+            "type": "string"
+          },
+          "eligible_mention_count": {
+            "minimum": 0,
+            "title": "Eligible Mention Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_id",
+          "order",
+          "state",
+          "rights_state",
+          "source_identity_state",
+          "eligible_mention_count"
+        ],
+        "title": "ProjectStoryLinkCandidateAssetCoverage",
+        "type": "object"
+      },
+      "ProjectStoryLinkCandidateCallerDisposition": {
+        "additionalProperties": false,
+        "description": "Latest caller-entered disposition, including whether it is still current.",
+        "properties": {
+          "disposition": {
+            "$ref": "#/$defs/ProjectStoryLinkComparisonDisposition"
+          },
+          "review_id": {
+            "minLength": 1,
+            "title": "Review Id",
+            "type": "string"
+          },
+          "review_revision": {
+            "minimum": 1,
+            "title": "Review Revision",
+            "type": "integer"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "disposition",
+          "review_id",
+          "review_revision",
+          "is_current"
+        ],
+        "title": "ProjectStoryLinkCandidateCallerDisposition",
+        "type": "object"
+      },
+      "ProjectStoryLinkCandidateComparisonAttempt": {
+        "additionalProperties": false,
+        "description": "One immutable local comparison attempt for the candidate.",
+        "properties": {
+          "attempt_number": {
+            "minimum": 1,
+            "title": "Attempt Number",
+            "type": "integer"
+          },
+          "comparison_id": {
+            "minLength": 1,
+            "title": "Comparison Id",
+            "type": "string"
+          },
+          "run_state": {
+            "enum": [
+              "idempotency_conflict",
+              "completed_unreviewed",
+              "failed"
+            ],
+            "title": "Run State",
+            "type": "string"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "runtime_binding_failed",
+                  "sampling_failed",
+                  "provider_unavailable",
+                  "provider_rate_limited",
+                  "provider_request_rejected",
+                  "provider_invalid",
+                  "source_changed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Code"
+          }
+        },
+        "required": [
+          "attempt_number",
+          "comparison_id",
+          "run_state"
+        ],
+        "title": "ProjectStoryLinkCandidateComparisonAttempt",
+        "type": "object"
+      },
+      "ProjectStoryLinkCandidateComparisonProgress": {
+        "additionalProperties": false,
+        "description": "Persisted comparison attempts and the stable next retry, if needed.",
+        "properties": {
+          "comparison_run_state": {
+            "default": "not_started",
+            "enum": [
+              "not_started",
+              "idempotency_conflict",
+              "failed",
+              "completed_unreviewed"
+            ],
+            "title": "Comparison Run State",
+            "type": "string"
+          },
+          "comparison_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Comparison Id"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryLinkCandidateComparisonAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "retry_comparison_request": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStoryLinkComparisonRequestData"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "latest_caller_disposition": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ProjectStoryLinkCandidateCallerDisposition"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "ProjectStoryLinkCandidateComparisonProgress",
+        "type": "object"
+      },
+      "ProjectStoryLinkComparisonDisposition": {
+        "additionalProperties": false,
+        "description": "Caller-asserted disposition of one immutable model comparison.",
+        "properties": {
+          "comparison_id": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Comparison Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accepted_as_caller_asserted",
+              "rejected",
+              "needs_more_evidence"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Link Id"
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comparison_id",
+          "decision"
+        ],
+        "title": "ProjectStoryLinkComparisonDisposition",
+        "type": "object"
+      },
+      "ProjectStoryLinkComparisonRequestData": {
+        "additionalProperties": false,
+        "description": "Exact request body for comparing one discovered candidate pair.",
+        "properties": {
+          "manifest_revision": {
+            "minimum": 1,
+            "title": "Manifest Revision",
+            "type": "integer"
+          },
+          "story_graph_id": {
+            "minLength": 1,
+            "title": "Story Graph Id",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Candidate Id"
+          },
+          "attempt_number": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attempt Number"
+          },
+          "source_mention_review_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Mention Review Id"
+          },
+          "source_mention_review_revision": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Source Mention Review Revision",
+            "type": "integer"
+          },
+          "relation_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity"
+            ],
+            "title": "Relation Kind",
+            "type": "string"
+          },
+          "left_observation_id": {
+            "minLength": 1,
+            "title": "Left Observation Id",
+            "type": "string"
+          },
+          "right_observation_id": {
+            "minLength": 1,
+            "title": "Right Observation Id",
+            "type": "string"
+          },
+          "left_story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Left Story Graph Node Id"
+          },
+          "right_story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Right Story Graph Node Id"
+          },
+          "left_person_description": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Left Person Description"
+          },
+          "right_person_description": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Right Person Description"
+          }
+        },
+        "required": [
+          "manifest_revision",
+          "story_graph_id",
+          "idempotency_key",
+          "relation_kind",
+          "left_observation_id",
+          "right_observation_id"
+        ],
+        "title": "ProjectStoryLinkComparisonRequestData",
+        "type": "object"
+      },
+      "ProjectStoryLinkEventEvidence": {
+        "additionalProperties": false,
+        "description": "Exact source-local semantic fields identifying one event mention.",
+        "properties": {
+          "action_type": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Action Type"
+          },
+          "scene_description": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Scene Description"
+          },
+          "temporal_notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Temporal Notes"
+          }
+        },
+        "title": "ProjectStoryLinkEventEvidence",
+        "type": "object"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Stable page over a graph-revision-bound, unranked caller scope.",
+    "properties": {
+      "candidate_set_id": {
+        "minLength": 1,
+        "title": "Candidate Set Id",
+        "type": "string"
+      },
+      "candidate_algorithm_version": {
+        "const": "exhaustive_cross_asset_pairs_v1",
+        "default": "exhaustive_cross_asset_pairs_v1",
+        "title": "Candidate Algorithm Version",
+        "type": "string"
+      },
+      "project_id": {
+        "minLength": 1,
+        "title": "Project Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "minLength": 1,
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "source_hash_validation_state": {
+        "const": "not_revalidated_by_read",
+        "default": "not_revalidated_by_read",
+        "description": "This read uses the persisted manifest and evidence without hashing current source files. Any operation that consumes source media or creates a review or Plan must revalidate the registered source hashes.",
+        "title": "Source Hash Validation State",
+        "type": "string"
+      },
+      "context_id": {
+        "minLength": 1,
+        "title": "Context Id",
+        "type": "string"
+      },
+      "analysis_fingerprint": {
+        "minLength": 1,
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "story_graph_id": {
+        "minLength": 1,
+        "title": "Story Graph Id",
+        "type": "string"
+      },
+      "source_mention_review_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Mention Review Id"
+      },
+      "source_mention_review_revision": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Source Mention Review Revision",
+        "type": "integer"
+      },
+      "source_mention_review_state": {
+        "default": "absent",
+        "description": "Whether a caller-asserted source mention review snapshot is bound. caller_asserted does not verify reviewer identity or prove that the source media was viewed.",
+        "enum": [
+          "absent",
+          "caller_asserted"
+        ],
+        "title": "Source Mention Review State",
+        "type": "string"
+      },
+      "relation_kind": {
+        "enum": [
+          "person_identity",
+          "event_identity"
+        ],
+        "title": "Relation Kind",
+        "type": "string"
+      },
+      "selected_anchor_story_graph_node_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional caller-selected current mention. When present, candidates are complete for this mention across eligible assets, unless a counterpart asset is also selected; no ranking or identity inference is performed.",
+        "title": "Selected Anchor Story Graph Node Id"
+      },
+      "selected_counterpart_project_asset_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional project asset paired with the selected mention. This narrows the complete unranked page to that asset only; it does not infer or score identity. Requires a selected anchor.",
+        "title": "Selected Counterpart Project Asset Id"
+      },
+      "selected_project_asset_pair": {
+        "anyOf": [
+          {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Optional pair of caller-selected project assets. When present, the page contains every eligible cross-asset pair within those assets, in manifest order, without ranking or identity inference. It cannot be combined with a selected mention anchor or counterpart asset.",
+        "title": "Selected Project Asset Pair"
+      },
+      "asset_coverage": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryLinkCandidateAssetCoverage"
+        },
+        "title": "Asset Coverage",
+        "type": "array"
+      },
+      "eligible_asset_count": {
+        "minimum": 0,
+        "title": "Eligible Asset Count",
+        "type": "integer"
+      },
+      "eligible_mention_count": {
+        "minimum": 0,
+        "title": "Eligible Mention Count",
+        "type": "integer"
+      },
+      "candidates": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryLinkCandidate"
+        },
+        "title": "Candidates",
+        "type": "array"
+      },
+      "limit": {
+        "maximum": 200,
+        "minimum": 1,
+        "title": "Limit",
+        "type": "integer"
+      },
+      "offset": {
+        "minimum": 0,
+        "title": "Offset",
+        "type": "integer"
+      },
+      "total": {
+        "minimum": 0,
+        "title": "Total",
+        "type": "integer"
+      },
+      "has_more": {
+        "title": "Has More",
+        "type": "boolean"
+      },
+      "selection_semantics": {
+        "default": "all_eligible_cross_asset_pairs_in_manifest_order",
+        "enum": [
+          "all_eligible_cross_asset_pairs_in_manifest_order",
+          "all_eligible_cross_asset_pairs_for_selected_mention_in_manifest_order",
+          "all_eligible_pairs_for_anchor_and_counterpart_asset_in_manifest_order",
+          "all_eligible_cross_asset_pairs_for_selected_asset_pair_in_manifest_order",
+          "all_eligible_cross_asset_pairs_for_selected_mention_ranked_by_shadow_similarity",
+          "all_eligible_pairs_for_anchor_and_counterpart_asset_ranked_by_shadow_similarity"
+        ],
+        "title": "Selection Semantics",
+        "type": "string"
+      },
+      "ranking_state": {
+        "default": "unranked",
+        "enum": [
+          "unranked",
+          "shadow_ranked_unadmitted"
+        ],
+        "title": "Ranking State",
+        "type": "string"
+      },
+      "ranking_profile_id": {
+        "anyOf": [
+          {
+            "const": "bge_m3_shadow_v1",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Ranking Profile Id"
+      },
+      "ranking_model": {
+        "anyOf": [
+          {
+            "const": "bge-m3:latest",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Ranking Model"
+      },
+      "ranking_model_digest": {
+        "anyOf": [
+          {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Ranking Model Digest"
+      },
+      "ranking_metric": {
+        "anyOf": [
+          {
+            "const": "cosine_similarity",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Ranking Metric"
+      },
+      "ranking_score_semantics": {
+        "anyOf": [
+          {
+            "const": "uncalibrated_similarity_only",
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Ranking Score Semantics"
+      },
+      "automatic_inference_state": {
+        "const": "not_attempted",
+        "default": "not_attempted",
+        "title": "Automatic Inference State",
+        "type": "string"
+      },
+      "relation_inference_state": {
+        "const": "EXPERIMENTAL",
+        "default": "EXPERIMENTAL",
+        "title": "Relation Inference State",
+        "type": "string"
+      },
+      "quality_acceptance": {
+        "const": "not_proven",
+        "default": "not_proven",
+        "title": "Quality Acceptance",
+        "type": "string"
+      }
+    },
+    "required": [
+      "candidate_set_id",
+      "project_id",
+      "project_manifest_id",
+      "project_revision",
+      "context_id",
+      "analysis_fingerprint",
+      "story_graph_id",
+      "relation_kind",
+      "asset_coverage",
+      "eligible_asset_count",
+      "eligible_mention_count",
+      "candidates",
+      "limit",
+      "offset",
+      "total",
+      "has_more"
+    ],
+    "title": "ProjectStoryLinkCandidatePage",
+    "type": "object"
+  }
+}

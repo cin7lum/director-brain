@@ -10,6 +10,8 @@ from pydantic import Field
 
 from director_brain.models.base import BaseRecord
 
+FILM_OBSERVATION_SCHEMA_VERSION = "1.0"
+
 
 class ClaimKind(str, enum.Enum):
     """观测断言的置信级别（共 6 级）。"""
@@ -22,15 +24,27 @@ class ClaimKind(str, enum.Enum):
     NOT_DETERMINED = "not_determined"
 
 
+class TimebaseUnit(str, enum.Enum):
+    UNKNOWN = "unknown"
+    FRAMES = "frames"
+    MICROSECONDS = "microseconds"
+    SECONDS = "seconds"
+
+
 class FilmObservation(BaseRecord):
     """对一段媒体素材的单次可溯源观测。"""
 
+    schema_version: str = FILM_OBSERVATION_SCHEMA_VERSION
     observation_id: str
     media_asset_id: str
+    project_asset_id: str | None = None
+    source_observation_id: str | None = None
+    source_stream_index: int | None = Field(default=None, ge=0)
     media_hash: str
     start_frame: int
     end_frame: int
     timebase: int
+    timebase_unit: TimebaseUnit = TimebaseUnit.UNKNOWN
     observation_type: str
     claim: str
     provider: str

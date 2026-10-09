@@ -15,6 +15,14 @@ class DirectorBrief(BaseRecord):
     brief_id: str
     version: str
     source_text: str
+    creator_direction: str = Field(
+        default="",
+        max_length=2000,
+        description=(
+            "Sanitized, bounded creator-authored direction; distinct from "
+            "asset-derived transcript text in source_text."
+        ),
+    )
     language: str
     intent: str
     audience: str

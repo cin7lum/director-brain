@@ -11,19 +11,36 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import Callable
 
 from director_brain.utils import file_sha256, short_hash
-from director_brain.analysis_cache import AnalysisCache
+from director_brain.analysis_cache import AnalysisCache, AnalysisCacheStore
 from director_brain.config import load_settings
-from director_brain.models.film_observation import ClaimKind, FilmObservation
-from observation_service.keyframe import extract_keyframes
-from observation_service.ollama_vlm_adapter import OllamaVLMAdapter
+from observation_service.analysis_control import AnalysisCancelledError
+from director_brain.models.film_observation import (
+    ClaimKind,
+    FILM_OBSERVATION_SCHEMA_VERSION,
+    FilmObservation,
+    TimebaseUnit,
+)
+from observation_service.keyframe import (
+    MULTI_FRAME_SAMPLING_PROFILE,
+    extract_keyframes,
+)
+from observation_service.ollama_vlm_adapter import (
+    LocalVLMRuntimeBindingError,
+    OllamaVLMAdapter,
+    SEMANTIC_GENERATION_PROFILE,
+    SEMANTIC_OBSERVATION_MAPPER_VERSION,
+    SEMANTIC_PROMPT_SHA256,
+    SEMANTIC_PROMPT_VERSION,
+)
 from observation_service.vlm_adapter import VLMAdapter
 
 _PROVIDER = "ollama_qwen3_vl"
 # v4：D2 人物外观字段（people）——实体聚类（entity_resolver）消费；
 # 缓存键随版本失效
-_PROMPT_VERSION = "vlm_prompt_v4_people"
+_PROMPT_VERSION = SEMANTIC_PROMPT_VERSION
 _TIMEBASE_US = 1_000_000
 
 
@@ -56,9 +73,15 @@ def _claim_payload(vlm_result: dict) -> dict:
 def _resolve_model_version(adapter) -> str:
     """从适配器获取 model_version（ollama 模型名补 :latest 后缀）。"""
     model = getattr(adapter, "model", "qwen3-vl")
-    if ":" in model:
-        return model
-    return f"{model}:latest"
+    if ":" not in model:
+        model = f"{model}:latest"
+    digest = getattr(adapter, "model_digest", None)
+    runtime_version = getattr(adapter, "runtime_version", None)
+    if digest:
+        model += f"@sha256:{digest.removeprefix('sha256:').lower()}"
+    if runtime_version:
+        model += f"|ollama:{runtime_version}"
+    return model
 
 
 def vlm_result_to_observation(
@@ -108,6 +131,7 @@ def vlm_result_to_observation(
         start_frame=int(shot["source_in_us"]),
         end_frame=int(shot["source_out_us"]),
         timebase=_TIMEBASE_US,
+        timebase_unit=TimebaseUnit.MICROSECONDS,
         observation_type="vlm_semantic",
         claim=json.dumps(payload, ensure_ascii=False),
         provider=_PROVIDER,
@@ -116,7 +140,7 @@ def vlm_result_to_observation(
         confidence=confidence,
         review_state="auto_generated",
         claim_kind=claim_kind,
-        schema_version="1.0",
+        schema_version=FILM_OBSERVATION_SCHEMA_VERSION,
         project_id="unknown",
         created_at=int(time.time()),
         producer=_PROVIDER,
@@ -129,7 +153,11 @@ def _cache_fingerprint(
 ) -> str:
     """基于视频哈希 + 模型版本 + 镜头范围生成稳定缓存指纹。"""
     return short_hash(
-        f"{video_hash}|{model_version}|"
+        f"{video_hash}|{model_version}|{_PROMPT_VERSION}|"
+        f"{SEMANTIC_PROMPT_SHA256}|{MULTI_FRAME_SAMPLING_PROFILE}|"
+        f"{SEMANTIC_GENERATION_PROFILE}|"
+        f"{SEMANTIC_OBSERVATION_MAPPER_VERSION}|"
+        f"FilmObservation/{FILM_OBSERVATION_SCHEMA_VERSION}|"
         f"{shot['source_in_us']}|{shot['source_out_us']}|{_PROVIDER}"
     )
 
@@ -156,7 +184,9 @@ def batch_vlm_observations(
     video_path: str,
     shots: list[dict],
     adapter=None,
-    cache: AnalysisCache | None = None,
+    cache: AnalysisCacheStore | None = None,
+    progress_callback: Callable[[str, int, int], None] | None = None,
+    cancellation_check: Callable[[], bool] | None = None,
 ) -> list[FilmObservation]:
     """对每个镜头抽取中点关键帧并调用 VLM 分析，返回 FilmObservation 列表。
 
@@ -206,14 +236,25 @@ def batch_vlm_observations(
     observations: list[FilmObservation] = []
     total = len(shots)
 
+    if total == 0 and progress_callback is not None:
+        progress_callback("semantic_analysis", 0, 0)
+
     for idx, shot in enumerate(shots):
+        if cancellation_check is not None and cancellation_check():
+            raise AnalysisCancelledError("analysis cancellation requested")
         shot_id = shot["shot_id"]
         fp = _cache_fingerprint(video_hash, model_version, shot)
 
-        cached = cache.get(f"{fp}|{_PROMPT_VERSION}")
-        if cached is not None:
+        cache_key = f"{fp}|{_PROMPT_VERSION}"
+        cached = cache.get(cache_key)
+        if cached and all(
+            item.claim_kind == ClaimKind.MODEL_OBSERVATION
+            for item in cached
+        ):
             print(f"[VLM {idx + 1}/{total}] cache hit  {shot_id}")
             observations.extend(cached)
+            if progress_callback is not None:
+                progress_callback("semantic_analysis", idx + 1, total)
             continue
 
         t0 = time.time()
@@ -236,17 +277,28 @@ def batch_vlm_observations(
                             f"退化为首帧单帧模式"
                         )
                     vlm_result = adapter.analyze_frames(frame_paths)
+        except LocalVLMRuntimeBindingError:
+            raise
         except Exception as exc:
             vlm_result = _degraded_result(
                 f"batch error: {type(exc).__name__}: {exc}", "UNKNOWN"
             )
+
+        cancelled_after_unit = (
+            cancellation_check()
+            if cancellation_check is not None else False
+        )
 
         elapsed = time.time() - t0
         obs = vlm_result_to_observation(
             vlm_result, shot, video_path, model_version=model_version
         )
         observations.append(obs)
-        cache.put(f"{fp}|{_PROMPT_VERSION}", [obs])
+        # Failure observations are evidence that an attempt failed, not a
+        # reusable analysis result. Keep them in the project snapshot but let
+        # the next request retry this shot.
+        if obs.claim_kind == ClaimKind.MODEL_OBSERVATION:
+            cache.put(cache_key, [obs])
 
         status = "OK  " if obs.claim_kind == ClaimKind.MODEL_OBSERVATION else "FAIL"
         print(
@@ -254,6 +306,10 @@ def batch_vlm_observations(
             f"({elapsed:.1f}s) role={vlm_result.get('proposed_role_v2')} "
             f"fn={vlm_result.get('shot_function')}"
         )
+        if progress_callback is not None:
+            progress_callback("semantic_analysis", idx + 1, total)
+        if cancelled_after_unit:
+            raise AnalysisCancelledError("analysis cancellation requested")
 
     cache.flush()
     return observations

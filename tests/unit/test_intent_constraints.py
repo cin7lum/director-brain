@@ -19,6 +19,7 @@ from director_brain.intent_constraints import (
     TechnicalAvoidRule,
     candidate_violated_rules,
     interpret_constraints,
+    unresolved_constraint_review_items,
 )
 from director_brain.models.director_brief import DirectorBrief
 from director_brain.models.director_plan import Decision, DirectorDecisionPlan
@@ -62,6 +63,22 @@ def test_interpret_splits_technical_and_semantic():
     assert terms == ["模糊"]  # 命中技术词表
     assert ("must_avoid", "陌生人") in d.unverifiable
     assert ("must_include", "日出") in d.unverifiable
+
+
+def test_unresolved_constraint_review_items_keep_exact_brief_positions():
+    brief = _brief(
+        must_avoid=["模糊镜头", "陌生人", "陌生人"],
+        must_include=["日出", "日出"],
+    )
+
+    items = unresolved_constraint_review_items(brief)
+
+    assert [(item["constraint_ref"], item["text"]) for item in items] == [
+        ("must_include:0", "日出"),
+        ("must_include:1", "日出"),
+        ("must_avoid:1", "陌生人"),
+        ("must_avoid:2", "陌生人"),
+    ]
 
 
 def test_technical_rule_predicates():
@@ -144,6 +161,7 @@ def _edl_and_plan_with_constraint():
         schema_version="1.0", project_id="p1a", created_at=int(time.time()),
         producer="test", source_ref="t", edl_id="edl_t", version="0.1",
         brief_version="0.1", context_id="c", timebase=1_000_000,
+        source_asset_hashes=[edits[0].source_media_hash],
         ordered_edits=edits, expected_duration=2_000_000, approval_state="draft",
     )
     ids = [e.source_asset_id for e in edl.ordered_edits]

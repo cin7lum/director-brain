@@ -1,6 +1,6 @@
 {
   "$contract_of": "director_brain@0.1.0",
-  "role": "中间产物：素材叙事结构（四幕骨架）",
+  "role": "中间产物：素材时间结构与带来源的本地人物/事件观测；不确认跨素材身份",
   "schema": {
     "$defs": {
       "StoryEdge": {
@@ -94,7 +94,9 @@
         "description": "故事图节点类型。",
         "enum": [
           "person",
+          "person_mention",
           "event",
+          "event_mention",
           "location",
           "shot",
           "observation",
@@ -102,13 +104,23 @@
         ],
         "title": "StoryNodeType",
         "type": "string"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
       }
     },
     "additionalProperties": false,
     "description": "从观测与实体构建的故事结构。",
     "properties": {
       "schema_version": {
-        "default": "1.0",
+        "default": "1.2",
         "title": "Schema Version",
         "type": "string"
       },
@@ -135,6 +147,46 @@
       "version": {
         "title": "Version",
         "type": "string"
+      },
+      "timeline_scope": {
+        "default": "single_request_source_unbound",
+        "title": "Timeline Scope",
+        "type": "string"
+      },
+      "project_asset_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Project Asset Id"
+      },
+      "timebase": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Timebase"
+      },
+      "timebase_unit": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/TimebaseUnit"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
       },
       "nodes": {
         "items": {

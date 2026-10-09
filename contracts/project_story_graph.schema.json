@@ -1,0 +1,402 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "中间产物：保留独立素材时间线的项目级结构集合；不含跨素材关系推断",
+  "schema": {
+    "$defs": {
+      "AssetAnalysisState": {
+        "description": "Per-asset state; a project context may retain usable assets on failure.",
+        "enum": [
+          "observed",
+          "completed_empty",
+          "partial",
+          "failed",
+          "source_unavailable",
+          "source_changed",
+          "not_authorized",
+          "provided",
+          "provided_empty"
+        ],
+        "title": "AssetAnalysisState",
+        "type": "string"
+      },
+      "ProjectAssetStoryGraph": {
+        "additionalProperties": false,
+        "description": "One asset's structural timeline and exact evidence references.",
+        "properties": {
+          "asset_id": {
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "order": {
+            "minimum": 0,
+            "title": "Order",
+            "type": "integer"
+          },
+          "source_content_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-fA-F0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Content Hash"
+          },
+          "analysis_state": {
+            "$ref": "#/$defs/AssetAnalysisState"
+          },
+          "story_graph_state": {
+            "enum": [
+              "constructed",
+              "no_deterministic_technical_observations",
+              "not_authorized",
+              "analysis_incomplete"
+            ],
+            "title": "Story Graph State",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "story_graph": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StoryGraph"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "asset_id",
+          "order",
+          "analysis_state",
+          "story_graph_state"
+        ],
+        "title": "ProjectAssetStoryGraph",
+        "type": "object"
+      },
+      "StoryEdge": {
+        "additionalProperties": false,
+        "description": "故事图边（嵌入式组件；每条推断边必须带推断状态与证据）。",
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "edge_type": {
+            "$ref": "#/$defs/StoryEdgeType"
+          },
+          "inference_status": {
+            "title": "Inference Status",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          }
+        },
+        "required": [
+          "edge_id",
+          "from_node",
+          "to_node",
+          "edge_type",
+          "inference_status",
+          "confidence"
+        ],
+        "title": "StoryEdge",
+        "type": "object"
+      },
+      "StoryEdgeType": {
+        "description": "故事图边类型。",
+        "enum": [
+          "temporal",
+          "causal_candidate",
+          "visual_transition",
+          "emotional_turn",
+          "narrative_link"
+        ],
+        "title": "StoryEdgeType",
+        "type": "string"
+      },
+      "StoryGraph": {
+        "additionalProperties": false,
+        "description": "从观测与实体构建的故事结构。",
+        "properties": {
+          "schema_version": {
+            "default": "1.2",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "graph_id": {
+            "title": "Graph Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "timeline_scope": {
+            "default": "single_request_source_unbound",
+            "title": "Timeline Scope",
+            "type": "string"
+          },
+          "project_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Asset Id"
+          },
+          "timebase": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Timebase"
+          },
+          "timebase_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TimebaseUnit"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/$defs/StoryNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/$defs/StoryEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "graph_id",
+          "version"
+        ],
+        "title": "StoryGraph",
+        "type": "object"
+      },
+      "StoryNode": {
+        "additionalProperties": false,
+        "description": "故事图节点（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "$ref": "#/$defs/StoryNodeType"
+          },
+          "ref_id": {
+            "title": "Ref Id",
+            "type": "string"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "ref_id"
+        ],
+        "title": "StoryNode",
+        "type": "object"
+      },
+      "StoryNodeType": {
+        "description": "故事图节点类型。",
+        "enum": [
+          "person",
+          "person_mention",
+          "event",
+          "event_mention",
+          "location",
+          "shot",
+          "observation",
+          "act"
+        ],
+        "title": "StoryNodeType",
+        "type": "string"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Revision-bound project view containing only independent asset graphs.",
+    "properties": {
+      "schema_version": {
+        "default": "1.0",
+        "title": "Schema Version",
+        "type": "string"
+      },
+      "project_id": {
+        "title": "Project Id",
+        "type": "string"
+      },
+      "created_at": {
+        "title": "Created At",
+        "type": "integer"
+      },
+      "producer": {
+        "title": "Producer",
+        "type": "string"
+      },
+      "source_ref": {
+        "title": "Source Ref",
+        "type": "string"
+      },
+      "graph_id": {
+        "title": "Graph Id",
+        "type": "string"
+      },
+      "project_manifest_id": {
+        "title": "Project Manifest Id",
+        "type": "string"
+      },
+      "project_revision": {
+        "minimum": 1,
+        "title": "Project Revision",
+        "type": "integer"
+      },
+      "context_id": {
+        "title": "Context Id",
+        "type": "string"
+      },
+      "analysis_fingerprint": {
+        "title": "Analysis Fingerprint",
+        "type": "string"
+      },
+      "boundary_state": {
+        "const": "declared_unverified",
+        "default": "declared_unverified",
+        "title": "Boundary State",
+        "type": "string"
+      },
+      "timeline_scope": {
+        "const": "project_per_asset",
+        "default": "project_per_asset",
+        "title": "Timeline Scope",
+        "type": "string"
+      },
+      "relation_scope": {
+        "const": "asset_local_structural_only",
+        "default": "asset_local_structural_only",
+        "title": "Relation Scope",
+        "type": "string"
+      },
+      "cross_asset_relations_state": {
+        "const": "not_attempted",
+        "default": "not_attempted",
+        "title": "Cross Asset Relations State",
+        "type": "string"
+      },
+      "evidence_refs": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Evidence Refs",
+        "type": "array"
+      },
+      "assets": {
+        "items": {
+          "$ref": "#/$defs/ProjectAssetStoryGraph"
+        },
+        "minItems": 1,
+        "title": "Assets",
+        "type": "array"
+      }
+    },
+    "required": [
+      "project_id",
+      "created_at",
+      "producer",
+      "source_ref",
+      "graph_id",
+      "project_manifest_id",
+      "project_revision",
+      "context_id",
+      "analysis_fingerprint",
+      "assets"
+    ],
+    "title": "ProjectStoryGraph",
+    "type": "object"
+  }
+}

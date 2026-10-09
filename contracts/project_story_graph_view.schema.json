@@ -1,0 +1,1006 @@
+{
+  "$contract_of": "director_brain@0.1.0",
+  "role": "只读视图：精确项目结构集合与当前调用方声明的跨素材关系快照组合；不执行自动关系推断",
+  "schema": {
+    "$defs": {
+      "AssetAnalysisState": {
+        "description": "Per-asset state; a project context may retain usable assets on failure.",
+        "enum": [
+          "observed",
+          "completed_empty",
+          "partial",
+          "failed",
+          "source_unavailable",
+          "source_changed",
+          "not_authorized",
+          "provided",
+          "provided_empty"
+        ],
+        "title": "AssetAnalysisState",
+        "type": "string"
+      },
+      "ProjectAssetStoryGraph": {
+        "additionalProperties": false,
+        "description": "One asset's structural timeline and exact evidence references.",
+        "properties": {
+          "asset_id": {
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "order": {
+            "minimum": 0,
+            "title": "Order",
+            "type": "integer"
+          },
+          "source_content_hash": {
+            "anyOf": [
+              {
+                "pattern": "^[a-fA-F0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Content Hash"
+          },
+          "analysis_state": {
+            "$ref": "#/$defs/AssetAnalysisState"
+          },
+          "story_graph_state": {
+            "enum": [
+              "constructed",
+              "no_deterministic_technical_observations",
+              "not_authorized",
+              "analysis_incomplete"
+            ],
+            "title": "Story Graph State",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "story_graph": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/StoryGraph"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "asset_id",
+          "order",
+          "analysis_state",
+          "story_graph_state"
+        ],
+        "title": "ProjectAssetStoryGraph",
+        "type": "object"
+      },
+      "ProjectStoryEntityLink": {
+        "additionalProperties": false,
+        "description": "A caller-asserted identity grouping across independent source assets.",
+        "properties": {
+          "link_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Link Id",
+            "type": "string"
+          },
+          "entity_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity",
+              "place_identity"
+            ],
+            "title": "Entity Kind",
+            "type": "string"
+          },
+          "display_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Label",
+            "type": "string"
+          },
+          "anchors": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryLinkAnchor"
+            },
+            "maxItems": 500,
+            "minItems": 2,
+            "title": "Anchors",
+            "type": "array"
+          },
+          "source_comparison_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Source Comparison Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "link_id",
+          "entity_kind",
+          "display_label",
+          "anchors"
+        ],
+        "title": "ProjectStoryEntityLink",
+        "type": "object"
+      },
+      "ProjectStoryGraph": {
+        "additionalProperties": false,
+        "description": "Revision-bound project view containing only independent asset graphs.",
+        "properties": {
+          "schema_version": {
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "graph_id": {
+            "title": "Graph Id",
+            "type": "string"
+          },
+          "project_manifest_id": {
+            "title": "Project Manifest Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1,
+            "title": "Project Revision",
+            "type": "integer"
+          },
+          "context_id": {
+            "title": "Context Id",
+            "type": "string"
+          },
+          "analysis_fingerprint": {
+            "title": "Analysis Fingerprint",
+            "type": "string"
+          },
+          "boundary_state": {
+            "const": "declared_unverified",
+            "default": "declared_unverified",
+            "title": "Boundary State",
+            "type": "string"
+          },
+          "timeline_scope": {
+            "const": "project_per_asset",
+            "default": "project_per_asset",
+            "title": "Timeline Scope",
+            "type": "string"
+          },
+          "relation_scope": {
+            "const": "asset_local_structural_only",
+            "default": "asset_local_structural_only",
+            "title": "Relation Scope",
+            "type": "string"
+          },
+          "cross_asset_relations_state": {
+            "const": "not_attempted",
+            "default": "not_attempted",
+            "title": "Cross Asset Relations State",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/$defs/ProjectAssetStoryGraph"
+            },
+            "minItems": 1,
+            "title": "Assets",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "graph_id",
+          "project_manifest_id",
+          "project_revision",
+          "context_id",
+          "analysis_fingerprint",
+          "assets"
+        ],
+        "title": "ProjectStoryGraph",
+        "type": "object"
+      },
+      "ProjectStoryGraphRelationGroup": {
+        "additionalProperties": false,
+        "description": "A caller-asserted identity group projected over independent asset graphs.",
+        "properties": {
+          "relation_id": {
+            "minLength": 1,
+            "title": "Relation Id",
+            "type": "string"
+          },
+          "relation_kind": {
+            "enum": [
+              "person_identity",
+              "event_identity",
+              "place_identity"
+            ],
+            "title": "Relation Kind",
+            "type": "string"
+          },
+          "display_label": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Label",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryGraphRelationMember"
+            },
+            "maxItems": 500,
+            "minItems": 2,
+            "title": "Members",
+            "type": "array"
+          },
+          "source_review_id": {
+            "minLength": 1,
+            "title": "Source Review Id",
+            "type": "string"
+          },
+          "source_review_revision": {
+            "minimum": 1,
+            "title": "Source Review Revision",
+            "type": "integer"
+          },
+          "source_link_id": {
+            "minLength": 1,
+            "title": "Source Link Id",
+            "type": "string"
+          },
+          "source_comparison_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Source Comparison Ids",
+            "type": "array"
+          },
+          "assertion_state": {
+            "const": "caller_asserted",
+            "default": "caller_asserted",
+            "title": "Assertion State",
+            "type": "string"
+          },
+          "identity_verification_state": {
+            "const": "not_independently_verified",
+            "default": "not_independently_verified",
+            "title": "Identity Verification State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "relation_kind",
+          "display_label",
+          "members",
+          "source_review_id",
+          "source_review_revision",
+          "source_link_id"
+        ],
+        "title": "ProjectStoryGraphRelationGroup",
+        "type": "object"
+      },
+      "ProjectStoryGraphRelationMember": {
+        "additionalProperties": false,
+        "description": "One revision-bound source member of a project-level relation group.",
+        "properties": {
+          "anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "node_binding_state": {
+            "enum": [
+              "exact_mention_node",
+              "observation_interval_only"
+            ],
+            "title": "Node Binding State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "anchor",
+          "node_binding_state"
+        ],
+        "title": "ProjectStoryGraphRelationMember",
+        "type": "object"
+      },
+      "ProjectStoryLinkAnchor": {
+        "additionalProperties": false,
+        "description": "A caller-selected interval bounded by one stored source observation.",
+        "properties": {
+          "project_asset_id": {
+            "minLength": 1,
+            "title": "Project Asset Id",
+            "type": "string"
+          },
+          "source_asset_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Asset Id"
+          },
+          "story_graph_node_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Story Graph Node Id"
+          },
+          "observation_id": {
+            "minLength": 1,
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "source_content_hash": {
+            "pattern": "^[a-fA-F0-9]{64}$",
+            "title": "Source Content Hash",
+            "type": "string"
+          },
+          "source_start": {
+            "minimum": 0,
+            "title": "Source Start",
+            "type": "integer"
+          },
+          "source_end": {
+            "exclusiveMinimum": 0,
+            "title": "Source End",
+            "type": "integer"
+          },
+          "timebase": {
+            "title": "Timebase",
+            "type": "integer"
+          },
+          "timebase_unit": {
+            "$ref": "#/$defs/TimebaseUnit"
+          }
+        },
+        "required": [
+          "project_asset_id",
+          "observation_id",
+          "source_content_hash",
+          "source_start",
+          "source_end",
+          "timebase",
+          "timebase_unit"
+        ],
+        "title": "ProjectStoryLinkAnchor",
+        "type": "object"
+      },
+      "ProjectStoryLinkComparisonDisposition": {
+        "additionalProperties": false,
+        "description": "Caller-asserted disposition of one immutable model comparison.",
+        "properties": {
+          "comparison_id": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Comparison Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accepted_as_caller_asserted",
+              "rejected",
+              "needs_more_evidence"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Link Id"
+          },
+          "rationale": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comparison_id",
+          "decision"
+        ],
+        "title": "ProjectStoryLinkComparisonDisposition",
+        "type": "object"
+      },
+      "ProjectStoryLinkReview": {
+        "additionalProperties": false,
+        "description": "Immutable, revision-bound caller overlay for cross-asset graph claims.\n\nA comparison disposition can point to an immutable local-model pair result,\nbut never changes that result's unreviewed state or proves the relationship.\nThe source-local StoryGraph remains unchanged. A later revision replaces the\ncomplete identity-link and semantic-relation sets while prior snapshots stay\nin the decision ledger.",
+        "properties": {
+          "schema_version": {
+            "default": "1.5",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "review_id": {
+            "title": "Review Id",
+            "type": "string"
+          },
+          "project_manifest_id": {
+            "title": "Project Manifest Id",
+            "type": "string"
+          },
+          "project_revision": {
+            "minimum": 1,
+            "title": "Project Revision",
+            "type": "integer"
+          },
+          "context_id": {
+            "title": "Context Id",
+            "type": "string"
+          },
+          "story_graph_id": {
+            "title": "Story Graph Id",
+            "type": "string"
+          },
+          "analysis_fingerprint": {
+            "title": "Analysis Fingerprint",
+            "type": "string"
+          },
+          "source_mention_review_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Source Mention Review Id"
+          },
+          "source_mention_review_revision": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Source Mention Review Revision",
+            "type": "integer"
+          },
+          "review_revision": {
+            "minimum": 1,
+            "title": "Review Revision",
+            "type": "integer"
+          },
+          "review_scope": {
+            "default": "project_cross_asset_identity_overlay",
+            "enum": [
+              "project_cross_asset_identity_overlay",
+              "project_cross_asset_review"
+            ],
+            "title": "Review Scope",
+            "type": "string"
+          },
+          "evidence_state": {
+            "const": "caller_asserted",
+            "default": "caller_asserted",
+            "title": "Evidence State",
+            "type": "string"
+          },
+          "actor_identity_state": {
+            "const": "caller_asserted",
+            "default": "caller_asserted",
+            "title": "Actor Identity State",
+            "type": "string"
+          },
+          "automatic_inference_state": {
+            "const": "not_attempted",
+            "default": "not_attempted",
+            "title": "Automatic Inference State",
+            "type": "string"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryEntityLink"
+            },
+            "maxItems": 500,
+            "title": "Links",
+            "type": "array"
+          },
+          "relations": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryRelationClaim"
+            },
+            "maxItems": 500,
+            "title": "Relations",
+            "type": "array"
+          },
+          "comparison_dispositions": {
+            "items": {
+              "$ref": "#/$defs/ProjectStoryLinkComparisonDisposition"
+            },
+            "maxItems": 500,
+            "title": "Comparison Dispositions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "review_id",
+          "project_manifest_id",
+          "project_revision",
+          "context_id",
+          "story_graph_id",
+          "analysis_fingerprint",
+          "review_revision"
+        ],
+        "title": "ProjectStoryLinkReview",
+        "type": "object"
+      },
+      "ProjectStoryRelationClaim": {
+        "additionalProperties": false,
+        "description": "One caller-asserted semantic edge between exact cross-asset mentions.",
+        "properties": {
+          "relation_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Relation Id",
+            "type": "string"
+          },
+          "relation_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "title": "Relation Type",
+            "type": "string"
+          },
+          "from_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "to_anchor": {
+            "$ref": "#/$defs/ProjectStoryLinkAnchor"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "relation_type_state": {
+            "const": "caller_supplied_unstandardized",
+            "default": "caller_supplied_unstandardized",
+            "title": "Relation Type State",
+            "type": "string"
+          },
+          "confirmation_state": {
+            "const": "caller_asserted",
+            "default": "caller_asserted",
+            "title": "Confirmation State",
+            "type": "string"
+          },
+          "privacy_class": {
+            "default": "private",
+            "enum": [
+              "public",
+              "internal",
+              "private",
+              "sensitive"
+            ],
+            "title": "Privacy Class",
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation_id",
+          "relation_type",
+          "from_anchor",
+          "to_anchor",
+          "evidence_refs"
+        ],
+        "title": "ProjectStoryRelationClaim",
+        "type": "object"
+      },
+      "StoryEdge": {
+        "additionalProperties": false,
+        "description": "故事图边（嵌入式组件；每条推断边必须带推断状态与证据）。",
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "edge_type": {
+            "$ref": "#/$defs/StoryEdgeType"
+          },
+          "inference_status": {
+            "title": "Inference Status",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          }
+        },
+        "required": [
+          "edge_id",
+          "from_node",
+          "to_node",
+          "edge_type",
+          "inference_status",
+          "confidence"
+        ],
+        "title": "StoryEdge",
+        "type": "object"
+      },
+      "StoryEdgeType": {
+        "description": "故事图边类型。",
+        "enum": [
+          "temporal",
+          "causal_candidate",
+          "visual_transition",
+          "emotional_turn",
+          "narrative_link"
+        ],
+        "title": "StoryEdgeType",
+        "type": "string"
+      },
+      "StoryGraph": {
+        "additionalProperties": false,
+        "description": "从观测与实体构建的故事结构。",
+        "properties": {
+          "schema_version": {
+            "default": "1.2",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "integer"
+          },
+          "producer": {
+            "title": "Producer",
+            "type": "string"
+          },
+          "source_ref": {
+            "title": "Source Ref",
+            "type": "string"
+          },
+          "graph_id": {
+            "title": "Graph Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          },
+          "timeline_scope": {
+            "default": "single_request_source_unbound",
+            "title": "Timeline Scope",
+            "type": "string"
+          },
+          "project_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Project Asset Id"
+          },
+          "timebase": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Timebase"
+          },
+          "timebase_unit": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TimebaseUnit"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/$defs/StoryNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/$defs/StoryEdge"
+            },
+            "title": "Edges",
+            "type": "array"
+          }
+        },
+        "required": [
+          "project_id",
+          "created_at",
+          "producer",
+          "source_ref",
+          "graph_id",
+          "version"
+        ],
+        "title": "StoryGraph",
+        "type": "object"
+      },
+      "StoryNode": {
+        "additionalProperties": false,
+        "description": "故事图节点（嵌入式组件，非顶层记录）。",
+        "properties": {
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_type": {
+            "$ref": "#/$defs/StoryNodeType"
+          },
+          "ref_id": {
+            "title": "Ref Id",
+            "type": "string"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_type",
+          "ref_id"
+        ],
+        "title": "StoryNode",
+        "type": "object"
+      },
+      "StoryNodeType": {
+        "description": "故事图节点类型。",
+        "enum": [
+          "person",
+          "person_mention",
+          "event",
+          "event_mention",
+          "location",
+          "shot",
+          "observation",
+          "act"
+        ],
+        "title": "StoryNodeType",
+        "type": "string"
+      },
+      "TimebaseUnit": {
+        "enum": [
+          "unknown",
+          "frames",
+          "microseconds",
+          "seconds"
+        ],
+        "title": "TimebaseUnit",
+        "type": "string"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Read projection of source-local graphs and current caller graph claims.\n\nThe persisted source graph and immutable caller link review remain separate\nevidence records. This view gives consumers one revision-bound object while\npreserving that provenance boundary; identity groups and semantic relation\nedges remain caller-asserted and are neither inferred nor verified here.",
+    "properties": {
+      "view_id": {
+        "minLength": 1,
+        "title": "View Id",
+        "type": "string"
+      },
+      "source_graph": {
+        "$ref": "#/$defs/ProjectStoryGraph"
+      },
+      "cross_asset_link_review": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ProjectStoryLinkReview"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "source_mention_review_id": {
+        "anyOf": [
+          {
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Source Mention Review Id"
+      },
+      "source_mention_review_revision": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Source Mention Review Revision",
+        "type": "integer"
+      },
+      "cross_asset_relations": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryGraphRelationGroup"
+        },
+        "title": "Cross Asset Relations",
+        "type": "array"
+      },
+      "cross_asset_relation_edges": {
+        "items": {
+          "$ref": "#/$defs/ProjectStoryRelationClaim"
+        },
+        "title": "Cross Asset Relation Edges",
+        "type": "array"
+      },
+      "link_snapshot_state": {
+        "enum": [
+          "absent",
+          "caller_asserted",
+          "stale"
+        ],
+        "title": "Link Snapshot State",
+        "type": "string"
+      },
+      "cross_asset_relation_state": {
+        "enum": [
+          "none",
+          "caller_asserted",
+          "needs_reconfirmation"
+        ],
+        "title": "Cross Asset Relation State",
+        "type": "string"
+      },
+      "cross_asset_link_count": {
+        "minimum": 0,
+        "title": "Cross Asset Link Count",
+        "type": "integer"
+      },
+      "cross_asset_relation_edge_state": {
+        "default": "none",
+        "enum": [
+          "none",
+          "caller_asserted",
+          "needs_reconfirmation"
+        ],
+        "title": "Cross Asset Relation Edge State",
+        "type": "string"
+      },
+      "cross_asset_relation_edge_count": {
+        "default": 0,
+        "minimum": 0,
+        "title": "Cross Asset Relation Edge Count",
+        "type": "integer"
+      },
+      "automatic_inference_state": {
+        "const": "not_attempted",
+        "default": "not_attempted",
+        "title": "Automatic Inference State",
+        "type": "string"
+      },
+      "schema_version": {
+        "const": "1.4",
+        "default": "1.4",
+        "title": "Schema Version",
+        "type": "string"
+      }
+    },
+    "required": [
+      "view_id",
+      "source_graph",
+      "link_snapshot_state",
+      "cross_asset_relation_state",
+      "cross_asset_link_count"
+    ],
+    "title": "ProjectStoryGraphView",
+    "type": "object"
+  }
+}
